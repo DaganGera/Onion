@@ -41,6 +41,21 @@ LADDER = [
         "honestly-labelled estimate that strengthens the pitch (e.g., CI width vs "
         "typical manual re-grade disagreement), (4) sharpen one first-90-seconds "
         "judge touchpoint. Keep changes small and tested.")),
+    ("india-access", (
+        "TASK LOOP-A{n}: India-viability pass {n}. Pick ONE highest-value item: "
+        "client-side image downscale before upload (canvas ≤1600px, JPEG q80) with "
+        "before/after KB measured and shown honestly in the UI; network timeout + "
+        "retry-once + 'save and retry' on every fetch; verify zero external CDN "
+        "dependencies for full offline demo; Hindi/English completeness + ≥48px "
+        "touch targets audit; per-lot data-cost measurement written to "
+        ".agent/IMPACT_EVIDENCE.md. Keep vanilla JS; pytest must stay green.")),
+    ("demo-wow", (
+        "TASK LOOP-W{n}: Wow-factor pass {n}. Pick ONE: make tamper-demo flip red "
+        "in <1s and restore bulletproof; big glanceable Grade-A gauge with Wilson CI "
+        "whiskers on result screen (Indian number format, bilingual); two-phone "
+        "dispute theater polish; certificate A4 print perfection from a phone; honest "
+        "progress text during inference ('analysing tray… 34 onions found'). Never "
+        "fake evidence; every addition must degrade gracefully. pytest green.")),
     ("qa-engineer", (
         "TASK LOOP-Q{n}: Adversarial pass {n}. Find NEW failure modes not covered by "
         "tests/test_failure_injection.py: concurrent /analyze uploads, duplicate lot "
