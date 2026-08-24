@@ -693,23 +693,37 @@ def _tamper_original_value(lot: dict) -> float:
                  or lot.get("grade_a_pct") or 0.0)
 
 
+def _set_grade_a(lot_id: int, value: float) -> None:
+    """The one write path of the demo: edit the column, never touch hashes."""
+    conn = db.connect()
+    try:
+        conn.execute("UPDATE lots SET grade_a_pct = ? WHERE id = ?",
+                     (value, lot_id))
+        conn.commit()
+    finally:
+        conn.close()
+
+
 @app.post("/tamper/attack/{lot_id}")
 def tamper_attack(lot_id: int):
+    """One round trip does everything: edit the row, then honestly recompute
+    the chain and report exactly which certificate went red. The UI renders
+    the flip from this response alone -- no second fetch, so it stays under
+    a second even on venue wifi."""
     try:
         lot = db.get_lot(lot_id)
         if lot is None:
             return _error("No such certificate.", 404)
         original = _tamper_original_value(lot)
         bumped = min(99.9, round(original + 25.0, 2))
-        conn = db.connect()
-        try:
-            conn.execute("UPDATE lots SET grade_a_pct = ? WHERE id = ?",
-                         (bumped, lot_id))
-            conn.commit()
-        finally:
-            conn.close()
+        _set_grade_a(lot_id, bumped)
         _TAMPER_STATE[lot_id] = {"original": original}
+        intact, audits, checked = db.audit_chain(lot["centre_id"])
+        broken = [a["lot_id"] for a in audits if not a["ok"]]
         return {"ok": True, "lot_id": lot_id, "was": original, "now": bumped,
+                "lot_ref": lot["lot_ref"], "centre_id": lot["centre_id"],
+                "audit": {"intact": intact, "broken_lot_ids": broken,
+                          "records_checked": checked},
                 "note": "Row edited directly, hash NOT recomputed -- "
                         "exactly what an attacker with database access does."}
     except Exception as exc:  # noqa: BLE001
@@ -725,17 +739,81 @@ def tamper_restore(lot_id: int):
         if lot is None:
             return _error("No such certificate.", 404)
         value = state["original"] if state else _tamper_original_value(lot)
-        conn = db.connect()
-        try:
-            conn.execute("UPDATE lots SET grade_a_pct = ? WHERE id = ?",
-                         (value, lot_id))
-            conn.commit()
-        finally:
-            conn.close()
-        return {"ok": True, "lot_id": lot_id, "restored_to": value}
+        _set_grade_a(lot_id, value)
+        intact, _, checked = db.audit_chain(lot["centre_id"])
+        return {"ok": True, "lot_id": lot_id, "restored_to": value,
+                "intact_after": intact, "records_checked": checked}
     except Exception as exc:  # noqa: BLE001
         traceback.print_exc()
         return _error(f"Restore failed: {type(exc).__name__}", 500)
+
+
+# Mismatch below this size is float rounding, not an attack.
+_GRADE_A_MATCH_TOL = 0.05
+
+
+@app.post("/tamper/restore-all")
+def tamper_restore_all():
+    """The demo must be impossible to leave broken.
+
+    Two sweeps, both honest:
+      1. every lot this server remembers attacking -> restore from memory;
+      2. every row whose stored grade_a_pct disagrees with its own
+         result_json copy -> restore from result_json. This catches attacks
+         made before a server restart, when in-memory state is gone.
+    result_json is written once at insert and never edited afterwards, and
+    nothing else in the app UPDATEs lots, so a mismatch IS a live attack --
+    restoring from result_json puts back the exact hashed value.
+    """
+    try:
+        restored: list[dict] = []
+        centres: set[int] = set()
+
+        for lot_id, state in list(_TAMPER_STATE.items()):
+            lot = db.get_lot(lot_id)
+            if lot is None:
+                _TAMPER_STATE.pop(lot_id, None)
+                continue
+            value = state["original"]
+            if abs(float(lot["grade_a_pct"] or 0.0) - value) > _GRADE_A_MATCH_TOL:
+                _set_grade_a(lot_id, value)
+                restored.append({"lot_id": lot_id, "restored_to": value})
+            centres.add(lot["centre_id"])
+            _TAMPER_STATE.pop(lot_id, None)
+
+        conn = db.connect()
+        try:
+            rows = conn.execute(
+                "SELECT id, centre_id, grade_a_pct, result_json FROM lots"
+            ).fetchall()
+        finally:
+            conn.close()
+        for row in rows:
+            try:
+                truth = float(json.loads(row["result_json"] or "{}")
+                              .get("grade_a_pct") or 0.0)
+            except (ValueError, TypeError):
+                continue  # unreadable result_json -- leave the row alone
+            stored = float(row["grade_a_pct"] or 0.0)
+            if abs(stored - truth) > _GRADE_A_MATCH_TOL:
+                _set_grade_a(int(row["id"]), truth)
+                restored.append({"lot_id": int(row["id"]), "restored_to": truth})
+                centres.add(int(row["centre_id"]))
+
+        # Dedupe (both sweeps can hit the same lot).
+        seen: set[int] = set()
+        restored = [r for r in restored
+                    if not (r["lot_id"] in seen or seen.add(r["lot_id"]))]
+
+        intact_after = True
+        for centre_id in centres:
+            intact, _, _ = db.audit_chain(centre_id)
+            intact_after = intact_after and intact
+        return {"ok": True, "restored": restored,
+                "n_restored": len(restored), "intact_after": intact_after}
+    except Exception as exc:  # noqa: BLE001
+        traceback.print_exc()
+        return _error(f"Restore-all failed: {type(exc).__name__}", 500)
 
 
 @app.get("/tamper-demo", response_class=HTMLResponse)
