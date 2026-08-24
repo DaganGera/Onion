@@ -125,3 +125,6 @@
 {"ts": "2026-08-25T03:04:01+05:30", "agent": "master", "event": "cycle_committed", "detail": "344 passed, 1 warning in 6.16s"}
 {"ts": "2026-08-25T03:04:08+05:30", "agent": "master", "event": "cycle_start", "detail": "{'cycle': 25, 'agent': 'india-access', 'phase': 'B/C/D-loop'}"}
 {"ts": "2026-08-25T03:05:24+05:30", "agent": "india-access", "event": "cycle_result", "detail": "{'agent': 'india-access', 'rc': 1, 'tail': ''}"}
+{"ts": "2026-08-25T03:05:30+05:30", "agent": "master", "event": "cycle_committed", "detail": "344 passed, 1 warning in 6.18s"}
+{"ts": "2026-08-25T03:05:37+05:30", "agent": "master", "event": "cycle_start", "detail": "{'cycle': 26, 'agent': 'demo-wow', 'phase': 'B/C/D-loop'}"}
+{"ts": "2026-08-25T03:06:52+05:30", "agent": "demo-wow", "event": "cycle_result", "detail": "{'agent': 'demo-wow', 'rc': 1, 'tail': ''}"}
