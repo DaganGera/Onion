@@ -20,10 +20,15 @@
       "agent": "backend-engineer",
       "task": "TASK B-002: Fix two findings from .agent/redteam/RT-001.md: (1) The dispute workflow is dead code - find where app/static/index.html or report.html fires the dispute action and wire it to POST /disput",
       "tests": "127 passed, 1 warning in 2.85s"
+    },
+    {
+      "agent": "frontend-engineer",
+      "task": "TASK F-001: Fix two RT-001 findings in the capture UI (app/static/index.html and related JS only - do NOT touch backend python): (1) HEIC/iPhone stall: if the browser cannot decode an uploaded/capture",
+      "tests": "127 passed, 1 warning in 2.79s"
     }
   ],
   "failed_tasks": [],
-  "last_successful_action": "ACCEPTED: TASK B-002: Fix two findings from .agent/redteam/RT-001.md: (1) The dispute workflow is dead code - find where app/stati",
+  "last_successful_action": "ACCEPTED: TASK F-001: Fix two RT-001 findings in the capture UI (app/static/index.html and related JS only - do NOT touch backend ",
   "last_rejected_change": null,
   "top_risks": [
     "synthetic-only model evidence",

@@ -230,6 +230,15 @@
   </div>
 </div>
 
+<!-- toast: bottom-screen notice for failures the operator must act on.
+     Solid red fill + bold type so it stays readable in field sunlight. -->
+<div id="toast" class="hidden fixed left-4 right-4 bottom-6 z-[80]" role="alert" aria-live="assertive">
+  <div class="mx-auto max-w-md bg-red-700 text-white rounded-xl px-4 py-3 border-2 border-red-900 shadow-lg active:bg-red-800">
+    <div id="toastTitle" class="font-bold text-base leading-snug"></div>
+    <div id="toastBody" class="text-sm mt-1 leading-snug"></div>
+  </div>
+</div>
+
 <script>
 const REPLAY = new URLSearchParams(location.search).get('replay') === '1';
 
@@ -264,6 +273,17 @@ const I18N = {
     genCert: 'Generate Certificate',
     analysing: 'Analysing…', computing: 'Computing lot result…',
     disputeBulb: 'Dispute this bulb', close: 'Close',
+    // RT-001 F-1/F-2: readable failures instead of stalls and dead ends.
+    heicTitle: 'Photo format not supported',
+    heicBody: 'The camera saved this photo as HEIC. Set the camera to '
+            + '“Most Compatible” (JPEG) — iPhone: Settings ▸ Camera ▸ Formats — '
+            + 'and retake the photo.',
+    unreadableTitle: 'Photo could not be opened',
+    unreadableBody: 'Retake the photo, or set the camera to “Most Compatible” '
+                  + '(JPEG) — iPhone: Settings ▸ Camera ▸ Formats.',
+    replayExhaustedTitle: 'Demo cache exhausted',
+    replayExhaustedBody: 'All cached trays have been shown. '
+                       + 'Restarting from the first tray.',
     referredTitle: n => `Referred to inspector — ${n} bulbs`,
   },
   hi: {
@@ -293,6 +313,16 @@ const I18N = {
     genCert: 'प्रमाणपत्र बनाएँ',
     analysing: 'विश्लेषण हो रहा है…', computing: 'परिणाम तैयार हो रहा है…',
     disputeBulb: 'इस प्याज़ पर आपत्ति दर्ज करें', close: 'बंद करें',
+    heicTitle: 'यह फ़ोटो फ़ॉर्मैट समर्थित नहीं है',
+    heicBody: 'कैमरे ने फ़ोटो HEIC में ली है। कैमरा को “Most Compatible” (JPEG) '
+            + 'पर सेट करें — iPhone: Settings ▸ Camera ▸ Formats — '
+            + 'और फ़ोटो दोबारा लें।',
+    unreadableTitle: 'फ़ोटो नहीं खोली जा सकी',
+    unreadableBody: 'फ़ोटो दोबारा लें, या कैमरा को “Most Compatible” (JPEG) पर '
+                  + 'सेट करें — iPhone: Settings ▸ Camera ▸ Formats।',
+    replayExhaustedTitle: 'डेमो कैश समाप्त हो गई',
+    replayExhaustedBody: 'सभी कैश की गई ट्रे दिखा दी गई हैं। '
+                       + 'पहली ट्रे से फिर शुरू कर रहे हैं।',
     referredTitle: n => `निरीक्षक को भेजा गया — ${n} प्याज़`,
   },
 };
@@ -346,6 +376,19 @@ function banner(msg, tone) {
   el.className = 'px-4 py-3 text-sm font-semibold ' +
     (tone === 'bad' ? 'bg-red-600 text-white' : 'bg-amber-400 text-amber-950');
 }
+
+// ---------- toast: bottom-screen notice that cannot be missed --------------
+// Used for failures the operator must act on (unreadable photo, replay
+// exhaustion). Auto-hides; a tap dismisses it immediately. Bilingual via t().
+let toastTimer = null;
+function toast(titleKey, bodyKey) {
+  $('toastTitle').textContent = t(titleKey);
+  $('toastBody').textContent = t(bodyKey);
+  $('toast').classList.remove('hidden');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => $('toast').classList.add('hidden'), 10000);
+}
+$('toast').onclick = () => $('toast').classList.add('hidden');
 
 function tally() {
   $('tally').innerHTML = state.trayCount
@@ -403,14 +446,79 @@ $('shutter').onclick = async () => {
   submit(await grabFrame());
 };
 
+// RT-001 F-1: an image the browser itself cannot decode (HEIC from an iPhone
+// opened in a non-Safari browser, or a corrupt file) used to go straight to
+// the server and leave the operator staring at a spinner. Ask the browser
+// first -- if it cannot open it, neither can the model.
+function imageDecodable(blob) {
+  if (!blob || typeof blob.size !== 'number' || blob.size < 16) {
+    return Promise.resolve(Boolean(blob));   // nothing sensible to check
+  }
+  const viaImg = () => new Promise(resolve => {
+    let url;
+    try { url = URL.createObjectURL(blob); } catch (e) { resolve(false); return; }
+    const img = new Image();
+    img.onload = () => { URL.revokeObjectURL(url); resolve(img.naturalWidth > 0); };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(false); };
+    img.src = url;
+  });
+  if (typeof createImageBitmap === 'function') {
+    return createImageBitmap(blob)
+      .then(bmp => { if (bmp && bmp.close) bmp.close(); return true; })
+      .catch(viaImg);   // second codec path before declaring failure
+  }
+  return viaImg();
+}
+
+// RT-001 F-2: replay fetch that reports WHY it failed, so a demo cache that
+// ran out can be told apart from a genuine break. `exhausted` mirrors the
+// server's 404 wording ("No cached replay N").
+async function fetchReplay(n) {
+  try {
+    const r = await fetch('/api/replay/' + n);
+    const data = await r.json().catch(() => ({ error: 'HTTP ' + r.status }));
+    return {
+      ok: !data.error,
+      status: r.status,
+      exhausted: r.status === 404 ||
+                 /^no cached replay/i.test(data.error || ''),
+      data: data,
+    };
+  } catch (e) {
+    return { ok: false, status: 0, exhausted: false,
+             data: { error: e.message } };
+  }
+}
+
 async function submit(blob) {
+  // Decode gate runs BEFORE the busy overlay: fail fast with instructions,
+  // never leave the capture flow hanging on a file nobody can open.
+  if (!REPLAY) {
+    const decodable = await imageDecodable(blob);
+    if (!decodable) {
+      $('fileInput').value = '';   // allow re-picking the same file
+      const heic = /heic|heif/i.test(blob?.type || '') ||
+                   /\.hei[cf]$/i.test(blob?.name || '');
+      toast(heic ? 'heicTitle' : 'unreadableTitle',
+            heic ? 'heicBody' : 'unreadableBody');
+      return;
+    }
+  }
   busy(true, `${t('analysing')} (${state.lookIndex + 1})`);
   try {
     let data;
     if (REPLAY) {
-      const r = await fetch(`/api/replay/${state.replayN}`);
-      data = await r.json();
-      if (data.error) throw new Error(data.error);
+      let res = await fetchReplay(state.replayN);
+      // Past the last cached tray (capture #7+ with six cached replays) this
+      // used to hard-fail forever. Cycle back to replay 0 and say so out
+      // loud instead of dead-ending the demo.
+      if (!res.ok && res.exhausted && state.replayN !== 0) {
+        toast('replayExhaustedTitle', 'replayExhaustedBody');
+        state.replayN = 0;
+        res = await fetchReplay(0);
+      }
+      if (!res.ok) throw new Error(res.data.error || ('HTTP ' + res.status));
+      data = res.data;
       state.replayN++;
       await new Promise(r => setTimeout(r, 1200));   // feels live
     } else {
