@@ -56,6 +56,12 @@ LADDER = [
         "dispute theater polish; certificate A4 print perfection from a phone; honest "
         "progress text during inference ('analysing tray… 34 onions found'). Never "
         "fake evidence; every addition must degrade gracefully. pytest green.")),
+    ("jury-simulator", (
+        "TASK LOOP-J{n}: Per your role: rotate to the next panelist, fire 5 fresh "
+        "questions grounded in the actual code/UI, answer honestly with file:line "
+        "citations, mark weak answers CRITICAL-PREP, convert each into a small "
+        "dispatchable prep task in .agent/JURY_LOG.md, and add polished 30-second "
+        "answers to .agent/JURY_ANSWERS.md. Read-only on production code.")),
     ("qa-engineer", (
         "TASK LOOP-Q{n}: Adversarial pass {n}. Find NEW failure modes not covered by "
         "tests/test_failure_injection.py: concurrent /analyze uploads, duplicate lot "
