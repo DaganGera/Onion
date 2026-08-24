@@ -291,3 +291,157 @@ across mandi daylight variance.
    (34 vs 43) wherever quoted. [LOW]
 
 — End of audit. All external sources accessed 2026-08-24. No production code was modified.
+
+---
+
+# ADDENDUM — Evidence hardening pass R-2219 (2026-08-25)
+
+Auditor: Research/Evidence Engineer. Scope of this pass ONLY: four claim
+families — NABCONS rates/losses, mandi volumes, manual grading time-per-lot,
+onion post-harvest loss %. Method: primary documents downloaded and text-extracted
+(CIPHET report PDF, Horticultural Statistics at a Glance PDF, Lok Sabha answer PDF);
+news pages fetched in full where noted; search-index snippets treated as leads,
+not evidence. All sources accessed **2026-08-25** unless stated otherwise.
+`scripts/impact_evidence.py` was extended so `IMPACT_EVIDENCE.md` carries these
+citations on regeneration (script is the generator; editing the .md alone would be
+overwritten). No production code touched.
+
+## 6.1 NABCONS rates — PARTIALLY VERIFIED, with an honest scope correction
+
+**What could NOT be verified:** no public NABCONS rate schedule for mandi grading
+labour (hamali/majdoori charges) was found in any session. Such charges are set
+per-APMC locally; treat any spoken "NABCONS grading rate" as **UNSUPPORTED** until
+someone produces the document.
+
+**What IS verifiable — NABCONS post-harvest LOSS study (2020–22):**
+
+| Figure | Value | Source |
+|---|---|---|
+| Category loss %, vegetables | **4.87–11.61%** | Lok Sabha US Q.839 table [S3] |
+| Monetary loss, vegetables | ₹27,459.08 crore/yr | same |
+| Total monetary loss, all 45 commodities | ₹1,52,790.42 crore (~₹1.53 lakh crore) | same |
+| Onion monetary loss | **₹5,156 crore** | MoFPI reply reported by HT, 05-Dec-2024 [S4] |
+| Perishables transport-only loss | 5–10% | same |
+
+The pairing of ICAR-CIPHET (2015) percentages with NABCONS (2022) percentages and
+rupees in one official Government table is the citation to use for both bodies.
+Corroboration attempt: NABCONS corporate pitchbook PDF exists (nabcons.com) with an
+onion value-chain section per search snippet; download timed out this session —
+do not cite its contents until retrieved.
+
+## 6.2 Mandi volumes — SUPPORTED
+
+| Claim | Verified figure | Source |
+|---|---|---|
+| National onion production 2023-24 | **242.7 lakh t (~24.3 Mt)** from 15.4 lakh ha, productivity 15.8 t/ha | HSAG 2024, Table 1.6 [S5] |
+| Maharashtra monthly onion arrivals 2023-24 | **~0.41–1.07 million t/month** (min Nov-23, max Jul-23); same order across 2021-22→2023-24 tables | HSAG 2024, Tables 8.1.1–8.1.3 [S5] |
+| Lasalgaon APMC daily arrivals | ~15,000 q/day baseline; fell to ~8,000 q (Aug-2026 rains); up to 25–30k q at peak supply (Feb-2026) | Business Today 14-Aug-2026 [S6, fully fetched]; FreshPlaza 09-Feb-2026 (headline/snippet only — corroborative, not load-bearing) |
+| Lasalgaon price levels Aug-2026 | avg ₹2,180→₹2,760/q over five sessions; day's min/max ₹800/₹3,117/q; crossed ₹4,250/q avg by 24-Aug (ToI headline only) | [S6]; ToI 24-Aug-2026 (snippet) |
+| JURY_LOG Q5 spoken claim "Lasalgaon clears hundreds of arrivals a day" | Consistent: ~15,000 q/day ≈ 1,500 t/day ≈ roughly 150–300 truck arrivals at 5–10 t/truck | derived from [S5][S6] |
+
+Note for slides: HSAG's own monthly-arrival tables are the citable source;
+newspaper arrival figures fluctuate with season and should carry their date.
+
+## 6.3 Manual grading time-per-lot — SUPPORTED (converts IMPACT_EVIDENCE §4 from pure assumption)
+
+Bisen, Bakane & Sakkalkar (2022), rotary-onion-grader paper (ICAR-AICRP PHET,
+Dr PDKV Akola), doi:10.1007/s13197-021-05253-8, PMC9114269 — full text read
+2026-08-25 [S2]:
+
+- Nashik-area trade survey (wholesalers/retailers/traders/storage): "**about 30
+  persons are required to grade 20 tonnes of onions in a day**".
+- Derived: ≈667 kg/person-day ≈ **0.72 person-min/kg** ⇒ a 2–5 t tractor-trolley
+  lot = **24–60 person-hours** of manual grading.
+- India grades **~50–55 lakh t/year manually** (paper cites Tripathi 2005,
+  NRC Onion & Garlic conference — historical figure, pre-mechanisation).
+- Machine context: their rotary grader does 20 t/day at 92.99% grading efficiency;
+  Gunathilake et al. 2016 onion grader capacity 630 kg/h (doi:10.1016/j.profoo.2016.02.022,
+  verified via [S2]'s reference list — secondary verification).
+- Same paper confirms manual grading is "expensive and time-consuming", labour-scarce
+  at peak season (citing Narvankar et al. 2005), and that repeated handling removes
+  skin and shortens shelf life.
+
+Honesty caveats enforced: (a) survey figure, not a time-motion study; (b) measures SIZE
+grading, not defect sorting — defect sorting is likely slower per bulb, so using it as a
+LOWER bound on manual effort is the conservative direction and is how IMPACT_EVIDENCE §4
+now words it; (c) Nashik-region figure, not an all-India average.
+
+Consequence: IMPACT_EVIDENCE §4's old bare assertion "manual whole-lot grading takes hours"
+is now literature-backed; the app-side handling estimate (~45–90 s/look) remains ASSUMED.
+
+## 6.4 Onion post-harvest loss % — SUPPORTED
+
+Primary source read end-to-end where cited (PDF downloaded, text extracted):
+
+- **Jha SN, Vishwakarma RK, Ahmad T, Rai A, Dixit AK (2015).** Report on Assessment of
+  Quantitative Harvest and Post-Harvest Losses of Major Crops and Commodities in India.
+  ICAR-CIPHET, Ludhiana (MoFPI-sponsored), 174 pp [S1].
+  - Onion overall national loss: **8.20%** (2005-07 study: 7.51%).
+    Farm operations 6.05% (harvesting + sorting/grading dominate); storage 2.16%.
+    Regional range **5.49% (Gujarat) → 12.72% (western plateau & hills, incl. Maharashtra)**.
+  - Table 6.8: onion row = production 16.66 Mt (2012-13) × price ₹16,920/t (2014 national
+    avg wholesale) × 8.20% ⇒ **₹2,312 crore** loss. Arithmetic re-checked this session ✓.
+  - Literature reviewed inside the same report: Kumar et al. 2006 Karnataka onion survey —
+    field 6.21%, wholesaler 1.85%, retail 2.36%; Nanda et al. 2012 eight-vegetable study
+    incl. onion (totals 6.9–13.0%). Cite as secondary if needed.
+- Cross-check table pairing both studies (Vegetables 4.58–12.44% CIPHET / 4.87–11.61%
+  NABCONS): Lok Sabha US Q.839 [S3].
+
+Pitch guidance: quote "**~8% harvest-to-retail loss nationally (ICAR-CIPHET), worst region
+12.7% including Maharashtra**, worth ~₹2,300 crore/yr at 2014 prices" — never the inflated
+20–40% figures that circulate without primary sources; nothing verified this session
+supports those.
+
+## 6.5 UI items STILL unsupported or still open after this pass
+
+Re-checked against app/static on 2026-08-25:
+
+| Item | Location | Status |
+|---|---|---|
+| I2/A2/D-dashboard money figures | index.html:148,274; arbitrate.html:139-142; dashboard.html:297-298 | **STILL FLAGGED.** Headline "Fair price band · per quintal" implies market grounding; only small-print "demo rates". New context: Grade-A default ₹2,400 sits inside observed Aug-2026 Lasalgaon band ₹800–3,117/q (avg ₹2,180–2,760) [S6], but the B/C/UNDERSIZED differentials are invented. Fix options unchanged: "(illustrative)" at equal prominence, wire Agmarknet/e-NAM modal price, or cite buffer-procurement rate ₹2,125/q effective 04-Jul-2026 (Zee headline seen in search index only — retrieve full article before quoting). |
+| C2 band attribution | report.html:85 | **STILL OPEN (P2).** "graded to ICAR-DOGR bands" prints with NO source+access-date despite D7 promising exactly that. This pass did not re-litigate D7; the promised citation must ship or relabel. |
+| V1 verdict wording | verify.html:76 | **STILL OPEN.** "✔ CERTIFICATE VERIFIED" still conflates record integrity with measurement validity ("RECORD INTACT" proposed in R-001 §3.5). |
+| C7 signature semantics | report.html signatures | **STILL OPEN (P4).** No "records attestation, does not authenticate identity" line under signature blocks. |
+| I4/C8/D3 quality & drift thresholds | index/report/dashboard | Unchanged — self-chosen UI conventions; keep presenting them as such. |
+
+Fixed earlier and confirmed still in place (no regression): prototype masthead marking
+(report.html:36), internal-rot RGB blindness sentence (report.html:97), dashboard DEMO DATA
+chip (dashboard.html:22).
+
+## 6.6 Reference list for this pass (labels [S#]; deliberately not [R#], which are claim IDs in §2.1) (author, year, doi/url, access date)
+
+- **[S1]** Jha, S.N., Vishwakarma, R.K., Ahmad, T., Rai, A., Dixit, A.K. (2015).
+  *Report on Assessment of Quantitative Harvest and Post-Harvest Losses of Major Crops
+  and Commodities in India.* ICAR-AICRP on Post-Harvest Technology, ICAR-CIPHET, Ludhiana.
+  https://ciphet.res.in/wp-content/uploads/pdf/MOFPI%20REPORT1.pdf — accessed &
+  downloaded 2026-08-25 (174 pp; onion §6.4.2 p.90-91, Table 6.8 p.100).
+- **[S2]** Bisen, R.D., Bakane, P.H., Sakkalkar, S.R. (2022). Design, development and
+  performance evaluation of rotary onion grader. *J Food Sci Technol* 59(6):2370–2380.
+  doi:10.1007/s13197-021-05253-8. PMCID PMC9114269.
+  https://pmc.ncbi.nlm.nih.gov/articles/PMC9114269/ — accessed 2026-08-25 (full text).
+- **[S3]** Ministry of Food Processing Industries, Govt of India (2025). Lok Sabha
+  Unstarred Question No. 839, answered 04-Dec-2025 ("Post Harvest Losses"; table pairing
+  ICAR-CIPHET 2015 % with NABCONS 2022 % and ₹).
+  https://sansad.in/getFile/loksabhaquestions/annex/186/AU839_b5IiJw.pdf?source=pqals
+  — accessed & downloaded 2026-08-25.
+- **[S4]** Hindustan Times (2024). "India loses ₹1.5 lakh crore worth of farm produce each
+  year, study reveals" (reports MoFPI written reply citing NABCONS study; onion ₹5,156 cr).
+  Published 05-Dec-2024. https://www.hindustantimes.com/india-news/india-loses-rs-1-5-lakh-crore-worth-of-farm-produce-each-year-study-reveals-101733408241490.html
+  — accessed 2026-08-25 (full text).
+- **[S5]** Ministry of Agriculture & Farmers Welfare, Govt of India (2024). *Horticultural
+  Statistics at a Glance 2024.* https://agriwelfare.gov.in/Documents/HORTICULTURAL_STATISTICS_AT_A_GLANCE_2024.pdf
+  — accessed & downloaded 2026-08-25 (320 pp; Table 1.6 p.33 TOP crops; Tables
+  8.1.1–8.1.3 p.200-202 monthly onion arrivals, state-wise, tonnes).
+- **[S6]** Business Today Desk (2026). "Wholesale onion prices go up by 25% at Lasalgaon,
+  Pimpalgaon mandis." Published/updated 14-Aug-2026.
+  https://www.businesstoday.in/india/story/wholesale-onion-prices-go-up-by-25-percent-at-lasalgaon-pimpalgaon-mandis-549144-2026-08-14
+  — accessed 2026-08-25 (full text; attributes arrivals/prices to Economic Times report
+  and Lasalgaon APMC officials).
+
+Snippet-only corroboration (seen in search index 2026-08-25, NOT fully retrieved — do not
+quote figures from these without retrieval): Times of India 24-Aug-2026 (Lasalgaon >₹4,250/q);
+Zee Business 04-Jul-2026 (buffer procurement price raised to ₹2,125/q); FreshPlaza
+09-Feb-2026 (arrivals 25–30k q); NABCONS Corporate Pitchbook PDF (download timed out).
+
+— End of R-2219 addendum. No production code modified; scripts/impact_evidence.py edited
+as the IMPACT_EVIDENCE.md generator; regenerated output diffed by eye against prior version.

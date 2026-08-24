@@ -1,6 +1,6 @@
 # IMPACT EVIDENCE — computed, not asserted
 
-Generated 2026-08-24 by `scripts/impact_evidence.py`.
+Generated 2026-08-25 by `scripts/impact_evidence.py`.
 Every figure below is one of:
 
 - **MEASURED-IN-REPO** — computed this run from files in this repo.
@@ -8,6 +8,9 @@ Every figure below is one of:
   quote it as field accuracy (see EVIDENCE_AUDIT.md §2.2).
 - **ASSUMED** — a stated planning assumption with its reasoning;
   replace with field data at the first opportunity.
+- **LITERATURE** — an external published figure, cited author/year/
+  url/access-date in EVIDENCE_AUDIT.md §6. Context for the problem
+  size only; never presented as a SAMA measurement.
 
 ## 1. The hand-sorted ground truth we actually have
 
@@ -52,10 +55,36 @@ spread below is an ASSUMED band, not a measurement:
 
 - Analysis cost per look: p95 139 ms CPU / 97 ms GPU on the dev machine. — SYNTHETIC (real hardware, generated imagery; measures pipeline cost only)
 - Two looks ≈ 0.28 s of inference. The lot is therefore dominated by PHYSICAL handling, not compute.
-- **ASSUMPTION:** handling ~45–90 s per look (lay tray beside mat, frame, capture, shake, recapture). A 1-tray two-look lot therefore lands at **~2–3 minutes end-to-end** including the result screen; a sample sized to the ±6-pt promise (~3 trays) at **~15–30 minutes**. Manual whole-lot grading of thousands of bulbs takes hours and cannot produce a signed interval. — ASSUMED
+- **ASSUMPTION:** handling ~45–90 s per look (lay tray beside mat, frame, capture, shake, recapture). A 1-tray two-look lot therefore lands at **~2–3 minutes end-to-end** including the result screen; a sample sized to the ±6-pt promise (~3 trays) at **~15–30 minutes**. — ASSUMED
+- Manual whole-lot grading is literature-slow, not assumption-slow: a Nashik-market trade survey found **~30 persons are needed to grade 20 tonnes of onions in a day** (≈0.72 person-minutes per kg), and ~50–55 lakh tonnes/year are graded manually in India (Bisen, Bakane & Sakkalkar 2022, J Food Sci Technol 59(6):2370–2380, doi:10.1007/s13197-021-05253-8; accessed 2026-08-25; survey figure, not a time-motion study — defect sorting may be slower still). At that rate one 2–5 t tractor-trolley lot is **24–60 person-hours**: hours even for a ten-person crew, and it produces no signed interval. — LITERATURE
 
-## 5. What would falsify this page
+## 5. External impact numbers — LITERATURE (problem-size context)
+
+All verified against primary documents on 2026-08-25; full citations
+and verification notes in EVIDENCE_AUDIT.md §6. These are context
+figures from published sources — never present them as SAMA data.
+
+- **Onion harvest+post-harvest loss, India: 8.20% overall** (farm
+  operations 6.05%, storage 2.16%; regional range 5.49–12.72%;
+  Maharashtra-inclusive region worst at 12.72%). Economic value of
+  onion loss ≈ ₹2,312 crore/yr (2012-13 production 16.66 Mt × 8.20% × ₹16,920/t). — Jha et al. 2015, ICAR-CIPHET/MoFPI report, Table 6.8 & §6.4.2 — LITERATURE
+- Category cross-check: vegetables lose **4.58–12.44%** (ICAR-CIPHET
+  2015) / **4.87–11.61%** (NABCONS 2022); all-India monetary loss
+  across 45 crops ₹1.53 lakh crore/yr (NABCONS). Onion alone ≈ ₹5,156 crore/yr per the NABCONS study as reported to Lok Sabha. — MoFPI reply, LS US Q.839 (04-Dec-2025) + HT (05-Dec-2024) — LITERATURE
+- **Mandi volumes:** official monthly onion arrivals in Maharashtra
+  ran ~0.41–1.07 million tonnes/month through 2023-24 (HSAG 2024,
+  Tables 8.1.1–8.1.3); national production 242.7 lakh t (~24.3 Mt)
+  from 15.4 lakh ha in 2023-24 (Table 1.6). Lasalgaon APMC — called
+  the country's largest onion market — auctions ~8,000–30,000 q/day
+  seasonally (~15,000 q/day baseline; avg price ₹2,180→₹2,760/q over
+  five sessions in Aug-2026, day's range ₹800–3,117/q). — HSAG 2024;
+  Business Today 14-Aug-2026 — LITERATURE
+- Price sanity for the app's demo rates (A ₹2,400/B ₹1,800/C ₹1,200/q): the Grade-A default sits inside Lasalgaon's observed Aug-2026 average band, but the size-grade differentials themselves
+  remain invented demo values — see EVIDENCE_AUDIT §6 flags. — LITERATURE (anchor) + DEMO (differentials)
+
+## 6. What would falsify this page
 
 - A dual-grading study (two inspectors, same lots) replacing §3's assumed band with data.
 - Real-phone tray photos re-run through eval_lot/calibrate_size converting §1–§2 inputs from synthetic to field data (gates T8, printed-mat caliper check).
+- Any §5 literature link rot or a superseding national loss study: re-verify the citations in EVIDENCE_AUDIT.md §6 before quoting.
 
