@@ -122,3 +122,6 @@
 {"ts": "2026-08-25T03:02:30+05:30", "agent": "master", "event": "cycle_committed", "detail": "344 passed, 1 warning in 6.12s"}
 {"ts": "2026-08-25T03:02:37+05:30", "agent": "master", "event": "cycle_start", "detail": "{'cycle': 24, 'agent': 'innovator', 'phase': 'B/C/D-loop'}"}
 {"ts": "2026-08-25T03:03:54+05:30", "agent": "innovator", "event": "cycle_result", "detail": "{'agent': 'innovator', 'rc': 1, 'tail': ''}"}
+{"ts": "2026-08-25T03:04:01+05:30", "agent": "master", "event": "cycle_committed", "detail": "344 passed, 1 warning in 6.16s"}
+{"ts": "2026-08-25T03:04:08+05:30", "agent": "master", "event": "cycle_start", "detail": "{'cycle': 25, 'agent': 'india-access', 'phase': 'B/C/D-loop'}"}
+{"ts": "2026-08-25T03:05:24+05:30", "agent": "india-access", "event": "cycle_result", "detail": "{'agent': 'india-access', 'rc': 1, 'tail': ''}"}
