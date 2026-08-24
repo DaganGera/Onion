@@ -821,9 +821,17 @@ function renderResults(res) {
   $('gradeA').textContent = res.grade_a_pct.toFixed(1) + '%';
   const half = ((res.grade_a_ci_high - res.grade_a_ci_low) / 2).toFixed(1);
   $('gradeCI').textContent = '± ' + half + '%';
-  $('sampleLine').textContent =
+  let sampleText =
     `${res.n_bulb_observations} bulb-observations · ${res.n_looks} looks · ` +
     `${res.n_trays} tray(s) · 95% confidence`;
+  // LOOP-D2218: two looks re-observe the same onions, so the certificate's
+  // interval credits each physical bulb once. Show that effective n.
+  if (res.grade_a_n_effective != null && res.n_looks > 1) {
+    sampleText += LANG === 'hi'
+      ? ` · ≈${res.grade_a_n_effective} अलग प्याज़ (दो नज़रें उन्हीं प्याज़ों को फिर देखती हैं)`
+      : ` · ≈${res.grade_a_n_effective} distinct bulbs (two looks re-observe the same onions)`;
+  }
+  $('sampleLine').textContent = sampleText;
 
   const conf = state.worstConfidence;
   const el = $('scaleLine');

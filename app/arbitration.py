@@ -263,6 +263,139 @@ def defect_ci_fields(result: dict, looks: list | None = None) -> dict:
 
 
 # --------------------------------------------------------------------------
+# Grade-A interval under two-look clustering -- LOOP-D2218 / RT-001 S-2
+#
+# merge_looks pools every look's observations into one Wilson interval, which
+# treats re-observations of the SAME physical bulb as independent evidence.
+# Repeats share the bulb's true diameter, so they are positively correlated;
+# at worst (a repeat measures identically) pooling halves the apparent
+# variance. Full derivation and scope limits: .agent/STATISTICS_NOTES.md.
+#
+# Same discipline as defect_ci_fields above (D8): reconstruct inputs ONLY
+# from what merge_looks already published, so the interval cannot drift from
+# the printed statistic. Scaling BOTH Wilson counts by 1/design-effect keeps
+# p_hat exact. grading.py stays frozen; /finalize overlays these fields.
+# --------------------------------------------------------------------------
+
+
+# Assumed intra-bulb correlation between looks. 1.0 is the worst case: each
+# bulb is credited exactly once no matter how many looks saw it. A measured
+# rho (see notes §7) can be passed explicitly; the code never guesses low.
+TWO_LOOK_RHO_ASSUMED = 1.0
+
+
+def _clean_rho(rho: float) -> float:
+    """NaN becomes worst-case 1.0 (broken input must widen, never shrink);
+    anything else clamps into [0, 1]."""
+    try:
+        r = float(rho)
+    except (TypeError, ValueError):
+        return TWO_LOOK_RHO_ASSUMED
+    if math.isnan(r):
+        return TWO_LOOK_RHO_ASSUMED
+    return max(0.0, min(1.0, r))
+
+
+def design_effect(n_looks: int, rho: float = TWO_LOOK_RHO_ASSUMED) -> float:
+    """Kish design effect for m repeated observations per physical bulb.
+
+    deff = 1 + (m - 1) * rho. One look -> 1.0 (no repeats, no penalty).
+    Two perfectly-correlated looks -> 2.0: the second look carries zero new
+    information about size band. rho is clamped to [0, 1].
+    """
+    m = max(1, int(n_looks))
+    return 1.0 + (m - 1) * _clean_rho(rho)
+
+
+def wilson_pct_effective(
+    k: float, n: float, deff: float, z: float = Z95
+) -> tuple[float, float]:
+    """Wilson interval on percentage scale at reduced effective sample size.
+
+    Both counts are divided by the SAME design effect, so the point estimate
+    k/n is preserved exactly and the interval stays centred on the printed
+    statistic. Mirrors grading.wilson_interval / wilson_pct arithmetic but
+    accepts float counts. Raises ValueError on deff <= 0: an invalid design
+    effect must be fixed upstream, not silently ignored.
+    """
+    d = float(deff)
+    if not (d > 0.0) or math.isnan(d):
+        raise ValueError("deff must be positive")
+    nn = float(n) / d
+    if nn <= 0.0:
+        return 0.0, 100.0
+    # Clamp like defect_rate_interval: reconstruction noise must not push k
+    # outside [0, n], where sqrt(p(1-p)) is undefined.
+    kk = max(0.0, min(float(k) / d, nn))
+    p = kk / nn
+    denom = 1.0 + (z * z) / nn
+    centre = p + (z * z) / (2.0 * nn)
+    margin = z * math.sqrt(p * (1.0 - p) / nn + (z * z) / (4.0 * nn * nn))
+    lo = (centre - margin) / denom
+    hi = (centre + margin) / denom
+    return (max(0.0, lo) * 100.0, min(1.0, hi) * 100.0)
+
+
+def grade_a_ci_fields(result: dict, rho: float = TWO_LOOK_RHO_ASSUMED) -> dict:
+    """Cluster-aware replacement keys for the Grade-A Wilson interval.
+
+    Reads n_bulb_observations / n_looks / grade_counts["A"] (falling back to
+    reconstructing k from the printed grade_a_pct) out of a merge_looks
+    result, recomputes the interval at n_eff = n / deff, and returns keys
+    merged over the result at /finalize:
+
+      grade_a_ci_low / grade_a_ci_high   clustered bounds (the signed ones)
+      grade_a_ci_pooled_low / _high      original frozen bounds, provenance
+      grade_a_ci_method                  wilson-clustered-two-look |
+                                         wilson-independent
+      grade_a_n_observations             bulbs-observations examined
+      grade_a_n_effective                floor(n_obs / deff) -- never rounds
+                                         precision up
+      grade_a_design_effect              the deff actually applied
+      grade_a_intra_class_corr           the assumed rho actually used
+
+    Returns {} when the inputs cannot support ANY interval (no observations,
+    no recoverable Grade-A count) -- callers render nothing rather than an
+    invented band. Single-look lots reproduce the frozen width bit-for-bit
+    and are labelled wilson-independent, keeping the schema uniform.
+    """
+    res = result or {}
+    n_obs = int(res.get("n_bulb_observations") or 0)
+    if n_obs <= 0:
+        return {}
+    n_looks = max(1, int(res.get("n_looks") or 1))
+
+    count_a = (res.get("grade_counts") or {}).get("A")
+    if not isinstance(count_a, (int, float)) or isinstance(count_a, bool):
+        pct = res.get("grade_a_pct")
+        count_a = round(float(pct) * n_obs / 100.0) if pct is not None else None
+    if count_a is None:
+        return {}
+
+    deff = design_effect(n_looks, rho)
+    lo, hi = wilson_pct_effective(float(count_a), float(n_obs), deff)
+
+    pooled_lo = res.get("grade_a_ci_low")
+    pooled_hi = res.get("grade_a_ci_high")
+    if pooled_lo is None or pooled_hi is None:
+        pooled_lo, pooled_hi = wilson_pct(int(count_a), n_obs)
+
+    clean_rho = _clean_rho(rho)
+    return {
+        "grade_a_ci_low": round(lo, 2),
+        "grade_a_ci_high": round(hi, 2),
+        "grade_a_ci_pooled_low": pooled_lo,
+        "grade_a_ci_pooled_high": pooled_hi,
+        "grade_a_ci_method": ("wilson-independent" if deff == 1.0
+                              else "wilson-clustered-two-look"),
+        "grade_a_n_observations": n_obs,
+        "grade_a_n_effective": int(math.floor(n_obs / deff)),
+        "grade_a_design_effect": round(deff, 4),
+        "grade_a_intra_class_corr": clean_rho,
+    }
+
+
+# --------------------------------------------------------------------------
 # Money: what should this lot be PAID?
 # --------------------------------------------------------------------------
 

@@ -527,6 +527,14 @@ async def finalize(payload: dict):
         # no interval is rendered rather than an invented one.
         result.update(arbitration.defect_ci_fields(result, looks))
 
+        # LOOP-D2218 / RT-001 S-2: the pooled Grade-A interval treated both
+        # looks of a shaken tray as independent bulbs. Recompute it at
+        # effective sample size (worst-case rho=1 -> n_eff = obs / looks)
+        # BEFORE insert_lot signs ci_low/ci_high into the hash chain. The
+        # frozen pooled bounds survive as grade_a_ci_pooled_*; grading.py
+        # itself is untouched. Empty captures add no fields.
+        result.update(arbitration.grade_a_ci_fields(result))
+
         centre_id = payload.get("centre_id") or db.upsert_centre(
             centre_name or "Unassigned")
 

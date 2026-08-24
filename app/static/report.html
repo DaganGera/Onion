@@ -87,6 +87,11 @@
     quality is stated above. The Grade A proportion is a sample estimate with a 95%
     Wilson confidence interval, not a census of the lot. Bulbs below the confidence
     threshold are referred to a human inspector rather than auto-graded.
+    <!-- LOOP-D2218 / RT-001 S-2: two looks of a shaken tray re-observe the same
+         bulbs, so the interval credits each physical onion once (effective n). -->
+    When a lot was photographed in more than one look, the interval counts each
+    physical onion once — the "distinct bulbs" figure is that effective n — because
+    repeat sightings of the same bulb are not independent evidence.
     <!-- EVIDENCE_AUDIT §3.1: RGB blindness to internal rot must be stated on
          the artifact that prints a Rotten % -->
     Surface-visible defects only: internal rot behind sound skin cannot be detected from
@@ -162,9 +167,15 @@ const $ = id => document.getElementById(id);
   $('gradeA').textContent = (res.grade_a_pct ?? 0).toFixed(1) + '%';
   const half = (((res.grade_a_ci_high ?? 0) - (res.grade_a_ci_low ?? 0)) / 2).toFixed(1);
   $('gradeCI').textContent = '± ' + half;
-  $('sampleLine').textContent =
-    `${res.n_bulb_observations ?? 0} bulb-observations · ${res.n_looks ?? 0} looks · ` +
+  let sample = `${res.n_bulb_observations ?? 0} bulb-observations · ${res.n_looks ?? 0} looks · ` +
     `${res.n_trays ?? 0} tray(s) · 95% CI ${(res.grade_a_ci_low ?? 0).toFixed(1)}–${(res.grade_a_ci_high ?? 0).toFixed(1)}%`;
+  // LOOP-D2218: effective n shown only when the overlay produced it, so
+  // legacy certificates (hash-frozen pooled intervals) render unchanged.
+  if (res.grade_a_n_effective != null && (res.n_looks ?? 0) > 1) {
+    sample += ` · ≈${res.grade_a_n_effective} distinct bulbs` +
+      ' (two looks re-observe the same onions)';
+  }
+  $('sampleLine').textContent = sample;
 
   $('defectRate').textContent = (res.defect_rate_corrected ?? 0).toFixed(1) + '%';
   // RT-001 S-3: the rejection-driving number carries its own interval now.
