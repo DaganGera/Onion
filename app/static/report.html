@@ -147,7 +147,11 @@
 const LOT = "__LOT_DATA__";
 const $ = id => document.getElementById(id);
 
+// A certificate page must never half-render silently: if any field shape
+// surprises us, say so on the page and give the reader a way forward, while
+// whatever did render stays visible.
 (function render() {
+  try {
   const res = LOT.result || {};
   $('lotRef').textContent = LOT.lot_ref || '—';
   $('centre').textContent = (LOT.centre_name || '') + (LOT.district ? ' · ' + LOT.district : '');
@@ -232,6 +236,15 @@ const $ = id => document.getElementById(id);
   if (!$('qr').getAttribute('src')) { $('qr').style.display = 'none'; }
   $('wa').href = 'https://wa.me/?text=' +
     encodeURIComponent(`SAMA certificate ${LOT.lot_ref}: ${(res.grade_a_pct ?? 0).toFixed(1)}% Grade A (±${half}). Verify: ${location.origin}/verify/${LOT.id}`);
+  } catch (e) {
+    const box = document.createElement('div');
+    box.className = 'mt-4 border-2 border-red-400 bg-red-50 rounded p-3 text-sm text-red-800';
+    box.innerHTML = '<span class="font-bold">This certificate could not be fully rendered'
+      + ' (' + (e && e.message ? e.message : 'unknown error') + ').</span> '
+      + 'Reload this page, or re-open it by scanning the QR code on the paper copy. '
+      + 'The signed record itself is unchanged.';
+    document.querySelector('.sheet').prepend(box);
+  }
 })();
 </script>
 </body>

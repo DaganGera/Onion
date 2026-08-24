@@ -66,6 +66,7 @@ const DATA = "__LOT_DATA__";
 const $ = id => document.getElementById(id);
 
 (function render() {
+  try {
   const lot = DATA.lot || {};
   const chain = DATA.chain || {};
 
@@ -108,6 +109,22 @@ const $ = id => document.getElementById(id);
       <span class="font-bold ${a.ok ? 'text-emerald-700' : 'text-red-700'}">
         ${a.ok ? '✔ hash OK' : '✖ ALTERED'}</span></div>`;
   }).join('');
+  } catch (e) {
+    // A verifier who sees a blank page cannot tell a broken page from a
+    // broken certificate. Say which one it is, loudly.
+    const v = $('verdict');
+    v.textContent = '⚠ VERIFICATION PAGE COULD NOT RENDER';
+    v.className = 'rounded-xl border-4 p-6 text-center font-black text-xl ' +
+      'bg-amber-50 border-amber-500 text-amber-800';
+    const box = document.createElement('div');
+    box.className = 'bg-white rounded-xl p-4 border-2 border-slate-200 text-sm text-slate-700';
+    box.innerHTML = 'This <b>page</b> failed to display'
+      + (e && e.message ? ' (' + e.message + ')' : '')
+      + '. That is not the same as the certificate failing verification. '
+      + 'Reload the page; if it persists, check the paper certificate and '
+      + '<a href="/" class="underline font-semibold">grade a lookup from the home screen</a>.';
+    $('content').appendChild(box);
+  }
 })();
 </script>
 </body>

@@ -245,6 +245,13 @@
 <script>
 const REPLAY = new URLSearchParams(location.search).get('replay') === '1';
 
+// LOOP-F2217: this WAS `const $ = …` declared thirty lines down, below the
+// i18n block -- and `$('langBtn').onclick = …` fired during evaluation, long
+// before that declaration. One TDZ ReferenceError later, NONE of this script
+// ran on a fresh load: no camera, no handlers, no centre list. A hoisted
+// function declaration cannot have this ordering accident again.
+function $(id) { return document.getElementById(id); }
+
 // ---------- i18n: English / Hindi ------------------------------------------
 // Hindi covers every string a farmer actually reads. English is the source
 // of truth; missing keys silently fall back to it.
@@ -292,6 +299,15 @@ const I18N = {
     blurWarn: 'Photo looks blurry — hold the phone steady or rest it on the '
             + 'tray edge for the next look.',
     referredTitle: n => `Referred to inspector — ${n} bulbs`,
+    // LOOP-F2217: failures must name the way forward, not just the fault.
+    // These two banners cover the only points where the capture flow can
+    // stop mid-session (network drop during upload, finalize failure).
+    captureFailed: 'Capture failed',
+    captureFailHint: 'Nothing was analysed. Check the connection, then capture again.',
+    finaliseFailed: 'Could not finalise results',
+    finaliseFailHint: 'Your captured looks are still on this device — '
+                    + 'press Finish again to retry.',
+    centreUnavailable: 'Centre list unavailable — lot will be saved unassigned',
     // India-access: the upload is the expensive part on 3G. Show both numbers
     // honestly -- including "sent as-is" when compression saved nothing.
     photoOptimised: (o, s, p) => `Photo compressed: ${o} → ${s} (${p}% less data)`,
@@ -340,6 +356,12 @@ const I18N = {
     blurWarn: 'तस्वीर धुंधली लग रही है — अगली बार फ़ोन को स्थिर रखें '
             + 'या ट्रे के किनारे पर टिकाकर लें।',
     referredTitle: n => `निरीक्षक को भेजा गया — ${n} प्याज़`,
+    captureFailed: 'कैप्चर विफल',
+    captureFailHint: 'कुछ भी जाँचा नहीं गया। कनेक्शन जाँचें, फिर दोबारा तस्वीर लें।',
+    finaliseFailed: 'परिणाम तैयार नहीं हो सके',
+    finaliseFailHint: 'ली गई तस्वीरें इसी डिवाइस पर सुरक्षित हैं — '
+                    + 'दोबारा कोशिश करने के लिए “समाप्त करें” दबाएँ।',
+    centreUnavailable: 'केंद्र सूची उपलब्ध नहीं — लॉट बिना केंद्र सहेजा जाएगा',
     photoOptimised: (o, s, p) => `फ़ोटो छोटी की गई: ${o} → ${s} (${p}% कम डेटा)`,
     photoAsIs: s => `फ़ोटो जैसी है वैसी भेजी — ${s}`,
     sessionSaved: kb => ` · कुल बचत ${kb}`,
@@ -382,7 +404,6 @@ const state = {
   lastUpload: null, savedKB: 0, uploadLog: [],
 };
 
-const $ = id => document.getElementById(id);
 const show = id => {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   $(id).classList.add('active');
@@ -421,11 +442,22 @@ function tally() {
 }
 
 // ---------- centres ----------
-fetch('/api/centres').then(r => r.json()).then(d => {
+// r.ok + d.error checked BEFORE trusting the body: a 500 that carries the
+// server's guaranteed {"error": …} JSON would otherwise parse fine, skip the
+// catch, and silently downgrade to "Unassigned" without telling the operator.
+fetch('/api/centres').then(r => {
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  return r.json();
+}).then(d => {
+  if (d.error) throw new Error(d.error);
   const sel = $('centre');
   const names = (d.centres || []).map(c => `<option value="${c.id}">${c.name}</option>`);
   sel.innerHTML = names.length ? names.join('') : '<option value="">Unassigned</option>';
-}).catch(() => { $('centre').innerHTML = '<option value="">Unassigned</option>'; });
+}).catch(() => {
+  // Say the downgrade out loud instead of silently grading to "Unassigned" —
+  // an operator who never notices cannot fix it at sign-off either.
+  $('centre').innerHTML = `<option value="">${t('centreUnavailable')}</option>`;
+});
 
 navigator.geolocation?.getCurrentPosition(
   p => { state.lat = p.coords.latitude; state.lon = p.coords.longitude; },
@@ -694,7 +726,9 @@ async function submit(blob) {
     tally();
   } catch (e) {
     busy(false);
-    banner('Capture failed: ' + e.message, 'bad');
+    // Fault + way forward. The operator's session is untouched: the failed
+    // look was never added, so re-capturing is always safe.
+    banner(`${t('captureFailed')}: ${e.message} · ${t('captureFailHint')}`, 'bad');
   }
 }
 
@@ -736,7 +770,9 @@ $('finishBtn').onclick = async () => {
     show('s3');
   } catch (e) {
     busy(false);
-    banner('Could not finalise: ' + e.message, 'bad');
+    // state.looks / state.shots are intact, so "press Finish again" is a real
+    // recovery action, not a consolation prize.
+    banner(`${t('finaliseFailed')}: ${e.message} · ${t('finaliseFailHint')}`, 'bad');
   }
 };
 

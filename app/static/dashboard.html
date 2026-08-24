@@ -117,48 +117,86 @@ function sparkline(history, drift) {
     <polyline points="${pts}" fill="none" stroke="${colour}" stroke-width="2"/></svg>`;
 }
 
-fetch('/api/drift').then(r => r.json()).then(d => {
-  const centres = d.centres || [];
-  const bad = centres.filter(c => c.status === 'RECALIBRATE');
+// Drift loader is named so both the initial load and the retry button share
+// one code path. A judge cannot run "python scripts/seed_demo.py" -- the old
+// error row asked exactly that, which is a developer note, not a recovery
+// action. The retry button IS the action; the seed hint stays as small print.
+function driftLoadFailed() {
+  $('rows').innerHTML = `<tr><td colspan="7" class="p-6 text-center">
+    <div class="font-bold text-slate-800">Could not load centre data from the server.</div>
+    <div class="text-sm text-slate-500 mt-1">The rest of this page still works. Nothing was changed.</div>
+    <button onclick="loadDrift()"
+            class="mt-3 bg-emerald-800 text-white font-bold px-5 py-2.5 rounded-lg active:bg-emerald-900">
+      Retry
+    </button>
+    <div class="text-xs text-slate-400 mt-3">Setting up for the first time? Run: python scripts/seed_demo.py</div>
+  </td></tr>`;
+}
 
-  if (bad.length) {
-    $('alert').classList.remove('hidden');
-    $('alertTitle').textContent =
-      `${bad.length} centre${bad.length > 1 ? 's need' : ' needs'} recalibration`;
-    $('alertBody').textContent =
-      bad.map(c => `${c.name} has drifted ${c.drift.toFixed(1)} points below its baseline`).join('; ') + '.';
-  }
+function loadDrift() {
+  $('rows').innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-400">Loading centres…</td></tr>`;
+  fetch('/api/drift').then(r => {
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  }).then(d => {
+    if (d.error) throw new Error(d.error);
+    const centres = d.centres || [];
 
-  $('rows').innerHTML = centres.map(c => {
-    const flagged = c.status === 'RECALIBRATE';
-    return `<tr class="border-t border-slate-200 cursor-pointer hover:bg-slate-50 ${flagged ? 'bg-amber-50' : ''}"
-                onclick='showCentre(${JSON.stringify(c).replace(/'/g, "&apos;")})'>
-      <td class="p-3 font-semibold ${flagged ? 'text-amber-900' : ''}">${c.name}</td>
-      <td class="p-3 text-slate-500">${c.district || '—'}</td>
-      <td class="p-3 text-right font-mono">${c.latest !== null ? c.latest.toFixed(1) + '%' : '—'}</td>
-      <td class="p-3 text-right font-mono font-bold ${flagged ? 'text-amber-800' : 'text-slate-500'}">
-        ${c.drift !== null ? (c.drift > 0 ? '+' : '') + c.drift.toFixed(1) : '—'}</td>
-      <td class="p-3">${sparkline(c.history || [], c.drift ?? 0)}</td>
-      <td class="p-3">${flagged
-        ? '<span class="bg-amber-500 text-amber-950 px-2 py-1 rounded text-xs font-bold">⚠ RECALIBRATE</span>'
-        : '<span class="bg-emerald-100 text-emerald-900 px-2 py-1 rounded text-xs font-bold">CALIBRATED</span>'}</td>
-      <td class="p-3 text-xs ${c.chain_intact ? 'text-emerald-700' : 'text-red-700 font-bold'}">
-        ${c.chain_intact ? `✓ ${c.chain_records} records verified` : '✗ CHAIN BROKEN'}</td>
-    </tr>`;
-  }).join('');
-}).catch(e => {
-  $('rows').innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-500">
-    Could not load drift data. Run: python scripts/seed_demo.py</td></tr>`;
-});
+    if (!centres.length) {   // genuinely empty DB: say so, don't render a void
+      $('rows').innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-500">
+        No centres recorded yet. Grade one lot, or run: python scripts/seed_demo.py</td></tr>`;
+      return;
+    }
+
+    const bad = centres.filter(c => c.status === 'RECALIBRATE');
+
+    if (bad.length) {
+      $('alert').classList.remove('hidden');
+      $('alertTitle').textContent =
+        `${bad.length} centre${bad.length > 1 ? 's need' : ' needs'} recalibration`;
+      $('alertBody').textContent =
+        bad.map(c => `${c.name} has drifted ${c.drift.toFixed(1)} points below its baseline`).join('; ') + '.';
+    }
+
+    $('rows').innerHTML = centres.map(c => {
+      const flagged = c.status === 'RECALIBRATE';
+      return `<tr class="border-t border-slate-200 cursor-pointer hover:bg-slate-50 ${flagged ? 'bg-amber-50' : ''}"
+                  onclick='showCentre(${JSON.stringify(c).replace(/'/g, "&apos;")})'>
+        <td class="p-3 font-semibold ${flagged ? 'text-amber-900' : ''}">${c.name}</td>
+        <td class="p-3 text-slate-500">${c.district || '—'}</td>
+        <td class="p-3 text-right font-mono">${c.latest !== null ? c.latest.toFixed(1) + '%' : '—'}</td>
+        <td class="p-3 text-right font-mono font-bold ${flagged ? 'text-amber-800' : 'text-slate-500'}">
+          ${c.drift !== null ? (c.drift > 0 ? '+' : '') + c.drift.toFixed(1) : '—'}</td>
+        <td class="p-3">${sparkline(c.history || [], c.drift ?? 0)}</td>
+        <td class="p-3">${flagged
+          ? '<span class="bg-amber-500 text-amber-950 px-2 py-1 rounded text-xs font-bold">⚠ RECALIBRATE</span>'
+          : '<span class="bg-emerald-100 text-emerald-900 px-2 py-1 rounded text-xs font-bold">CALIBRATED</span>'}</td>
+        <td class="p-3 text-xs ${c.chain_intact ? 'text-emerald-700' : 'text-red-700 font-bold'}">
+          ${c.chain_intact ? `✓ ${c.chain_records} records verified` : '✗ CHAIN BROKEN'}</td>
+      </tr>`;
+    }).join('');
+  }).catch(driftLoadFailed);
+}
+loadDrift();
+
+let lastCentre = null;   // centre whose detail panel is open; retry target
 
 function showCentre(c) {
+  lastCentre = c;   // kept so the retry button can re-run the same fetch
   $('detail').classList.remove('hidden');
   $('detailTitle').textContent = c.name;
-  fetch('/api/lots?centre_id=' + c.centre_id + '&limit=10')
-    .then(r => r.json())
-    .then(d => {
-      const lots = d.lots || [];
-      $('detailBody').innerHTML = `
+  const loadLots = () => {
+    $('detailBody').innerHTML =
+      '<div class="text-sm text-slate-400 py-2">Loading lots…</div>';
+    fetch('/api/lots?centre_id=' + c.centre_id + '&limit=10')
+      .then(r => {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .then(d => {
+        if (d.error) throw new Error(d.error);
+        const lots = d.lots || [];
+        $('detailBody').innerHTML = `
         <div class="text-sm text-slate-600 mb-3">
           Latest reference ${c.latest?.toFixed(1)}% · baseline ${c.baseline?.toFixed(1)}% ·
           drift <b>${c.drift?.toFixed(1)}</b> ·
@@ -177,8 +215,22 @@ function showCentre(c) {
             <td class="py-1 text-right">${l.n_bulbs ?? 0}</td></tr>`).join('')
           || '<tr><td colspan="4" class="py-3 text-slate-500">No lots recorded.</td></tr>'}</tbody>
         </table>`;
-      $('detail').scrollIntoView({ behavior: 'smooth' });
-    });
+        $('detail').scrollIntoView({ behavior: 'smooth' });
+      })
+      .catch(e => {
+        // The panel used to open and stay blank forever on a failed fetch.
+        $('detailBody').innerHTML = `
+          <div class="bg-red-50 border-2 border-red-300 rounded-lg p-4 text-sm">
+            <div class="font-bold text-red-800">Could not load the lots for this centre.</div>
+            <div class="text-red-700 mt-1">Nothing was changed — the summary line is still valid.</div>
+            <button onclick="showCentre(lastCentre)"
+                    class="mt-3 bg-red-700 text-white font-bold px-5 py-2.5 rounded-lg active:bg-red-800">
+              Retry
+            </button>
+          </div>`;
+      });
+  };
+  loadLots();
 }
 
 // ------------------------- digital twin panel -----------------------------
@@ -187,15 +239,34 @@ $('twinSev').addEventListener('input', e => {
   $('twinSevLabel').textContent = e.target.value + '%';
 });
 
-fetch('/api/lots?limit=50').then(r => r.json()).then(d => {
-  const lots = d.lots || [];
-  $('twinLot').innerHTML = lots.length
-    ? '<option value="">— pick a lot —</option>' + lots.map(l =>
-        `<option value="${l.id}">#${l.id} ${l.lot_ref} · ${l.centre_name || ''} · ${(l.grade_a_pct ?? 0).toFixed(0)}% A · ${l.n_bulbs ?? 0} bulbs</option>`).join('')
-    : '<option value="">No lots recorded yet — grade one first</option>';
-}).catch(() => {
+// Named + retryable: the simulator's lot list is the demo's best panel, and
+// a dead "Loading…" option is how it silently disappears on venue wifi.
+function twinLotsFailed() {
   $('twinLot').innerHTML = '<option value="">Could not load lot list</option>';
-});
+  if (!document.getElementById('twinRetry')) {
+    const btn = document.createElement('button');
+    btn.id = 'twinRetry';
+    btn.textContent = 'Retry loading lots';
+    btn.className = 'mt-2 text-sm font-bold text-emerald-800 underline';
+    btn.onclick = () => { btn.remove(); loadTwinLots(); };
+    $('twinLot').closest('label').appendChild(btn);
+  }
+}
+
+function loadTwinLots() {
+  $('twinLot').innerHTML = '<option value="">Loading lots…</option>';
+  fetch('/api/lots?limit=50').then(r => r.json()).then(d => {
+    if (d.error) throw new Error(d.error);
+    const lots = d.lots || [];
+    $('twinLot').innerHTML = lots.length
+      ? '<option value="">— pick a lot —</option>' + lots.map(l =>
+          `<option value="${l.id}">#${l.id} ${l.lot_ref} · ${l.centre_name || ''} · ${(l.grade_a_pct ?? 0).toFixed(0)}% A · ${l.n_bulbs ?? 0} bulbs</option>`).join('')
+      : '<option value="">No lots recorded yet — grade one first</option>';
+    const stale = document.getElementById('twinRetry');
+    if (stale) stale.remove();
+  }).catch(twinLotsFailed);
+}
+loadTwinLots();
 
 function bar(label, value, max, colour) {
   const w = Math.max(0, Math.min(100, (value / max) * 100));
