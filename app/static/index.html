@@ -146,20 +146,39 @@
 </section>
 
 <!-- ================= SCREEN 3 — RESULTS ================= -->
+<!-- LOOP-F2261 sunlight-legibility audit of this screen. Field condition:
+     a procurement officer grades in a godown doorway at noon; a judge
+     first sees this screen on a phone held under conference-hall
+     spotlights. WCAG-measured policy for EVERY text pair rendered here
+     (ratios computed, see task notes): body/small text >= 7:1 (AAA),
+     display numerals >= 4.5:1, non-text graphics >= 3:1. What changed:
+     slate-500/600 metadata -> slate-700 (4.76 -> 10.35:1), scaleLine
+     good/reduced/LOW -> emerald-800 / amber-900 / red-800 (5.48 / 5.02 /
+     6.47 -> >= 7.68:1), sufficiency + refer tints darkened one step
+     (~6.3-6.8 -> >= 8.15:1), dispute controls red-700 -> red-800,
+     gauge axis ticks #cbd5e1 -> #64748b (1.48 -> 4.76:1), and the red
+     'bad' banner tone reachable from the dispute path bg-red-600 ->
+     bg-red-800 (white text 4.83 -> 8.31:1). Unchanged on purpose: the
+     emerald-800 Grade-A numeral and white-on-emerald-800 buttons already
+     clear the bar; hierarchy is preserved by keeping metadata lighter
+     than the figures it describes, just no longer near-invisible. -->
 <section id="s3" class="screen p-4 space-y-4 pb-32">
   <div class="bg-white rounded-xl p-5 border-2 border-slate-200 text-center">
-    <div class="text-sm font-semibold text-slate-500 uppercase tracking-wide" data-i18n="gradeA">Grade A</div>
+    <div class="text-sm font-semibold text-slate-700 uppercase tracking-wide" data-i18n="gradeA">Grade A</div>
     <div id="gradeA" class="text-6xl font-black text-emerald-800 leading-none mt-1">—</div>
     <!-- the interval carries the same visual weight as the estimate on purpose:
          a percentage without its uncertainty is what causes disputes -->
-    <div id="gradeCI" class="text-3xl font-bold text-slate-500 mt-1">—</div>
+    <div id="gradeCI" class="text-3xl font-bold text-slate-600 mt-1">—</div>
     <!-- LOOP-W2224: the certificate's glanceable Wilson-CI gauge, live on
          the phone that graded the lot. Inline SVG -- no assets, scales to
          any width, degrades by hiding when no honest interval exists. -->
     <div id="ggWrap" hidden class="mt-3">
       <svg id="ggSvg" viewBox="0 0 1000 104" class="w-full h-auto" role="img"
            aria-label="Grade A estimate on a zero-to-hundred scale with its 95 percent confidence interval">
-        <g stroke="#cbd5e1" stroke-width="3">
+        <!-- LOOP-F2261: axis ticks carry the 0/25/50/75/100 positions and
+             #cbd5e1 measured 1.48:1 -- invisible in sunlight. #64748b
+             clears the 3:1 graphics bar (4.76:1). -->
+        <g stroke="#64748b" stroke-width="3">
           <line x1="10" y1="30" x2="10" y2="40"></line>
           <line x1="255" y1="30" x2="255" y2="40"></line>
           <line x1="500" y1="30" x2="500" y2="40"></line>
@@ -174,12 +193,12 @@
         <text id="ggLoTxt" x="48" y="98" font-size="30" font-weight="700" fill="#334155" text-anchor="middle"></text>
         <text id="ggHiTxt" x="952" y="98" font-size="30" font-weight="700" fill="#334155" text-anchor="middle"></text>
       </svg>
-      <div class="flex justify-between items-baseline text-[11px] font-semibold text-slate-500 mt-0.5">
+      <div class="flex justify-between items-baseline text-[11px] font-semibold text-slate-700 mt-0.5">
         <span data-i18n="ciLabel">95% confidence interval · 95% विश्वास अंतराल</span>
         <span>0–100%</span>
       </div>
     </div>
-    <div id="sampleLine" class="text-xs text-slate-500 mt-2"></div>
+    <div id="sampleLine" class="text-xs text-slate-700 mt-2"></div>
     <div id="scaleLine" class="text-xs mt-1 font-semibold"></div>
   </div>
 
@@ -187,32 +206,32 @@
   <div class="grid grid-cols-1 gap-4">
     <div id="suffCard" class="hidden bg-white rounded-xl p-4 border-2 border-slate-200">
       <div class="text-sm font-semibold text-slate-700 mb-1" data-i18n="sampleCheck">Sample sufficiency check</div>
-      <div class="flex items-center justify-between text-xs text-slate-500 mb-2">
+      <div class="flex items-center justify-between text-xs text-slate-700 mb-2">
         <span id="suffLabel"></span>
         <span id="suffBadge" class="px-2 py-0.5 rounded font-bold"></span>
       </div>
       <div class="h-3 rounded bg-slate-200 overflow-hidden">
         <div id="suffBar" class="h-full bg-emerald-600 transition-all duration-700" style="width:0%"></div>
       </div>
-      <div id="suffAdvice" class="text-xs text-slate-500 mt-2"></div>
+      <div id="suffAdvice" class="text-xs text-slate-700 mt-2"></div>
     </div>
 
     <div id="priceCard" class="hidden bg-white rounded-xl p-4 border-2 border-emerald-300">
       <div class="text-sm font-semibold text-slate-700 mb-1" data-i18n="priceBand">Fair price band · per quintal</div>
       <div id="priceMain" class="text-2xl font-black text-emerald-900"></div>
-      <div id="priceSub" class="text-xs text-slate-500 mt-1"></div>
+      <div id="priceSub" class="text-xs text-slate-700 mt-1"></div>
     </div>
   </div>
 
   <div class="bg-white rounded-xl p-4 border-2 border-slate-200">
     <div class="text-sm font-semibold text-slate-700 mb-2" data-i18n="sizeDist">Size distribution</div>
     <div id="stack" class="flex h-9 rounded overflow-hidden border border-slate-300"></div>
-    <div id="stackKey" class="flex flex-wrap gap-3 mt-2 text-xs text-slate-600"></div>
+    <div id="stackKey" class="flex flex-wrap gap-3 mt-2 text-xs text-slate-700"></div>
   </div>
 
   <div id="referBox" class="hidden bg-amber-50 border-2 border-amber-400 rounded-xl p-4">
     <div class="font-bold text-amber-900" id="referTitle"></div>
-    <p class="text-sm text-amber-800 mt-1" data-i18n="referText">
+    <p class="text-sm text-amber-900 mt-1" data-i18n="referText">
       Low-confidence calls. A human inspector decides these, not the model.
     </p>
   </div>
@@ -272,7 +291,7 @@
     <div class="w-12 h-1.5 bg-slate-300 rounded-full mx-auto"></div>
     <img id="sheetCrop" class="w-40 h-40 object-cover rounded-lg mx-auto border-2 border-slate-200">
     <div id="sheetInfo" class="text-center"></div>
-    <button id="disputeBtn" class="w-full border-2 border-red-500 text-red-700 font-bold py-3 rounded-lg">
+    <button id="disputeBtn" class="w-full border-2 border-red-700 text-red-800 font-bold py-3 rounded-lg">
       Dispute this bulb
     </button>
     <button id="closeSheet" class="w-full bg-slate-200 text-slate-700 font-semibold py-3 rounded-lg">Close</button>
@@ -733,8 +752,11 @@ function banner(msg, tone) {
   const el = $('banner');
   if (!msg) { el.classList.add('hidden'); return; }
   el.textContent = msg;
+  // LOOP-F2261: the 'bad' strip is reachable from the RESULT screen (failed
+  // dispute), so it is held to that screen's sunlight bar too. White on
+  // bg-red-600 measured 4.83:1; bg-red-800 measures 8.31:1.
   el.className = 'px-4 py-3 text-sm font-semibold ' +
-    (tone === 'bad' ? 'bg-red-600 text-white' : 'bg-amber-400 text-amber-950');
+    (tone === 'bad' ? 'bg-red-800 text-white' : 'bg-amber-400 text-amber-950');
 }
 
 // ---------- toast: bottom-screen notice that cannot be missed --------------
@@ -1144,10 +1166,13 @@ function renderSufficiency(s) {
   $('suffBar').className = 'h-full transition-all duration-700 ' +
     (ok ? 'bg-emerald-600' : 'bg-amber-500');
   $('suffLabel').textContent = `${s.n_obs} / ${s.n_required} observations`;
+  // LOOP-F2261: badge tints darkened one step -- 12px bold on a tinted
+  // chip measured 6.78 (emerald-800/emerald-100) and 6.37 (amber-800/
+  // amber-100); emerald-900 / amber-900 measure 8.57 and 8.15.
   $('suffBadge').textContent = ok ? (LANG === 'hi' ? 'पर्याप्त' : 'SUFFICIENT')
                                   : (LANG === 'hi' ? 'और देखें' : 'MORE DATA');
   $('suffBadge').className = 'px-2 py-0.5 rounded font-bold text-xs ' +
-    (ok ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800');
+    (ok ? 'bg-emerald-100 text-emerald-900' : 'bg-amber-100 text-amber-900');
   $('suffAdvice').textContent = s.advice;
 }
 
@@ -1184,17 +1209,18 @@ function renderResults(res) {
 
   const conf = state.worstConfidence;
   const el = $('scaleLine');
+  // LOOP-F2261: all three verdicts >= 7:1 on white (was 5.48 / 5.02 / 6.47).
   if (conf === null || conf === undefined) {
     el.textContent = '';
   } else if (conf >= 0.85) {
     el.textContent = 'Measurement quality: good';
-    el.className = 'text-xs mt-1 font-semibold text-emerald-700';
+    el.className = 'text-xs mt-1 font-semibold text-emerald-800';
   } else if (conf >= 0.6) {
     el.textContent = 'Measurement quality: reduced — some markers were hidden';
-    el.className = 'text-xs mt-1 font-semibold text-amber-700';
+    el.className = 'text-xs mt-1 font-semibold text-amber-900';
   } else {
     el.textContent = 'Measurement quality: LOW — sizes are approximate';
-    el.className = 'text-xs mt-1 font-semibold text-red-700';
+    el.className = 'text-xs mt-1 font-semibold text-red-800';
   }
 
   const stack = $('stack'), key = $('stackKey');
@@ -1218,22 +1244,22 @@ function renderResults(res) {
     .map(([n, c]) => `<tr class="border-t border-slate-200">
         <td class="py-1.5 capitalize">${n.replace('_', ' ')}</td>
         <td class="py-1.5 text-right font-semibold">${c}</td>
-        <td class="py-1.5 text-right text-slate-500">${(res.class_pcts[n] || 0).toFixed(1)}%</td></tr>`);
+        <td class="py-1.5 text-right text-slate-700">${(res.class_pcts[n] || 0).toFixed(1)}%</td></tr>`);
   rows.unshift(`<tr><td class="py-1.5 font-semibold">Sound</td>
       <td class="py-1.5 text-right font-semibold">${res.class_counts.sound}</td>
-      <td class="py-1.5 text-right text-slate-500">${res.class_pcts.sound.toFixed(1)}%</td></tr>`);
+      <td class="py-1.5 text-right text-slate-700">${res.class_pcts.sound.toFixed(1)}%</td></tr>`);
   rows.push(`<tr class="border-t-2 border-slate-300">
       <td class="py-1.5 font-bold">Defect rate (observed)</td>
       <td colspan="2" class="py-1.5 text-right font-bold">${res.defect_rate_raw.toFixed(1)}%</td></tr>`);
-  rows.push(`<tr><td class="py-1.5 text-slate-600">Corrected for occlusion</td>
-      <td colspan="2" class="py-1.5 text-right text-slate-600">${res.defect_rate_corrected.toFixed(1)}%</td></tr>`);
+  rows.push(`<tr><td class="py-1.5 text-slate-700">Corrected for occlusion</td>
+      <td colspan="2" class="py-1.5 text-right text-slate-700">${res.defect_rate_corrected.toFixed(1)}%</td></tr>`);
   // RT-001 S-3: the corrected defect rate used to ship with no uncertainty.
   // Same statistic, now with its interval -- basis named so nobody reads it
   // as whole-lot variance.
   let defectCILine = '';
   if (res.defect_ci_n > 0) {
     const dhalf = ((res.defect_ci_high - res.defect_ci_low) / 2).toFixed(1);
-    defectCILine = `<div class="text-xs text-slate-500 mt-2">Defect interval: ${res.defect_ci_low.toFixed(1)}–${res.defect_ci_high.toFixed(1)}% (±${dhalf} pts, 95% Wilson on the least-occluded view)</div>`;
+    defectCILine = `<div class="text-xs text-slate-700 mt-2">Defect interval: ${res.defect_ci_low.toFixed(1)}–${res.defect_ci_high.toFixed(1)}% (±${dhalf} pts, 95% Wilson on the least-occluded view)</div>`;
   }
   $('defectTable').innerHTML = rows.join('') + defectCILine;
 
@@ -1255,7 +1281,7 @@ function renderResults(res) {
           : fmtKB(u.sentKB))
       : '';
     const wrap = document.createElement('div');
-    wrap.innerHTML = `<div class="text-xs text-slate-500 mb-1">Look ${i + 1} — ${shot.n_bulbs} bulbs${kbNote}</div>`;
+    wrap.innerHTML = `<div class="text-xs text-slate-700 mb-1">Look ${i + 1} — ${shot.n_bulbs} bulbs${kbNote}</div>`;
     const img = document.createElement('img');
     img.src = shot.annotated;
     img.className = 'w-full rounded-lg border-2 border-slate-200';
@@ -1298,12 +1324,12 @@ function openSheet(shot, lookIdx, img, ev) {
 
   const disputedLine =
     (state.currentBulbId && state.disputed.has(state.currentBulbId))
-      ? '<div class="mt-1 text-sm font-bold text-red-700">DISPUTED — recorded on the certificate</div>'
+      ? '<div class="mt-1 text-sm font-bold text-red-800">DISPUTED — recorded on the certificate</div>'
       : '';
   $('sheetInfo').innerHTML =
     `<div class="text-xl font-bold capitalize">${hit.cls_name.replace('_', ' ')}</div>
-     <div class="text-slate-600">${hit.diameter_mm ? hit.diameter_mm.toFixed(0) + ' mm · Grade ' + hit.size_grade : 'size unavailable'}</div>
-     <div class="mt-1 text-sm ${hit.decision === 'REFER' ? 'text-amber-700 font-bold' : 'text-slate-500'}">
+     <div class="text-slate-700">${hit.diameter_mm ? hit.diameter_mm.toFixed(0) + ' mm · Grade ' + hit.size_grade : 'size unavailable'}</div>
+     <div class="mt-1 text-sm ${hit.decision === 'REFER' ? 'text-amber-900 font-bold' : 'text-slate-700'}">
        confidence ${(hit.confidence * 100).toFixed(0)}% · ${hit.decision}</div>${disputedLine}`;
   $('sheetWrap').classList.remove('hidden');
 }
