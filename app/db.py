@@ -22,6 +22,8 @@ import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
 
+from app import evidence as evidence_mod
+
 DB_PATH = Path(__file__).resolve().parents[1] / "data" / "sama.db"
 GENESIS_HASH = "0" * 64
 
@@ -53,6 +55,7 @@ CREATE TABLE IF NOT EXISTS lots (
     scale_source  TEXT,
     scale_conf    REAL,
     result_json   TEXT,
+    evidence_json TEXT,
     prev_hash     TEXT NOT NULL,
     row_hash      TEXT NOT NULL
 );
@@ -98,9 +101,30 @@ def init_db() -> None:
     conn = connect()
     try:
         conn.executescript(SCHEMA)
+        _migrate(conn)
         conn.commit()
     finally:
         conn.close()
+
+
+def _migrate(conn: sqlite3.Connection) -> None:
+    """Add columns that pre-RT-001-T7 databases are missing.
+
+    CREATE TABLE IF NOT EXISTS cannot upgrade a file that already exists, so
+    an older sama.db would otherwise lack evidence_json and every thumbnail
+    write would die on an unknown column. Idempotent by inspection; a failed
+    migration must not stop the server from booting -- certificates keep
+    working without photographs, which is exactly where we were before T-7.
+    """
+    try:
+        cols = {row["name"] for row in
+                conn.execute("PRAGMA table_info(lots)").fetchall()}
+        if "evidence_json" not in cols:
+            conn.execute("ALTER TABLE lots ADD COLUMN evidence_json TEXT")
+            print("MIGRATED: lots.evidence_json added (RT-001 T-7)")
+    except sqlite3.Error as exc:
+        print(f"WARNING: schema migration check failed ({exc}); "
+              "continuing without evidence persistence.")
 
 
 def _now() -> str:
@@ -335,6 +359,10 @@ def get_lot(lot_id: int) -> dict | None:
             return None
         lot = dict(row)
         lot["result"] = json.loads(lot.get("result_json") or "{}")
+        # RT-001 T-7: photographic-evidence manifest. Parsed for callers; the
+        # report route turns paths into data URIs. Outside the hash chain like
+        # result_json -- annotations on the record, not signed fields.
+        lot["evidence"] = evidence_mod.parse_manifest(lot.get("evidence_json"))
         lot["bulbs"] = [dict(b) for b in conn.execute(
             "SELECT * FROM bulbs WHERE lot_id = ? ORDER BY id", (lot_id,)).fetchall()]
         return lot
@@ -362,6 +390,26 @@ def mark_disputed(bulb_id: int) -> bool:
     conn = connect()
     try:
         cur = conn.execute("UPDATE bulbs SET disputed = 1 WHERE id = ?", (bulb_id,))
+        conn.commit()
+        return cur.rowcount > 0
+    finally:
+        conn.close()
+
+
+def set_evidence(lot_id: int, manifest: list[dict]) -> bool:
+    """Attach the photographic-evidence manifest to a lot (RT-001 T-7).
+
+    Runs AFTER insert_lot has committed: evidence is an annotation on a
+    finished certificate and must never be able to fail one. Returns False
+    if the lot vanished mid-flight (only possible if someone deleted rows
+    out from under us) so the caller can say so instead of pretending.
+    """
+    conn = connect()
+    try:
+        cur = conn.execute(
+            "UPDATE lots SET evidence_json = ? WHERE id = ?",
+            (json.dumps(manifest, default=str) if manifest else None, lot_id),
+        )
         conn.commit()
         return cur.rowcount > 0
     finally:

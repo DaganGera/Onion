@@ -29,6 +29,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from app import db, grading
 from app import arbitration
 from app import capture_quality
+from app import evidence as evidence_mod
 from app import twin
 # Aliased, not bare: /analyze has a local variable named `scale`, and a bare
 # `from app import scale` would shadow-trap it (UnboundLocalError waiting to
@@ -222,6 +223,11 @@ def report(lot_id: int, request: Request) -> HTMLResponse:
     # works for anyone on the same bench network.
     verify_url = str(request.base_url).rstrip("/") + f"/verify/{lot_id}"
     try:
+        # RT-001 T-7: swap stored manifest paths for fresh data URIs read
+        # from disk now, so #shots finally shows the annotated trays. A
+        # missing/unreadable image drops out of the gallery; the page never
+        # fails over photographs.
+        lot["evidence"] = evidence_mod.page_views(lot.get("evidence") or [])
         payload = _json_for_script(lot)
         page = path.read_text(encoding="utf-8").replace(
             '"__LOT_DATA__"', payload
@@ -557,12 +563,43 @@ async def finalize(payload: dict):
             # mint a second certificate for the same physical lot.
             dedupe=True,
         )
+
+        # RT-001 T-7: persist one annotated thumbnail per look so the
+        # certificate's evidence section stops being permanently empty.
+        # Deliberately AFTER insert_lot committed and inside its own
+        # try/except: a photograph is supporting evidence, not a signed
+        # field, so any failure here degrades to a note on a SUCCESSFUL
+        # certificate instead of blocking it. A deduped retry lands on the
+        # same lot id, overwriting byte-identical files -- harmless.
+        evidence_saved = 0
+        evidence_note = None
+        try:
+            shots, skipped = evidence_mod.extract_shots(payload.get("shots"))
+            if shots:
+                manifest = evidence_mod.save_lot_evidence(
+                    written["lot_id"], shots)
+                if manifest:
+                    db.set_evidence(written["lot_id"], manifest)
+                    evidence_saved = len(manifest)
+            dropped = skipped + (len(shots) - evidence_saved)
+            if dropped:
+                evidence_note = (f"{dropped} photo(s) could not be stored; "
+                                 "the certified numbers are unaffected.")
+        except Exception as ev_exc:  # noqa: BLE001 -- degrade, never block
+            traceback.print_exc()
+            evidence_note = ("Photographs could not be saved to storage "
+                             f"({type(ev_exc).__name__}); the certificate "
+                             "and its numbers are unaffected.")
+
         response = {"lot_id": written["lot_id"], "row_hash": written["row_hash"],
                     # Per-look bulb row ids, shaped like the request's looks, so
                     # the UI can wire its contest button to real rows (RT-001 T-4).
                     "bulb_ids": written.get("bulb_ids"),
                     "result": result,
+                    "evidence_saved": evidence_saved,
                     "duplicate": bool(written.get("duplicate"))}
+        if evidence_note:
+            response["evidence_note"] = evidence_note
         if ts_override:
             # Honest substitution: say so rather than quietly rewriting the
             # client's idea of when this happened.

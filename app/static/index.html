@@ -746,6 +746,13 @@ $('finishBtn').onclick = async () => {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         looks: state.looks,
+        // RT-001 T-7: the server never had the annotated tray images, so
+        // the certificate's evidence section stayed empty forever. Send one
+        // entry per captured look; the server validates and persists them.
+        shots: (state.shots || []).map(s => ({
+          annotated: (s && typeof s.annotated === 'string') ? s.annotated : '',
+          tray_id: (s && s.tray_id) || ''
+        })),
         lot_ref: $('lotRef').value,
         farmer_name: $('farmer').value,
         officer_name: $('officer').value,

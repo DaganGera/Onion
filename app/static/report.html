@@ -242,6 +242,33 @@ const $ = id => document.getElementById(id);
     $('disputeCount').textContent = disputed;
   }
 
+  // RT-001 T-7: photographic evidence -- one annotated capture per look,
+  // persisted server-side at finalize and injected as fresh data URIs when
+  // this page was built. Base64 cannot carry markup, so direct src
+  // interpolation is safe. The gallery stays hidden for older certificates
+  // that were finalized before persistence existed.
+  const shots = Array.isArray(LOT.evidence) ? LOT.evidence : [];
+  const shotsBox = $('shots');
+  if (shots.length) {
+    shotsBox.innerHTML =
+      '<div class="col-span-2 font-bold text-sm uppercase tracking-wide text-slate-700 border-b border-slate-300 pb-1">Evidence — annotated captures</div>' +
+      shots.map(s => {
+        const look = (s.look_index ?? 0) + 1;
+        const tray = s.tray_id ? ' · ' + s.tray_id : '';
+        const sha = s.sha256 ? String(s.sha256).slice(0, 12) : '';
+        return '<figure class="m-0">' +
+          '<img src="' + s.data_uri + '" alt="Annotated tray photograph, look ' + look + '"' +
+          ' class="w-full rounded border border-slate-300">' +
+          '<figcaption class="text-[10px] text-slate-500 mt-1">Look ' + look + tray +
+          (sha ? ' · sha256 ' + sha + '…' : '') + '</figcaption></figure>';
+      }).join('') +
+      '<div class="col-span-2 text-[10px] text-slate-500 mt-1">' +
+      'Photographs support the counts above but are stored outside the hash chain; ' +
+      'the SHA-256 covers the certified numbers, not the images.</div>';
+  } else {
+    shotsBox.style.display = 'none';
+  }
+
   $('hash').textContent = LOT.row_hash || '';
   $('verifyUrlText').textContent = location.origin + '/verify/' + LOT.id;
   if (!$('qr').getAttribute('src')) { $('qr').style.display = 'none'; }
