@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-24T19:00:00+05:30",
+  "updated": "2026-08-24T20:30:00+05:30",
   "model": {
     "provider": "openrouter",
     "id": "openrouter/stealth/ox-alpha",
@@ -7,9 +7,24 @@
     "harness": "opencode 1.18.21"
   },
   "baseline": {
-    "pytest": {"passed": 68, "failed": 0, "cmd": "python -m pytest tests -q"},
+    "pytest": {
+      "passed": 127,
+      "failed": 0,
+      "cmd": "python -m pytest tests -q"
+    },
     "python": "3.11.4 (C:/Users/ADMIN/AppData/Local/Programs/Python/Python311/python.exe)",
-    "gates_passing": ["T0","T2","T3","T4","T5","T6","T7","T10","T11","T12"],
+    "gates_passing": [
+      "T0",
+      "T2",
+      "T3",
+      "T4",
+      "T5",
+      "T6",
+      "T7",
+      "T10",
+      "T11",
+      "T12"
+    ],
     "note": "all metrics are SYNTHETIC-data numbers; see STATUS.md warning"
   },
   "metrics": {
@@ -18,8 +33,9 @@
     "occlusion_2look_miss_pct": 10.8,
     "lot_gradeA_err_points_synthetic": 1.2,
     "size_mae_mm_marker_rungs": 0.72,
-    "cpu_p95_ms": 108,
-    "refer_rate_nms_pct": 1.4
+    "cpu_p95_ms": 139.0,
+    "refer_rate_nms_pct": 1.4,
+    "gpu_p95_ms": 96.6
   },
   "top_risks": [
     "All model metrics measured on synthetic trays; real-photo revalidation outstanding",
@@ -27,5 +43,12 @@
     "Printed mat not caliper-verified in the field",
     "doubles class weakest (0.894) and rarest"
   ],
-  "blockers": []
+  "blockers": [],
+  "cycle_log": [
+    "B-001 backend hardening (85 tests)",
+    "R-001 evidence audit + Q-001 failure injection (108 tests)",
+    "DS-001 band verification -> D7 keep A>80; RT-001 red team",
+    "B-002 dispute flow + aruco boot resilience (127 tests)",
+    "F-001 HEIC toast + replay cycling; bench T12 re-passed"
+  ]
 }
