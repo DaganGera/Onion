@@ -7,8 +7,10 @@ Prints a pass/fail table. Anything red comes with the exact command to fix it.
 
 from __future__ import annotations
 
+import json
 import platform
 import sys
+from pathlib import Path
 
 CHECKS: list[tuple[str, str]] = []
 
@@ -48,10 +50,12 @@ def check_torch() -> bool:
     ok = record("PyTorch + CUDA", True, detail)
 
     # Advisory only -- a smaller card still works, it just changes the config.
+    # YOLO26 rule: resolution stays 1024; VRAM pressure is relieved by batch.
     if vram < 7:
-        print(f"  NOTE: {vram:.1f} GB VRAM. Train yolo26n at 640, batch 16.")
+        print(f"  NOTE: {vram:.1f} GB VRAM. Keep imgsz 1024, drop batch to 8.")
     elif vram < 12:
-        print(f"  NOTE: {vram:.1f} GB VRAM. Train yolo26s at 640, batch 16.")
+        print(f"  NOTE: {vram:.1f} GB VRAM. yolo26s at 1024/batch 12 should fit;"
+              " drop batch to 8 if it OOMs. Never drop the resolution.")
     return ok
 
 
@@ -129,6 +133,71 @@ def check_grading() -> bool:
                       "Run from the repo root: python scripts/check_env.py")
 
 
+def check_constants() -> bool:
+    """constants.json must be parseable, known-keyed, and in sane ranges.
+
+    A typo'd key is the silent killer: grading._load_constants() merges
+    whatever it reads over its defaults and IGNORES unknown keys -- so
+    "height_corrrection": 0.94 would quietly fall back to 1.0 and every
+    bulb on the certificate reads oversized.
+    """
+    try:
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+        from app.grading import _DEFAULTS
+    except Exception as exc:  # noqa: BLE001
+        return record("app/constants.json", False,
+                      f"cannot import grading defaults: {type(exc).__name__}: {exc}",
+                      "Run from the repo root: python scripts/check_env.py")
+
+    path = Path(__file__).resolve().parents[1] / "app" / "constants.json"
+    if not path.exists():
+        # Absent file is legal -- every default applies -- but say so.
+        return record("app/constants.json", True,
+                      "absent; all defaults apply (height_correction=1.0, "
+                      "e2e_mode=False)")
+
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError) as exc:
+        return record("app/constants.json", False,
+                      f"unparseable: {exc}",
+                      "Fix the JSON syntax; app falls back to ALL defaults "
+                      "while this file is broken.")
+
+    if not isinstance(raw, dict):
+        return record("app/constants.json", False,
+                      f"expected a JSON object, got {type(raw).__name__}")
+
+    unknown = sorted(set(raw) - set(_DEFAULTS))
+    if unknown:
+        return record("app/constants.json", False,
+                      f"unknown key(s) {unknown} -- silently ignored by "
+                      "grading.py, which keeps the default value instead",
+                      "Fix the typo or delete the key. Known keys: "
+                      f"{sorted(_DEFAULTS)}")
+
+    ranges = {
+        "height_correction": (0.0, 2.0),
+        "occlusion_correction_1look": (0.0, 2.0),
+        "occlusion_correction_2look": (0.0, 2.0),
+        "accept_threshold": (0.0, 1.0),
+    }
+    for key, (lo, hi) in ranges.items():
+        if key in raw:
+            value = raw[key]
+            if not isinstance(value, (int, float)) or not (lo < value <= hi):
+                return record("app/constants.json", False,
+                              f"{key}={value!r} outside sane range ({lo}, {hi}]",
+                              f"Re-fit with calibrate_size.py / measure_occlusion.py")
+    if "e2e_mode" in raw and not isinstance(raw["e2e_mode"], bool):
+        return record("app/constants.json", False,
+                      f"e2e_mode={raw['e2e_mode']!r} is not a boolean",
+                      'Use true or false (false = NMS path, the default).')
+
+    detail = ", ".join(f"{k}={raw[k]}" for k in sorted(raw)) or "empty object"
+    return record("app/constants.json", True, detail)
+
+
 def main() -> int:
     print("SAMA environment check\n")
 
@@ -139,6 +208,7 @@ def main() -> int:
         check_yolo26(),
         check_imports(),
         check_grading(),
+        check_constants(),
     ]
 
     width = max(len(name) for name, *_ in CHECKS)

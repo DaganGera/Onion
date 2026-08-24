@@ -10,6 +10,10 @@ sees surfaces the first could not.
 GATE T5: two-look under-detection MUST be lower than one-look. If it is not,
 the Two-Look claim is unsupported and comes out of the deck. This script
 says so loudly rather than letting the claim slide through.
+
+Inference is pinned to the shipped mode (end2end from app/constants.json),
+imgsz 1024, max_det 300, and the fit lands in runs/report/occlusion_report.json
+with a config echo.
 """
 
 from __future__ import annotations
@@ -22,6 +26,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from app.grading import CLASS_NAMES  # noqa: E402
+from scripts.run_config import echo_config, yolo26_inference_kwargs  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
 CONSTANTS = ROOT / "app" / "constants.json"
@@ -35,9 +40,11 @@ def _find(data_dir: Path, name: str) -> Path | None:
     return None
 
 
-def _observed_defects(model, image_path: Path, conf: float) -> tuple[int, int]:
+def _observed_defects(model, image_path: Path, conf: float,
+                      predict_kwargs: dict) -> tuple[int, int]:
     """Return (defect detections, total detections) for one photo."""
-    result = model.predict(str(image_path), conf=conf, verbose=False, max_det=300)[0]
+    result = model.predict(str(image_path), conf=conf, verbose=False,
+                           **predict_kwargs)[0]
     if result.boxes is None or len(result.boxes) == 0:
         return 0, 0
     classes = result.boxes.cls.cpu().numpy().astype(int)
@@ -50,7 +57,14 @@ def main() -> int:
     ap.add_argument("--data", type=Path, default=ROOT / "data")
     ap.add_argument("--weights", type=Path, default=ROOT / "weights" / "best.pt")
     ap.add_argument("--conf", type=float, default=0.35)
+    ap.add_argument("--imgsz", type=int, default=1024,
+                    help="inference resolution; protocol pins this at 1024")
+    ap.add_argument("--out", type=Path, default=ROOT / "runs" / "report")
     args = ap.parse_args()
+
+    if args.imgsz != 1024:
+        print(f"WARNING: --imgsz {args.imgsz} breaks protocol; the correction "
+              "factors are only valid at the resolution they were fitted on.")
 
     gt_path = args.data / "groundtruth.csv"
     if not gt_path.exists():
@@ -62,6 +76,9 @@ def main() -> int:
 
     from ultralytics import YOLO
     model = YOLO(str(args.weights))
+    predict_kwargs = yolo26_inference_kwargs(args.imgsz)
+    print(f"inference mode: end2end={predict_kwargs['end2end']} "
+          f"(app/constants.json), imgsz={args.imgsz}, max_det=300")
 
     with open(gt_path, newline="", encoding="utf-8") as fh:
         trays = list(csv.DictReader(fh))
@@ -90,8 +107,8 @@ def main() -> int:
         if truth == 0:
             continue
 
-        d1, _ = _observed_defects(model, img1, args.conf)
-        d2, _ = _observed_defects(model, img2, args.conf)
+        d1, _ = _observed_defects(model, img1, args.conf, predict_kwargs)
+        d2, _ = _observed_defects(model, img2, args.conf, predict_kwargs)
 
         # Two looks re-observe the SAME physical bulbs. Adding the counts
         # would double-count every defect visible in both. The recoverable
@@ -128,13 +145,28 @@ def main() -> int:
     constants = {}
     if CONSTANTS.exists():
         constants = json.loads(CONSTANTS.read_text(encoding="utf-8"))
+    # Preserve any keys we do not own (e2e_mode, accept_threshold, ...).
     constants["occlusion_correction_1look"] = round(factor_1look, 4)
     constants["occlusion_correction_2look"] = round(factor_2look, 4)
     CONSTANTS.write_text(json.dumps(constants, indent=2), encoding="utf-8")
     print(f"\nWrote both factors to {CONSTANTS}")
 
+    gate_pass = under_2 < under_1
+    echo_config(
+        args.out / "occlusion_report.json",
+        script="measure_occlusion.py", weights=str(args.weights), conf=args.conf,
+        imgsz=args.imgsz, trays_used=used, true_defects=true_total,
+        look1_defects=look1_total, look2_defects=look2_total,
+        pooled_defects=pooled_total,
+        occlusion_correction_1look=round(factor_1look, 4),
+        occlusion_correction_2look=round(factor_2look, 4),
+        under_detection_1look_pct=round(under_1, 2),
+        under_detection_2look_pct=round(under_2, 2),
+        gate_t5_pass=gate_pass, wrote_constants=True,
+    )
+
     print("\n" + "=" * 62)
-    if under_2 < under_1:
+    if gate_pass:
         gain = under_1 - under_2
         print(f"GATE T5: PASS -- two looks recover {gain:.1f} percentage points "
               "of hidden defects.")

@@ -5,10 +5,15 @@ images slightly LARGER than its true size. Left uncorrected, every bulb reads
 oversized and the Grade A percentage is inflated -- the single number the
 whole product reports.
 
-    python scripts/calibrate_size.py
+    python scripts/calibrate_size.py [--no-write]
 
 Writes height_correction into app/constants.json and prints the error before
-and after, which is one of the five numbers quoted to judges.
+and after, which is one of the five numbers quoted to judges. --no-write
+fits and reports WITHOUT touching constants.json (a dry run). The full fit
+-- pairs, factor, errors, config echo -- lands in runs/report/calibrate_size.json.
+
+Inference is pinned to the shipped mode (end2end from app/constants.json),
+imgsz 1024, max_det 300.
 """
 
 from __future__ import annotations
@@ -25,6 +30,7 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from app.grading import detect_scale  # noqa: E402
 from app.scale import measure_bbox_mm  # noqa: E402
+from scripts.run_config import echo_config, yolo26_inference_kwargs  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
 CONSTANTS = ROOT / "app" / "constants.json"
@@ -60,8 +66,17 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--data", type=Path, default=ROOT / "data")
     ap.add_argument("--weights", type=Path, default=ROOT / "weights" / "best.pt")
-    ap.add_argument("--write", action="store_true", default=True)
+    ap.add_argument("--imgsz", type=int, default=1024,
+                    help="inference resolution; protocol pins this at 1024")
+    ap.add_argument("--write", action=argparse.BooleanOptionalAction, default=True,
+                    help="--no-write fits and reports without touching "
+                         "constants.json")
+    ap.add_argument("--out", type=Path, default=ROOT / "runs" / "report")
     args = ap.parse_args()
+
+    if args.imgsz != 1024:
+        print(f"WARNING: --imgsz {args.imgsz} breaks protocol; the correction "
+              "factor is only valid at the resolution it was fitted on.")
 
     rows = _load_caliper(args.data)
     if not rows:
@@ -69,10 +84,13 @@ def main() -> int:
 
     use_model = args.weights.exists()
     model = None
+    predict_kwargs = {}
     if use_model:
         from ultralytics import YOLO
         model = YOLO(str(args.weights))
-        print(f"Matching detections from {args.weights}")
+        predict_kwargs = yolo26_inference_kwargs(args.imgsz)
+        print(f"Matching detections from {args.weights} "
+              f"(end2end={predict_kwargs.get('end2end')}, imgsz={args.imgsz})")
     else:
         print(f"No {args.weights} yet -- measuring the recorded boxes directly.")
 
@@ -100,7 +118,8 @@ def main() -> int:
         bbox = truth_bbox
         if model is not None:
             # nearest detection centre to the measured bulb
-            result = model.predict(img, conf=0.25, verbose=False, max_det=300)[0]
+            result = model.predict(img, conf=0.25, verbose=False,
+                                   **predict_kwargs)[0]
             if result.boxes is None or len(result.boxes) == 0:
                 unmatched += 1
                 continue
@@ -145,9 +164,24 @@ def main() -> int:
         constants = {}
         if CONSTANTS.exists():
             constants = json.loads(CONSTANTS.read_text(encoding="utf-8"))
+        # Preserve any keys we do not own (e2e_mode, accept_threshold, ...).
         constants["height_correction"] = round(factor, 4)
         CONSTANTS.write_text(json.dumps(constants, indent=2), encoding="utf-8")
         print(f"\nWrote height_correction to {CONSTANTS}")
+    else:
+        print("\n--no-write: constants.json left untouched (dry run).")
+
+    echo_config(
+        args.out / "calibrate_size.json",
+        script="calibrate_size.py", weights=str(args.weights) if use_model else None,
+        imgsz=args.imgsz, matched_pairs=len(pairs), unmatched=unmatched,
+        height_correction=round(factor, 4),
+        mae_before_mm=round(float(err_before.mean()), 3),
+        mae_after_mm=round(float(err_after.mean()), 3),
+        p95_before_mm=round(float(np.percentile(err_before, 95)), 3),
+        p95_after_mm=round(float(np.percentile(err_after, 95)), 3),
+        wrote_constants=bool(args.write),
+    )
 
     print(f"\nPITCH NUMBER: size estimate within +/- {err_after.mean():.1f} mm "
           f"of caliper (n={len(pairs)})")

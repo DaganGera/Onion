@@ -6,6 +6,11 @@ Evaluates BOTH inference modes -- end2end=True (NMS-free) and end2end=False
 (NMS path) -- because YOLO26's one-to-one head trades roughly 0.5 mAP for
 speed. Which one we ship is a measurement, not an assumption.
 
+Reproducibility: the run is seeded (--seed, default 0) and trained with
+deterministic=True, and runs/report/<name>/config.json echoes the full run
+configuration -- git commit, library versions, seed, every hyperparameter.
+Same commit + same data + same config -> comparable numbers.
+
 Prints a one-screen PASS/FAIL summary. You should never need TensorBoard.
 """
 
@@ -22,6 +27,7 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from app.grading import CLASS_NAMES  # noqa: E402
+from scripts.run_config import echo_config  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -154,16 +160,40 @@ def main() -> int:
     ap.add_argument("--data", type=Path, default=ROOT / "data/dataset/data.yaml")
     ap.add_argument("--holdout", type=Path, default=ROOT / "data/holdout")
     ap.add_argument("--device", default="0")
+    ap.add_argument("--seed", type=int, default=0,
+                    help="training seed; echoed into the run config")
     args = ap.parse_args()
 
     if "yolo11" in args.model or "yolov8" in args.model:
         print(f"WARNING: --model is {args.model}. This project is YOLO26. "
               "See the YOLO26 rules in CLAUDE.md.")
 
+    # YOLO26 rule guards. Advisory (an experiment may override on purpose),
+    # but the defaults are the protocol: 1024 because a black-smut speck is
+    # ~12 px at 640 and ~22 px at 1024; batch 12, or 8 under VRAM pressure --
+    # never a lower resolution.
+    if args.imgsz != 1024:
+        print(f"WARNING: --imgsz {args.imgsz} breaks protocol. Small defects "
+              "need 1024; if VRAM is short drop --batch to 8 instead.")
+    if args.batch not in (8, 12):
+        print(f"NOTE: --batch {args.batch} is off-protocol "
+              "(12 standard, 8 when VRAM-bound).")
+
     from ultralytics import YOLO
 
     report = ROOT / "runs" / "report" / args.name
     report.mkdir(parents=True, exist_ok=True)
+
+    # Config echo BEFORE training starts: a run that dies at epoch 3 still
+    # leaves behind what it was trying to be.
+    cfg = echo_config(
+        report / "config.json",
+        script="train.py", model=args.model, imgsz=args.imgsz,
+        batch=args.batch, epochs=args.epochs, seed=args.seed,
+        deterministic=True, patience=30, data=str(args.data),
+        holdout=str(args.holdout), device=args.device,
+        project=str(ROOT / "runs" / "detect"), run_name=args.name,
+    )
 
     model = YOLO(args.model)
     model.train(
@@ -175,6 +205,8 @@ def main() -> int:
         device=args.device,
         name=args.name,
         project=str(ROOT / "runs" / "detect"),
+        seed=args.seed,
+        deterministic=True,
         # Tuned for phone-camera and outdoor-light variance, not COCO.
         hsv_h=0.02, hsv_s=0.8, hsv_v=0.5,
         degrees=15, translate=0.1, scale=0.4,
@@ -261,7 +293,7 @@ def main() -> int:
     print(f"\nReport written to {report}")
 
     (report / "summary.json").write_text(
-        json.dumps({"summary": summary, "refer_rates": refer_rates,
+        json.dumps({"config": cfg, "summary": summary, "refer_rates": refer_rates,
                     "gate_t4_pass": passed}, indent=2),
         encoding="utf-8",
     )
