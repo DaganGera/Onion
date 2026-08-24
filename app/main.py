@@ -13,6 +13,7 @@ import html as html_mod
 import io
 import json
 import sqlite3
+import threading
 import time
 import traceback
 from datetime import datetime, timedelta, timezone
@@ -59,14 +60,30 @@ E2E_MODE = bool(grading.CONSTANTS.get("e2e_mode", False))
 # Last successful scale per lot reference, for the carried-scale fallback.
 # Deliberately tiny and in-process: it is a within-lot convenience, not state
 # worth persisting, and it must not grow without bound on demo day.
+# QA LOOP-Q2260: every request thread touches this dict, so all access is
+# serialised. Without the lock, two concurrent /analyze uploads could both
+# pick the same eviction victim via next(iter(...)) -- the loser's pop()
+# raised KeyError and the officer's photo came back as a 500.
 _LAST_GOOD_SCALE: dict[str, grading.ScaleResult] = {}
 _MAX_REMEMBERED_LOTS = 32
+_SCALE_CACHE_LOCK = threading.Lock()
 
 
 def _remember_scale(lot_ref: str, scale) -> None:
-    if len(_LAST_GOOD_SCALE) >= _MAX_REMEMBERED_LOTS:
-        _LAST_GOOD_SCALE.pop(next(iter(_LAST_GOOD_SCALE)))
-    _LAST_GOOD_SCALE[lot_ref] = scale
+    with _SCALE_CACHE_LOCK:
+        # Updating an entry we already hold must not evict a neighbour to
+        # make room we already have (Q2260): that would drop a good carried
+        # scale for an unrelated lot mid-session.
+        if (len(_LAST_GOOD_SCALE) >= _MAX_REMEMBERED_LOTS
+                and lot_ref not in _LAST_GOOD_SCALE):
+            _LAST_GOOD_SCALE.pop(next(iter(_LAST_GOOD_SCALE)))
+        _LAST_GOOD_SCALE[lot_ref] = scale
+
+
+def _carried_scale(lot_ref: str):
+    """Snapshot read of the carried-scale cache under the same lock."""
+    with _SCALE_CACHE_LOCK:
+        return _LAST_GOOD_SCALE.get(lot_ref)
 
 
 BOX_COLOURS = {
@@ -259,6 +276,13 @@ MAX_UPLOAD_BYTES = 25 * 1024 * 1024      # 25 MB wire cap per photo
 UPLOAD_CHUNK_BYTES = 1024 * 1024         # read in 1 MB chunks
 MAX_IMAGE_PIXELS = 40_000_000            # ~40 MP decoded-frame ceiling
 
+# QA LOOP-Q2260: lot_ref becomes a _LAST_GOOD_SCALE key -- an unbounded
+# client string parked ~800 MB of RAM across the 32 cache slots under a
+# probe loop. The lot_ref cap mirrors /finalize's signed-record limit;
+# tray_id only labels trays.
+ANALYZE_MAX_LOT_REF = 120
+ANALYZE_MAX_TRAY_ID = 64
+
 
 def _annotate(image: np.ndarray, bulbs: list[dict]) -> str:
     """Draw boxes and return a base64 JPEG the phone can display directly.
@@ -313,6 +337,17 @@ async def analyze(
     tray_id: str = Form("T1"),
 ):
     try:
+        # QA LOOP-Q2260: cheap field caps FIRST -- before the upload is read
+        # a single byte. Over-limit lot_ref/tray_id would otherwise be
+        # echoed, cached as carried-scale keys (lot_ref), or stored on
+        # bulbs; refuse with field and limit named.
+        if len(lot_ref) > ANALYZE_MAX_LOT_REF:
+            return _error(f"lot_ref too long ({len(lot_ref)} characters, "
+                          f"limit {ANALYZE_MAX_LOT_REF}). Shorten it and retry.")
+        if len(tray_id) > ANALYZE_MAX_TRAY_ID:
+            return _error(f"tray_id too long ({len(tray_id)} characters, "
+                          f"limit {ANALYZE_MAX_TRAY_ID}). Shorten it and retry.")
+
         # RT-001 D-1: on a machine with plain opencv-python there is no
         # cv2.aruco at all. Import no longer dies (guarded in app/scale.py);
         # capture alone degrades, loudly, while pages/replay/dashboard/verify
@@ -378,7 +413,7 @@ async def analyze(
         # Reuse this lot's last good scale if every marker is buried in THIS
         # photo. The mat and the phone barely move between two looks at one
         # tray, so a carried scale beats reporting no sizes at all.
-        scale = grading.detect_scale(image, carried=_LAST_GOOD_SCALE.get(lot_ref))
+        scale = grading.detect_scale(image, carried=_carried_scale(lot_ref))
         if scale.calibrated and scale.source != "carried":
             _remember_scale(lot_ref, scale)
 
@@ -474,6 +509,48 @@ def _clean_text(value, field: str, max_len: int) -> str:
 CLOCK_SKEW_TOLERANCE = timedelta(hours=24)
 
 
+def _validated_centre_id(raw) -> tuple[int | None, str | None]:
+    """Vet a client-supplied centre id. Returns (id_or_None, error_or_None).
+
+    QA LOOP-Q2260: this field used to go straight through int(). "abc"
+    raised ValueError -> generic 500; worse, a well-typed NONEXISTENT id
+    passed and -- foreign keys being off -- minted a lot row whose centre
+    JOIN matches nothing, so get_lot/report/verify/recent_lots all answered
+    'no such certificate' for a record the ledger provably held.
+
+    Accepted shapes follow what real callers send:
+      * int                      -- API scripts;
+      * numeric STRING           -- the shipped UI (<option value> is text);
+      * integral float           -- JS-number clients;
+    Everything else, non-positive ids, and ids with no centres row are
+    refused BEFORE anything is written.
+    """
+    if isinstance(raw, bool):          # bool is an int subclass; not an id
+        return None, ("centre_id must be a centre id from /api/centres "
+                      "(got true/false).")
+    if isinstance(raw, float):
+        if not raw.is_integer():
+            return None, f"centre_id {raw} is not a whole centre id."
+        raw = int(raw)
+    if isinstance(raw, str):
+        try:
+            raw = int(raw.strip())
+        except ValueError:
+            return None, (f"centre_id {raw!r} is not a centre id. Pick the "
+                          "centre again from the list (or clear it to file "
+                          "under a name).")
+    if not isinstance(raw, int):
+        return None, ("centre_id must be a centre id from /api/centres "
+                      "(a number or numeric string).")
+    if raw <= 0:
+        return None, f"centre_id {raw} is not a valid centre id."
+    if not db.centre_exists(raw):
+        return None, (f"centre_id {raw} does not exist on this server. "
+                      "Re-pick the centre from the list -- or clear it to "
+                      "file under a centre name.")
+    return raw, None
+
+
 def _trusted_created_at(raw) -> tuple[str | None, str | None]:
     """Vet a client-supplied timestamp for a certificate.
 
@@ -505,6 +582,32 @@ async def finalize(payload: dict):
         looks = payload.get("looks") or []
         if not looks:
             return _error("No looks captured. Photograph at least one tray.")
+
+        # QA LOOP-Q2260: merge_looks() assumes a list of per-look lists of
+        # bulb objects. A dict, a bare string, or scalar entries used to
+        # explode inside it as AttributeError/TypeError -- a caller mistake
+        # surfacing as the generic 500 'Could not save lot'. Validate the
+        # SHAPE here so every rejection names where it broke.
+        if not isinstance(looks, list):
+            return _error("looks must be a list -- one list of bulb "
+                          "detections per photo.", 400)
+        for i, look in enumerate(looks):
+            # A null look slot is LEGAL (tests/test_dispute_flow.py:
+            # 'merge_looks tolerates null entries') -- it stands for a
+            # skipped/failed photo and yields an empty bulb-id row.
+            if look is not None and not isinstance(look, (list, tuple)):
+                return _error(f"looks[{i}] must be a list of bulb "
+                              "detections (one list per photo).", 400)
+            for j, bulb in enumerate(look or ()):  # None -> nothing to check
+                if not isinstance(bulb, dict):
+                    return _error(
+                        f"looks[{i}][{j}] must be a bulb object with cls, "
+                        "confidence and size_grade fields.", 400)
+        # NOTE(Q2260): all-empty looks ([[ ], []]) are deliberately NOT
+        # rejected here -- tests/test_two_look_ci.py and
+        # tests/test_finalize_defect_ci.py encode the contract that
+        # degenerate/empty captures finalise successfully with no invented
+        # interval fields. An honest empty record beats blocking the bench.
 
         # QA LOOP-Q2216: free-text fields are sanitised BEFORE anything can
         # reach the ledger or a public page. Unicode names are the norm
@@ -544,11 +647,20 @@ async def finalize(payload: dict):
         # itself is untouched. Empty captures add no fields.
         result.update(arbitration.grade_a_ci_fields(result))
 
-        centre_id = payload.get("centre_id") or db.upsert_centre(
-            centre_name or "Unassigned")
+        # QA LOOP-Q2260: validate BEFORE any write. A truthy check keeps
+        # the legacy fallback the UI relies on -- it posts
+        # `centre_id: $('centre').value || null`, so ''/null (and 0/False)
+        # mean 'file under centre_name', exactly as before.
+        centre_id: int
+        if payload.get("centre_id"):
+            centre_id, centre_err = _validated_centre_id(payload["centre_id"])
+            if centre_err:
+                return _error(centre_err, 400)
+        else:
+            centre_id = db.upsert_centre(centre_name or "Unassigned")
 
         written = db.insert_lot(
-            centre_id=int(centre_id),
+            centre_id=centre_id,
             lot_ref=lot_ref or "UNLABELLED",
             result=result,
             meta={

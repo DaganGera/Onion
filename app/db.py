@@ -173,6 +173,24 @@ def upsert_centre(name: str, district: str = "") -> int:
         conn.close()
 
 
+def centre_exists(centre_id: int) -> bool:
+    """Whether this centre id is real.
+
+    QA LOOP-Q2260: foreign keys are OFF in SQLite by default, so /finalize
+    used to accept any positive integer here and insert a lot row whose
+    centre JOIN matches nothing -- get_lot/report/verify/recent_lots then
+    all report "no such certificate" for a row the ledger provably holds.
+    Callers check BEFORE inserting; a signed record must never be minted
+    into a black hole.
+    """
+    conn = connect()
+    try:
+        return conn.execute("SELECT 1 FROM centres WHERE id = ?",
+                            (centre_id,)).fetchone() is not None
+    finally:
+        conn.close()
+
+
 def list_centres() -> list[dict]:
     conn = connect()
     try:
