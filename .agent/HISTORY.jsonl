@@ -35,3 +35,6 @@
 {"ts": "2026-08-24T22:07:44+05:30", "agent": "master", "event": "cycle_start", "detail": "{'cycle': 1, 'agent': 'backend-engineer', 'phase': 'B/C/D-loop'}"}
 {"ts": "2026-08-24T22:09:14+05:30", "agent": "backend-engineer", "event": "cycle_result", "detail": "{'agent': 'backend-engineer', 'rc': 1, 'tail': ''}"}
 {"ts": "2026-08-24T22:09:17+05:30", "agent": "master", "event": "cycle_committed", "detail": "127 passed, 1 warning in 2.53s"}
+{"ts": "2026-08-24T22:09:54+05:30", "agent": "master", "event": "loop_start", "detail": "budget_hours=8.0"}
+{"ts": "2026-08-24T22:09:58+05:30", "agent": "master", "event": "cycle_start", "detail": "{'cycle': 1, 'agent': 'backend-engineer', 'phase': 'B/C/D-loop'}"}
+{"ts": "2026-08-24T22:11:16+05:30", "agent": "backend-engineer", "event": "cycle_result", "detail": "{'agent': 'backend-engineer', 'rc': 1, 'tail': ''}"}
