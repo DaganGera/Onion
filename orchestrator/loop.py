@@ -56,6 +56,15 @@ LADDER = [
         "dispute theater polish; certificate A4 print perfection from a phone; honest "
         "progress text during inference ('analysing tray… 34 onions found'). Never "
         "fake evidence; every addition must degrade gracefully. pytest green.")),
+    ("frontier-tech", (
+        "TASK LOOP-T{n}: Frontier-tech pass {n}. Read .agent/FRONTIER_TECH.md to see "
+        "what exists, then implement the next highest-value item from your menu "
+        "(suggested order: 1) app/twin.py digital-twin simulation with tests + a "
+        "'simulate quality drift' endpoint/panel; 2) reliability diagram / ECE for "
+        "detection confidence; 3) template-based local NLG certificate narrative "
+        "(offline); 4) make_synthetic.py realism upgrade via the existing 3D occlusion "
+        "model. Working code + tests + honest rationale each time. No external AI API "
+        "in the demo path.")),
     ("jury-simulator", (
         "TASK LOOP-J{n}: Per your role: rotate to the next panelist, fire 5 fresh "
         "questions grounded in the actual code/UI, answer honestly with file:line "
