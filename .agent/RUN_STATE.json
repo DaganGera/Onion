@@ -10,10 +10,15 @@
       "agent": "backend-engineer",
       "task": "TASK B-001: Fix the robustness gap found by QA audit: 1) Add a FastAPI global exception handler that returns the existing _error() JSON shape for any unhandled exception (never a raw 500). 2) Harden /",
       "tests": "85 passed, 1 warning in 2.31s"
+    },
+    {
+      "agent": "qa-engineer",
+      "task": "TASK Q-001: Failure-injection test suite. Create tests/test_failure_injection.py covering: POST /analyze with empty body, non-image bytes, truncated JPEG, huge random bytes; GET /api/replay/999 (missi",
+      "tests": "108 passed, 1 warning in 2.18s"
     }
   ],
   "failed_tasks": [],
-  "last_successful_action": "ACCEPTED: TASK B-001: Fix the robustness gap found by QA audit: 1) Add a FastAPI global exception handler that returns the existin",
+  "last_successful_action": "ACCEPTED: TASK Q-001: Failure-injection test suite. Create tests/test_failure_injection.py covering: POST /analyze with empty body",
   "last_rejected_change": null,
   "top_risks": [
     "synthetic-only model evidence",
