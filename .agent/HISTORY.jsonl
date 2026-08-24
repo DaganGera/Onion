@@ -208,3 +208,4 @@
 {"ts": "2026-08-25T04:42:23+05:30", "agent": "frontend-engineer", "event": "cycle_result", "detail": "{'agent': 'frontend-engineer', 'rc': 0, 'tail': ' gauge ticks and has many slate-500s \u2014 worse there since laser printers eat light grays too.\\n- Capture/setup/sign-off screens still carry slate-500/600 (`dataLine`, `signoffText`, resume card).\\n- Dashboard/arbitrate/tamper-demo have no Hindi at all \u2014 that overlaps your option 2 if you want it next.\\n'}"}
 {"ts": "2026-08-25T04:42:33+05:30", "agent": "master", "event": "cycle_committed", "detail": "412 passed, 1 warning in 9.12s"}
 {"ts": "2026-08-25T04:42:44+05:30", "agent": "master", "event": "cycle_start", "detail": "{'cycle': 53, 'agent': 'data-scientist', 'phase': 'B/C/D-loop'}"}
+{"ts": "2026-08-25T05:24:45+05:30", "agent": "master", "event": "cycle_timeout", "detail": "data-scientist"}
