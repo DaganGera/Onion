@@ -140,3 +140,6 @@
 {"ts": "2026-08-25T03:11:23+05:30", "agent": "master", "event": "cycle_committed", "detail": "344 passed, 1 warning in 6.18s"}
 {"ts": "2026-08-25T03:11:30+05:30", "agent": "master", "event": "cycle_start", "detail": "{'cycle': 30, 'agent': 'frontend-engineer', 'phase': 'B/C/D-loop'}"}
 {"ts": "2026-08-25T03:12:41+05:30", "agent": "frontend-engineer", "event": "cycle_result", "detail": "{'agent': 'frontend-engineer', 'rc': 1, 'tail': ''}"}
+{"ts": "2026-08-25T03:12:48+05:30", "agent": "master", "event": "cycle_committed", "detail": "344 passed, 1 warning in 6.22s"}
+{"ts": "2026-08-25T03:12:55+05:30", "agent": "master", "event": "cycle_start", "detail": "{'cycle': 31, 'agent': 'data-scientist', 'phase': 'B/C/D-loop'}"}
+{"ts": "2026-08-25T03:14:05+05:30", "agent": "data-scientist", "event": "cycle_result", "detail": "{'agent': 'data-scientist', 'rc': 1, 'tail': ''}"}
