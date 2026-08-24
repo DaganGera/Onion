@@ -153,6 +153,32 @@
     <!-- the interval carries the same visual weight as the estimate on purpose:
          a percentage without its uncertainty is what causes disputes -->
     <div id="gradeCI" class="text-3xl font-bold text-slate-500 mt-1">—</div>
+    <!-- LOOP-W2224: the certificate's glanceable Wilson-CI gauge, live on
+         the phone that graded the lot. Inline SVG -- no assets, scales to
+         any width, degrades by hiding when no honest interval exists. -->
+    <div id="ggWrap" hidden class="mt-3">
+      <svg id="ggSvg" viewBox="0 0 1000 104" class="w-full h-auto" role="img"
+           aria-label="Grade A estimate on a zero-to-hundred scale with its 95 percent confidence interval">
+        <g stroke="#cbd5e1" stroke-width="3">
+          <line x1="10" y1="30" x2="10" y2="40"></line>
+          <line x1="255" y1="30" x2="255" y2="40"></line>
+          <line x1="500" y1="30" x2="500" y2="40"></line>
+          <line x1="745" y1="30" x2="745" y2="40"></line>
+          <line x1="990" y1="30" x2="990" y2="40"></line>
+        </g>
+        <rect x="8" y="44" width="984" height="14" rx="7" fill="#e2e8f0"></rect>
+        <line id="ggBar" x1="10" y1="51" x2="990" y2="51" stroke="#047857" stroke-width="6"></line>
+        <line id="ggCapL" x1="10" y1="32" x2="10" y2="70" stroke="#047857" stroke-width="6" stroke-linecap="round"></line>
+        <line id="ggCapH" x1="990" y1="32" x2="990" y2="70" stroke="#047857" stroke-width="6" stroke-linecap="round"></line>
+        <circle id="ggDot" cx="10" cy="51" r="12" fill="#065f46" stroke="#ffffff" stroke-width="3"></circle>
+        <text id="ggLoTxt" x="48" y="98" font-size="30" font-weight="700" fill="#334155" text-anchor="middle"></text>
+        <text id="ggHiTxt" x="952" y="98" font-size="30" font-weight="700" fill="#334155" text-anchor="middle"></text>
+      </svg>
+      <div class="flex justify-between items-baseline text-[11px] font-semibold text-slate-500 mt-0.5">
+        <span data-i18n="ciLabel">95% confidence interval · 95% विश्वास अंतराल</span>
+        <span>0–100%</span>
+      </div>
+    </div>
     <div id="sampleLine" class="text-xs text-slate-500 mt-2"></div>
     <div id="scaleLine" class="text-xs mt-1 font-semibold"></div>
   </div>
@@ -269,6 +295,57 @@
   </div>
 </div>
 
+<script id="sama-gauge-js">
+/* LOOP-W2224 -- the Grade-A gauge, same drawing rules as the certificate:
+   render ONLY the stored Wilson interval. Missing or impossible interval
+   (NaN, inverted, outside 0-100) hides the strip instead of inventing one.
+   Values enter through setAttribute/textContent only -- result fields can
+   never inject markup into the phone that graded the lot. */
+function samaGauge(svgId, pct, lo, hi) {
+  const svg = document.getElementById(svgId);
+  if (!svg) return false;
+  const wrap = svg.closest('#ggWrap') || svg.parentElement;
+  const p = Number(pct), l = Number(lo), h = Number(hi);
+  const honest = [p, l, h].every(Number.isFinite)
+              && l >= 0 && l <= p && p <= h && h <= 100;
+  if (!honest) { if (wrap) wrap.hidden = true; return false; }
+  // viewBox runs 0-104; the track spans x=10..990 so end caps never clip
+  const X = v => Math.min(990, Math.max(10, 10 + v * 9.8));
+  const XL = X(l), XH = X(h), XP = X(p);
+  const set = (nid, attr, val) => {
+    const el = svg.querySelector('#' + nid);
+    if (el) el.setAttribute(attr, val);
+  };
+  set('ggCapL', 'x1', XL); set('ggCapL', 'x2', XL);
+  set('ggCapH', 'x1', XH); set('ggCapH', 'x2', XH);
+  set('ggBar', 'x1', XL); set('ggBar', 'x2', XH);
+  set('ggDot', 'cx', XP);
+  /* numeric labels sit under their caps but are pulled inside the frame
+     so they never clip at the edges of a narrow phone */
+  const LX = Math.min(952, Math.max(48, XL));
+  const HX = Math.min(952, Math.max(48, XH));
+  const loT = svg.querySelector('#ggLoTxt'), hiT = svg.querySelector('#ggHiTxt');
+  if (loT) { loT.setAttribute('x', LX); loT.textContent = fmtIN(l) + '%'; }
+  if (hiT) { hiT.setAttribute('x', HX); hiT.textContent = fmtIN(h) + '%'; }
+  svg.setAttribute('aria-label', 'Grade A estimate ' + fmtIN(p)
+    + ' percent; 95% confidence interval ' + fmtIN(l) + ' to ' + fmtIN(h) + ' percent');
+  if (wrap) wrap.hidden = false;
+  return true;
+}
+
+/* Indian number format: en-IN groups digits 12,34,567. Falls back to
+   plain toFixed on engines without Intl rather than failing the screen. */
+function fmtIN(n, dec) {
+  const d = (dec === null || dec === undefined) ? 1 : dec;
+  try {
+    return Number(n).toLocaleString('en-IN',
+      { minimumFractionDigits: d, maximumFractionDigits: d });
+  } catch (e) {
+    return Number(n).toFixed(d);
+  }
+}
+</script>
+
 <script>
 const REPLAY = new URLSearchParams(location.search).get('replay') === '1';
 
@@ -298,6 +375,7 @@ const I18N = {
     shakeText: 'Roll the onions so hidden faces come up. A single look misses defects on the underside.',
     shakeDone: 'Done — capture Look 2',
     gradeA: 'Grade A', sampleCheck: 'Sample sufficiency check',
+    ciLabel: '95% confidence interval · विश्वास अंतराल',
     priceBand: 'Fair price band · per quintal',
     sizeDist: 'Size distribution', defectBreakdown: 'Defect breakdown',
     capturedLooks: 'Captured looks — tap a box to inspect',
@@ -378,6 +456,7 @@ const I18N = {
     shakeText: 'प्याज़ घुमाएँ ताकि छिपे हिस्से ऊपर आएँ। एक बार देखने पर नीचे के दोष छूट सकते हैं।',
     shakeDone: 'हो गया — दूसरी तस्वीर लें',
     gradeA: 'ग्रेड A', sampleCheck: 'नमूना पर्याप्तता जाँच',
+    ciLabel: '95% विश्वास अंतराल',
     priceBand: 'उचित मूल्य सीमा · प्रति क्विंटल',
     sizeDist: 'आकार वितरण', defectBreakdown: 'दोष विवरण',
     capturedLooks: 'ली गई तस्वीरें — जाँच के लिए किसी बॉक्स पर टैप करें',
@@ -1085,11 +1164,14 @@ function renderPrice(p) {
 const GRADE_COLOURS = { A: '#166534', B: '#65a30d', C: '#d97706', UNDERSIZED: '#b91c1c', UNKNOWN: '#94a3b8' };
 
 function renderResults(res) {
-  $('gradeA').textContent = res.grade_a_pct.toFixed(1) + '%';
+  $('gradeA').textContent = fmtIN(res.grade_a_pct) + '%';
   const half = ((res.grade_a_ci_high - res.grade_a_ci_low) / 2).toFixed(1);
   $('gradeCI').textContent = '± ' + half + '%';
+  // LOOP-W2224: glanceable Wilson-CI gauge -- same drawing rules as the
+  // certificate. Hides itself rather than drawing an interval it wasn't given.
+  samaGauge('ggSvg', res.grade_a_pct, res.grade_a_ci_low, res.grade_a_ci_high);
   let sampleText =
-    `${res.n_bulb_observations} bulb-observations · ${res.n_looks} looks · ` +
+    `${fmtIN(res.n_bulb_observations, 0)} bulb-observations · ${res.n_looks} looks · ` +
     `${res.n_trays} tray(s) · 95% confidence`;
   // LOOP-D2218: two looks re-observe the same onions, so the certificate's
   // interval credits each physical bulb once. Show that effective n.

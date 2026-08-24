@@ -58,9 +58,41 @@
   <div class="grid grid-cols-3 gap-4 my-6">
     <div class="col-span-2 border-2 border-emerald-900 rounded-lg p-5 text-center">
       <div class="text-xs font-bold uppercase tracking-widest text-slate-500">Grade A proportion</div>
+      <!-- LOOP-W2224: bilingual label -- a certificate serves readers who
+           think in either language, and print cannot toggle one away -->
+      <div class="text-[11px] font-semibold text-slate-500">ग्रेड A हिस्सा</div>
       <div class="flex items-baseline justify-center gap-3 mt-1">
         <span id="gradeA" class="text-6xl font-black text-emerald-900"></span>
         <span id="gradeCI" class="text-2xl font-bold text-slate-500"></span>
+      </div>
+      <!-- LOOP-W2224: the number that matters as a glanceable picture.
+           Pure inline SVG -- no assets, scales to any phone width, prints
+           on A4 inside this sheet. The whisker is drawn ONLY from the
+           stored Wilson interval; if a record lacks one, the strip hides
+           rather than inventing an interval. All values enter through
+           setAttribute/textContent, never innerHTML. -->
+      <div id="ggWrap" hidden class="mt-4">
+        <svg id="ggSvg" viewBox="0 0 1000 104" class="w-full h-auto" role="img"
+             aria-label="Grade A estimate on a zero-to-hundred scale with its 95 percent confidence interval">
+          <g stroke="#cbd5e1" stroke-width="3">
+            <line x1="10" y1="30" x2="10" y2="40"></line>
+            <line x1="255" y1="30" x2="255" y2="40"></line>
+            <line x1="500" y1="30" x2="500" y2="40"></line>
+            <line x1="745" y1="30" x2="745" y2="40"></line>
+            <line x1="990" y1="30" x2="990" y2="40"></line>
+          </g>
+          <rect x="8" y="44" width="984" height="14" rx="7" fill="#e2e8f0"></rect>
+          <line id="ggBar" x1="10" y1="51" x2="990" y2="51" stroke="#047857" stroke-width="6"></line>
+          <line id="ggCapL" x1="10" y1="32" x2="10" y2="70" stroke="#047857" stroke-width="6" stroke-linecap="round"></line>
+          <line id="ggCapH" x1="990" y1="32" x2="990" y2="70" stroke="#047857" stroke-width="6" stroke-linecap="round"></line>
+          <circle id="ggDot" cx="10" cy="51" r="12" fill="#065f46" stroke="#ffffff" stroke-width="3"></circle>
+          <text id="ggLoTxt" x="48" y="98" font-size="30" font-weight="700" fill="#334155" text-anchor="middle"></text>
+          <text id="ggHiTxt" x="952" y="98" font-size="30" font-weight="700" fill="#334155" text-anchor="middle"></text>
+        </svg>
+        <div class="flex justify-between items-baseline text-[11px] font-semibold text-slate-500 mt-0.5">
+          <span>95% confidence interval · 95% विश्वास अंतराल</span>
+          <span>0–100%</span>
+        </div>
       </div>
       <div id="sampleLine" class="text-xs text-slate-500 mt-2"></div>
       <div id="scaleBadge" class="text-xs mt-2 inline-block px-2 py-1 rounded font-bold"></div>
@@ -159,6 +191,59 @@
   <a id="wa" class="bg-green-600 text-white font-bold py-4 rounded-lg text-center">Share on WhatsApp</a>
 </div>
 
+<script id="sama-gauge-js">
+/* LOOP-W2224 -- the Grade-A gauge. One job: draw the stored Wilson
+   interval as a picture. It renders nothing it was not given: no default
+   interval, no invented endpoints, no guessed scale. If anything about
+   the interval is missing or impossible (NaN, inverted, outside 0-100),
+   the strip hides and the plain number above still tells the truth.
+   Values enter through setAttribute/textContent only -- a certificate
+   field can never inject markup here. */
+function samaGauge(svgId, pct, lo, hi) {
+  const svg = document.getElementById(svgId);
+  if (!svg) return false;
+  const wrap = svg.closest('#ggWrap') || svg.parentElement;
+  const p = Number(pct), l = Number(lo), h = Number(hi);
+  const honest = [p, l, h].every(Number.isFinite)
+              && l >= 0 && l <= p && p <= h && h <= 100;
+  if (!honest) { if (wrap) wrap.hidden = true; return false; }
+  // viewBox runs 0-104; the track spans x=10..990 so end caps never clip
+  const X = v => Math.min(990, Math.max(10, 10 + v * 9.8));
+  const XL = X(l), XH = X(h), XP = X(p);
+  const set = (nid, attr, val) => {
+    const el = svg.querySelector('#' + nid);
+    if (el) el.setAttribute(attr, val);
+  };
+  set('ggCapL', 'x1', XL); set('ggCapL', 'x2', XL);
+  set('ggCapH', 'x1', XH); set('ggCapH', 'x2', XH);
+  set('ggBar', 'x1', XL); set('ggBar', 'x2', XH);
+  set('ggDot', 'cx', XP);
+  /* numeric labels sit under their caps but are pulled inside the frame
+     so they never clip at the edges of a narrow phone */
+  const LX = Math.min(952, Math.max(48, XL));
+  const HX = Math.min(952, Math.max(48, XH));
+  const loT = svg.querySelector('#ggLoTxt'), hiT = svg.querySelector('#ggHiTxt');
+  if (loT) { loT.setAttribute('x', LX); loT.textContent = fmtIN(l) + '%'; }
+  if (hiT) { hiT.setAttribute('x', HX); hiT.textContent = fmtIN(h) + '%'; }
+  svg.setAttribute('aria-label', 'Grade A estimate ' + fmtIN(p)
+    + ' percent; 95% confidence interval ' + fmtIN(l) + ' to ' + fmtIN(h) + ' percent');
+  if (wrap) wrap.hidden = false;
+  return true;
+}
+
+/* Indian number format: en-IN groups digits 12,34,567. Falls back to
+   plain toFixed on engines without Intl rather than failing a certificate. */
+function fmtIN(n, dec) {
+  const d = (dec === null || dec === undefined) ? 1 : dec;
+  try {
+    return Number(n).toLocaleString('en-IN',
+      { minimumFractionDigits: d, maximumFractionDigits: d });
+  } catch (e) {
+    return Number(n).toFixed(d);
+  }
+}
+</script>
+
 <script>
 const LOT = "__LOT_DATA__";
 const $ = id => document.getElementById(id);
@@ -175,9 +260,12 @@ const $ = id => document.getElementById(id);
   $('geo').textContent = (LOT.lat && LOT.lon)
     ? `${LOT.lat.toFixed(4)}, ${LOT.lon.toFixed(4)}` : 'GPS unavailable';
 
-  $('gradeA').textContent = (res.grade_a_pct ?? 0).toFixed(1) + '%';
+  $('gradeA').textContent = fmtIN(res.grade_a_pct ?? 0) + '%';
   const half = (((res.grade_a_ci_high ?? 0) - (res.grade_a_ci_low ?? 0)) / 2).toFixed(1);
   $('gradeCI').textContent = '± ' + half;
+  // LOOP-W2224: same numbers, now glanceable. The gauge hides itself when
+  // the interval is absent or impossible -- never draws a guess.
+  samaGauge('ggSvg', res.grade_a_pct, res.grade_a_ci_low, res.grade_a_ci_high);
 
   // LOOP-I2222: the five-second read. Same numbers, in sentence order:
   // what the lot graded, how sure we are, how much is defective, and on
@@ -190,7 +278,7 @@ const $ = id => document.getElementById(id);
     `${res.n_looks ?? 0} look${(res.n_looks ?? 0) === 1 ? '' : 's'} on ` +
     `${LOT.created_at ? new Date(LOT.created_at).toLocaleDateString() : '—'}.`;
 
-  let sample = `${res.n_bulb_observations ?? 0} bulb-observations · ${res.n_looks ?? 0} looks · ` +
+  let sample = `${fmtIN(res.n_bulb_observations ?? 0, 0)} bulb-observations · ${res.n_looks ?? 0} looks · ` +
     `${res.n_trays ?? 0} tray(s) · 95% CI ${(res.grade_a_ci_low ?? 0).toFixed(1)}–${(res.grade_a_ci_high ?? 0).toFixed(1)}%`;
   // LOOP-D2218: effective n shown only when the overlay produced it, so
   // legacy certificates (hash-frozen pooled intervals) render unchanged.
