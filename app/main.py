@@ -27,6 +27,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from app import db, grading
 from app import arbitration
 from app import capture_quality
+from app import twin
 # Aliased, not bare: /analyze has a local variable named `scale`, and a bare
 # `from app import scale` would shadow-trap it (UnboundLocalError waiting to
 # happen on the next edit).
@@ -442,6 +443,33 @@ def api_drift():
             row["chain_records"] = count
         return {"centres": report_rows}
     except Exception as exc:  # noqa: BLE001
+        return _error(f"{type(exc).__name__}", 500)
+
+
+@app.get("/api/twin/{lot_id}")
+def api_twin(lot_id: int, severity: float = twin.DEFAULT_SEVERITY,
+             seed: int | None = None):
+    """Digital-twin replay of one certified lot under quality drift.
+
+    Pure simulation on ledger data -- no model, no camera, no network.
+    Baseline numbers are read from the hash-chained record (measured);
+    scenario numbers are seeded forward replay (simulated). Same inputs
+    always give the same answer, so this is safe to show next to a
+    signed certificate.
+    """
+    try:
+        lot = db.get_lot(lot_id)
+    except Exception as exc:  # noqa: BLE001
+        return _error(f"{type(exc).__name__}", 500)
+    if lot is None:
+        return _error(f"Lot {lot_id} not found.", 404)
+    try:
+        return twin.simulate_lot(lot, severity=severity, seed=seed)
+    except ValueError as exc:
+        return _error(str(exc), 400)
+    except Exception as exc:  # noqa: BLE001
+        print(f"WARNING: twin simulate failed on lot {lot_id} -- "
+              f"{type(exc).__name__}: {exc}")
         return _error(f"{type(exc).__name__}", 500)
 
 

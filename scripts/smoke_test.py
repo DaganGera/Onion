@@ -165,6 +165,29 @@ def main() -> int:
     check("/dashboard renders", "SAMA" in get(f"{base}/dashboard"))
     check("/ renders", "SHAKE THE TRAY" in get(base))
 
+    # --- digital twin --------------------------------------------------------
+    twin = json.loads(get(f"{base}/api/twin/{final['lot_id']}?severity=0.10"))
+    check("/api/twin simulates the certified lot",
+          twin.get("kind") == "digital_twin_quality_drift"
+          and twin.get("data_source") == "bulbs",
+          f"source={twin.get('data_source')}")
+    b, s = twin.get("baseline", {}), twin.get("scenario", {})
+    check("  drift never raises saleable Grade A",
+          s.get("saleable_grade_a_pct", -1) <= b.get("saleable_grade_a_pct", 0),
+          f"saleable A {b.get('saleable_grade_a_pct')} -> {s.get('saleable_grade_a_pct')}")
+    check("  labels say measured vs simulated",
+          twin.get("labels", {}).get("scenario") == "simulated")
+    again = json.loads(get(f"{base}/api/twin/{final['lot_id']}?severity=0.10"))
+    check("  deterministic (same seed, same answer)", again == twin)
+    bad = urllib.request.urlopen
+    try:
+        bad(f"{base}/api/twin/{final['lot_id']}?severity=9", timeout=20)
+        check("out-of-range severity is an error, not a crash", False)
+    except urllib.error.HTTPError as exc:
+        body = json.loads(exc.read())
+        check("out-of-range severity returns JSON error",
+              exc.code == 400 and "error" in body, body.get("error", "")[:50])
+
     # --- graceful failure ---------------------------------------------------
     try:
         urllib.request.urlopen(f"{base}/api/replay/999", timeout=20)

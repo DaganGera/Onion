@@ -175,3 +175,22 @@ never quote a metric measured on them" rule.
 - `git init` was flagged as still the user's call per `STATUS.md`; not done this session.
 - Rotating the Roboflow API key used this session, if desired — it's now in this
   terminal's shell history.
+
+---
+
+## Frontier-tech pass (LOOP-T2214) — digital twin adopted
+
+Implemented menu item 1 from the frontier-tech roadmap: a **digital twin** of a
+graded lot (`app/twin.py` + `/api/twin/{lot_id}` + dashboard panel). The twin
+replays a certified lot's recorded bulb observations forward under a seeded
+quality-drift scenario and reports what happens to saleable Grade A %, defect
+rate and farmer payout, using the SAME pricing code as the certificate
+(`arbitration.fair_price_band`, cull model). Deterministic per lot via SHA-256
+seed derivation; measured vs simulated labels on every response block; two data
+paths (per-bulb exact / aggregate fallback with documented independence
+assumption). Rationale + limitations in `.agent/FRONTIER_TECH.md`.
+
+Verification: `py -3.11 -m pytest tests -q` → 190 passed (17 new in
+`tests/test_twin.py`); `python scripts/smoke_test.py` → ALL PASS including 5 new
+twin checks; live `GET /api/twin/45?severity=0.2` returns deterministic labelled
+JSON. Live uvicorn on :8000 restarted onto current code.

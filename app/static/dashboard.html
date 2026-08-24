@@ -58,6 +58,40 @@
     <div id="detailBody" class="mt-3"></div>
   </div>
 
+  <!-- Digital twin: quality-drift simulator. Everything below the "Run
+       simulation" line is SIMULATED forward replay on ledger data, never a
+       live measurement. Baseline numbers come from the signed record. -->
+  <div class="bg-white rounded-xl border-2 border-slate-200 p-5">
+    <div class="flex items-center gap-2">
+      <h2 class="text-lg font-bold">Quality-drift simulator</h2>
+      <span class="bg-sky-100 text-sky-900 text-[10px] font-black px-2 py-1 rounded uppercase tracking-wider"
+            title="Forward simulation on recorded lots. Deterministic per seed; not a measurement.">Simulated</span>
+    </div>
+    <p class="text-xs text-slate-500 mt-1">
+      Replays a certified lot forward: if quality degrades by this much, what
+      happens to saleable Grade A and farmer payout? Uses the same pricing
+      code as the certificate (cull model).
+    </p>
+    <div class="mt-3 flex flex-wrap items-end gap-3">
+      <label class="text-sm">Lot
+        <select id="twinLot" class="block mt-1 border border-slate-300 rounded px-2 py-1 bg-white min-w-[16rem]">
+          <option value="">Loading lots…</option>
+        </select>
+      </label>
+      <label class="text-sm flex-1 min-w-[12rem]">Quality degradation
+        <span id="twinSevLabel" class="font-mono font-bold text-emerald-800">10%</span>
+        <input id="twinSev" type="range" min="0" max="100" value="10" class="w-full accent-emerald-700">
+      </label>
+      <button onclick="runTwin()" id="twinBtn"
+              class="bg-emerald-800 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold px-4 py-2 rounded">
+        Run simulation
+      </button>
+    </div>
+    <div id="twinOut" class="mt-4 text-sm text-slate-500">
+      Pick a lot, choose a degradation, run.
+    </div>
+  </div>
+
   <p class="text-xs text-slate-500">
     A reference score is the app re-grading a sealed reference tray of known composition.
     Drift is measured against that centre's own settled baseline, so a worn mat, a changed
@@ -145,6 +179,82 @@ function showCentre(c) {
         </table>`;
       $('detail').scrollIntoView({ behavior: 'smooth' });
     });
+}
+
+// ------------------------- digital twin panel -----------------------------
+
+$('twinSev').addEventListener('input', e => {
+  $('twinSevLabel').textContent = e.target.value + '%';
+});
+
+fetch('/api/lots?limit=50').then(r => r.json()).then(d => {
+  const lots = d.lots || [];
+  $('twinLot').innerHTML = lots.length
+    ? '<option value="">— pick a lot —</option>' + lots.map(l =>
+        `<option value="${l.id}">#${l.id} ${l.lot_ref} · ${l.centre_name || ''} · ${(l.grade_a_pct ?? 0).toFixed(0)}% A · ${l.n_bulbs ?? 0} bulbs</option>`).join('')
+    : '<option value="">No lots recorded yet — grade one first</option>';
+}).catch(() => {
+  $('twinLot').innerHTML = '<option value="">Could not load lot list</option>';
+});
+
+function bar(label, value, max, colour) {
+  const w = Math.max(0, Math.min(100, (value / max) * 100));
+  return `<div class="flex items-center gap-2 mb-1">
+    <span class="w-40 shrink-0 text-xs text-slate-600">${label}</span>
+    <div class="flex-1 h-4 bg-slate-100 rounded overflow-hidden">
+      <div class="h-full rounded" style="width:${w.toFixed(1)}%;background:${colour}"></div>
+    </div>
+    <span class="w-20 text-right font-mono text-xs">${value.toFixed(1)}</span>
+  </div>`;
+}
+
+async function runTwin() {
+  const lotId = $('twinLot').value;
+  if (!lotId) { $('twinOut').innerHTML =
+    '<span class="text-amber-800">Pick a lot first.</span>'; return; }
+  const sev = Number($('twinSev').value) / 100;
+  $('twinBtn').disabled = true;
+  $('twinOut').innerHTML = 'Simulating…';
+  try {
+    const t = await fetch(`/api/twin/${lotId}?severity=${sev}`).then(r => r.json());
+    if (!t.scenario) {   // API answered with a JSON error object
+      $('twinOut').innerHTML =
+        `<span class="text-red-700">Simulation unavailable: ${t.error || JSON.stringify(t)}</span>`;
+      return;
+    }
+    const d = t.delta, b = t.baseline, s = t.scenario;
+    const pay = d.payout_inr_per_quintal === null ? 'n/a (nothing saleable left)'
+      : `₹${d.payout_inr_per_quintal}/quintal (${d.payout_pct ?? 0}%)`;
+    const src = t.data_source === 'bulbs'
+      ? 'per-bulb replay of recorded observations'
+      : 'aggregate replay (proportions only — coarser)';
+    $('twinOut').innerHTML = `
+      <div class="text-xs text-slate-500 mb-2">Lot #${t.lot_id} ${t.lot_ref || ''} ·
+        seed ${t.seed} · ${src}. Baseline = measured ledger record; scenario = simulated.</div>
+      <div class="grid md:grid-cols-2 gap-x-8">
+        <div>
+          <div class="text-xs font-bold uppercase text-slate-400 mb-1">Saleable Grade A % (sound &amp; ≥80 mm)</div>
+          ${bar('baseline', b.saleable_grade_a_pct, 100, '#059669')}
+          ${bar(`after ${(t.severity * 100).toFixed(0)}% drift`, s.saleable_grade_a_pct, 100,
+                d.saleable_grade_a_pts < 0 ? '#d97706' : '#059669')}
+          <div class="text-xs text-slate-600 mt-1">Δ <b>${d.saleable_grade_a_pts}</b> points
+            (95% CI after drift: ${s.saleable_grade_a_ci_low_pct}–${s.saleable_grade_a_ci_high_pct}%).
+            Size-band Grade A stays ${b.grade_a_pct_size_band}% — the certificate counts size, not health.</div>
+        </div>
+        <div>
+          <div class="text-xs font-bold uppercase text-slate-400 mb-1">Defect rate % / payout</div>
+          ${bar('baseline defects', b.defect_rate_pct, 100, '#64748b')}
+          ${bar(`after ${(t.severity * 100).toFixed(0)}% drift`, s.defect_rate_pct, 100, '#dc2626')}
+          <div class="text-xs text-slate-600 mt-1">Payout (cull model): <b>${pay}</b>.
+            ${t.degraded_observations.count} bulb-observations degrade.</div>
+        </div>
+      </div>`;
+  } catch (e) {
+    $('twinOut').innerHTML =
+      `<span class="text-red-700">Simulation failed (${e}). The rest of this page is unaffected.</span>`;
+  } finally {
+    $('twinBtn').disabled = false;
+  }
 }
 </script>
 </body>
