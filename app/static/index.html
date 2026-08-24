@@ -94,6 +94,9 @@
 
   <div class="p-4 space-y-3">
     <div id="lookLabel" class="text-center font-bold text-slate-700">Look 1 — photograph the tray</div>
+    <!-- India-access: honest data cost of the LAST upload, shown right where
+         the operator waits. Numbers only -- readable at low literacy. -->
+    <div id="dataLine" class="hidden mt-1 text-center text-sm font-semibold text-emerald-700"></div>
     <button id="shutter" class="w-full bg-emerald-800 text-white text-lg font-bold py-5 rounded-lg active:bg-emerald-900" data-i18n="capture">
       Capture
     </button>
@@ -289,6 +292,11 @@ const I18N = {
     blurWarn: 'Photo looks blurry — hold the phone steady or rest it on the '
             + 'tray edge for the next look.',
     referredTitle: n => `Referred to inspector — ${n} bulbs`,
+    // India-access: the upload is the expensive part on 3G. Show both numbers
+    // honestly -- including "sent as-is" when compression saved nothing.
+    photoOptimised: (o, s, p) => `Photo compressed: ${o} → ${s} (${p}% less data)`,
+    photoAsIs: s => `Photo sent as-is — ${s}`,
+    sessionSaved: kb => ` · session saved ${kb}`,
   },
   hi: {
     headerSub: 'प्याज़ लॉट ग्रेडिंग · DoCA',
@@ -332,6 +340,9 @@ const I18N = {
     blurWarn: 'तस्वीर धुंधली लग रही है — अगली बार फ़ोन को स्थिर रखें '
             + 'या ट्रे के किनारे पर टिकाकर लें।',
     referredTitle: n => `निरीक्षक को भेजा गया — ${n} प्याज़`,
+    photoOptimised: (o, s, p) => `फ़ोटो छोटी की गई: ${o} → ${s} (${p}% कम डेटा)`,
+    photoAsIs: s => `फ़ोटो जैसी है वैसी भेजी — ${s}`,
+    sessionSaved: kb => ` · कुल बचत ${kb}`,
   },
 };
 
@@ -348,6 +359,7 @@ function applyLang() {
   $('lookLabel').textContent =
     state.lookIndex === 1 ? t('look2') : (state.trayCount ? t('lookNext') : t('look1'));
   if (!$('busy').classList.contains('hidden')) $('busyText').textContent = t('analysing');
+  renderDataLine();   // India-access line re-renders in the new language
 }
 $('langBtn').onclick = () => {
   LANG = LANG === 'en' ? 'hi' : 'en';
@@ -364,6 +376,10 @@ const state = {
   // plus the ids already disputed in this session (RT-001 T-4).
   bulbIds: null, disputed: new Set(), currentBulbId: null,
   farmerOk: false, officerOk: false,
+  // India-access data-cost ledger, parallel to state.shots ([look] -> prep):
+  // lastUpload drives the live capture line; savedKB is the honest session
+  // total actually deducted (0 when nothing was resized).
+  lastUpload: null, savedKB: 0, uploadLog: [],
 };
 
 const $ = id => document.getElementById(id);
@@ -478,6 +494,82 @@ function imageDecodable(blob) {
   return viaImg();
 }
 
+// ---------- India-access: shrink the photo BEFORE it leaves the phone -------
+// The upload is the single most expensive step on a ₹8k phone on rural 3G
+// (~0.5 Mbps up): a stock camera frame is 3-8 MB, i.e. 40-120 s per look,
+// twice per tray. The model letterboxes to 1024 px internally either way, so
+// a 1600 px long edge keeps every defect that matters (a black-smut speck is
+// still >15 px) while cutting the upload ~10-20x. EXIF orientation is baked
+// in by the canvas re-encode, which also converts HEIC-decodable files to
+// JPEG for free.
+const UPLOAD_MAX_EDGE = 1600;   // px, long edge
+const UPLOAD_JPEG_QUALITY = 0.80;
+
+async function decodeForCanvas(blob) {
+  if (typeof createImageBitmap === 'function') {
+    try {
+      // from-image: honour EXIF rotation so what we send is what was framed.
+      return await createImageBitmap(blob, { imageOrientation: 'from-image' });
+    } catch (e) { /* older engine -- fall through to <img> decode */ }
+  }
+  return new Promise((resolve, reject) => {
+    let url;
+    try { url = URL.createObjectURL(blob); } catch (e) { reject(e); return; }
+    const img = new Image();
+    img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('decode failed')); };
+    img.src = url;
+  });
+}
+
+async function downscaleForUpload(blob) {
+  const origKB = Math.max(1, Math.round(blob.size / 1024));
+  try {
+    const src = await decodeForCanvas(blob);
+    const longEdge = Math.max(src.width, src.height);
+    const k = Math.min(1, UPLOAD_MAX_EDGE / longEdge);
+    const w = Math.max(1, Math.round(src.width * k));
+    const h = Math.max(1, Math.round(src.height * k));
+    const c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    c.getContext('2d').drawImage(src, 0, 0, w, h);
+    if (src.close) src.close();   // free the decoded bitmap promptly (2GB RAM)
+    const out = await new Promise(r => c.toBlob(r, 'image/jpeg', UPLOAD_JPEG_QUALITY));
+    // Honesty guard: if the re-encode somehow came out BIGGER (tiny or
+    // already well-compressed photo), ship the original untouched instead of
+    // pretending to save data.
+    if (out && out.size < blob.size) {
+      return { blob: out, origKB,
+               sentKB: Math.max(1, Math.round(out.size / 1024)), resized: true };
+    }
+    return { blob, origKB, sentKB: origKB, resized: false };
+  } catch (e) {
+    // Canvas unavailable / decode failed here: never block a capture over an
+    // optimisation. Send the original and say so.
+    return { blob, origKB, sentKB: origKB, resized: false };
+  }
+}
+
+function fmtKB(kb) {
+  return kb >= 1024 ? (kb / 1024).toFixed(1) + ' MB'
+                    : kb.toLocaleString('en-IN') + ' KB';
+}
+
+function renderDataLine() {
+  const el = $('dataLine');
+  if (!el) return;
+  const u = state.lastUpload;
+  if (!u) { el.classList.add('hidden'); return; }
+  el.classList.remove('hidden');
+  if (u.resized && u.sentKB < u.origKB) {
+    const pct = Math.max(1, Math.round(100 * (1 - u.sentKB / u.origKB)));
+    el.textContent = t('photoOptimised')(fmtKB(u.origKB), fmtKB(u.sentKB), pct);
+  } else {
+    el.textContent = t('photoAsIs')(fmtKB(u.sentKB));
+  }
+  if (state.savedKB > 0) el.textContent += t('sessionSaved')(fmtKB(state.savedKB));
+}
+
 // RT-001 F-2: replay fetch that reports WHY it failed, so a demo cache that
 // ran out can be told apart from a genuine break. `exhausted` mirrors the
 // server's 404 wording ("No cached replay N").
@@ -530,6 +622,17 @@ async function submit(blob) {
       state.replayN++;
       await new Promise(r => setTimeout(r, 1200));   // feels live
     } else {
+      // Shrink before upload: this is the step that makes a 3G lot viable.
+      // Runs under the busy overlay so the operator sees progress, and its
+      // honest KB numbers render while the (much smaller) upload crawls.
+      const prep = await downscaleForUpload(blob);
+      blob = prep.blob;
+      state.lastUpload = prep;
+      state.uploadLog.push(prep);
+      if (prep.resized && prep.sentKB < prep.origKB) {
+        state.savedKB += prep.origKB - prep.sentKB;
+      }
+      renderDataLine();
       const fd = new FormData();
       fd.append('file', blob, 'tray.jpg');
       fd.append('lot_ref', $('lotRef').value);
@@ -750,8 +853,16 @@ function renderResults(res) {
   shots.innerHTML = '';
   state.shots.forEach((shot, i) => {
     if (!shot.annotated) return;
+    // Per-look data cost travels with the look itself: the officer sees what
+    // each photograph actually cost to send. Arrow + numbers need no words.
+    const u = state.uploadLog[i];
+    const kbNote = u
+      ? ' · ' + (u.resized && u.sentKB < u.origKB
+          ? fmtKB(u.origKB) + ' → ' + fmtKB(u.sentKB)
+          : fmtKB(u.sentKB))
+      : '';
     const wrap = document.createElement('div');
-    wrap.innerHTML = `<div class="text-xs text-slate-500 mb-1">Look ${i + 1} — ${shot.n_bulbs} bulbs</div>`;
+    wrap.innerHTML = `<div class="text-xs text-slate-500 mb-1">Look ${i + 1} — ${shot.n_bulbs} bulbs${kbNote}</div>`;
     const img = document.createElement('img');
     img.src = shot.annotated;
     img.className = 'w-full rounded-lg border-2 border-slate-200';
