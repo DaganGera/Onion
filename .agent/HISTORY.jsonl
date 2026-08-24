@@ -60,3 +60,6 @@
 {"ts": "2026-08-24T23:14:34+05:30", "agent": "master", "event": "cycle_committed", "detail": "190 passed, 1 warning in 3.37s"}
 {"ts": "2026-08-24T23:14:38+05:30", "agent": "master", "event": "cycle_start", "detail": "{'cycle': 6, 'agent': 'jury-simulator', 'phase': 'B/C/D-loop'}"}
 {"ts": "2026-08-24T23:21:44+05:30", "agent": "jury-simulator", "event": "cycle_result", "detail": "{'agent': 'jury-simulator', 'rc': 0, 'tail': 't \"don\\'t quote X until P# lands\" guards so nobody bluffs at regionals.\\n\\nSharpest finding of the round: **D7\\'s own mitigation was never shipped** \u2014 the team\\'s decision log promises a citation that the signed artifact doesn\\'t carry. That\\'s exactly the kind of self-documented gap a jury loves to find.\\n'}"}
+{"ts": "2026-08-24T23:21:48+05:30", "agent": "master", "event": "cycle_committed", "detail": "190 passed, 1 warning in 3.42s"}
+{"ts": "2026-08-24T23:21:52+05:30", "agent": "master", "event": "cycle_start", "detail": "{'cycle': 7, 'agent': 'qa-engineer', 'phase': 'B/C/D-loop'}"}
+{"ts": "2026-08-25T00:06:08+05:30", "agent": "master", "event": "cycle_timeout", "detail": "qa-engineer"}

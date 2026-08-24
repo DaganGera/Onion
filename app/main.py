@@ -12,8 +12,10 @@ import base64
 import html as html_mod
 import io
 import json
+import sqlite3
 import time
 import traceback
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import cv2
@@ -140,6 +142,26 @@ def _error_page(message: str, status: int = 500) -> HTMLResponse:
     )
 
 
+def _json_for_script(obj) -> str:
+    """JSON that is safe to inline inside a <script> block.
+
+    QA LOOP-Q2216: certificate payloads reached the report/verify pages as
+    raw json.dumps output inside a <script> element. A farmer_name holding
+    '</script>' closed that element early and let arbitrary markup run on
+    the PUBLIC trust surface. Escaping < > & makes breakout impossible while
+    staying byte-equivalent for every JSON/JS parser (they read \\u003c as
+    '<' inside string literals). U+2028/U+2029 are escaped for pre-ES2019
+    WebViews -- cheap Androids are exactly this product's audience.
+    ensure_ascii=False keeps real names human-readable in page source.
+    """
+    text = json.dumps(obj, default=str, ensure_ascii=False)
+    return (text.replace("&", "\\u0026")
+                .replace("<", "\\u003c")
+                .replace(">", "\\u003e")
+                .replace("\u2028", "\\u2028")
+                .replace("\u2029", "\\u2029"))
+
+
 def _serve(name: str) -> HTMLResponse:
     path = STATIC / name
     if not path.exists():
@@ -200,7 +222,7 @@ def report(lot_id: int, request: Request) -> HTMLResponse:
     # works for anyone on the same bench network.
     verify_url = str(request.base_url).rstrip("/") + f"/verify/{lot_id}"
     try:
-        payload = json.dumps(lot, default=str)
+        payload = _json_for_script(lot)
         page = path.read_text(encoding="utf-8").replace(
             '"__LOT_DATA__"', payload
         ).replace(
@@ -222,6 +244,11 @@ def report(lot_id: int, request: Request) -> HTMLResponse:
 
 ANNOTATED_MAX_WIDTH = 1280
 ANNOTATED_JPEG_QUALITY = 82
+
+# QA LOOP-Q2216: upload ceiling and decode ceiling for /analyze.
+MAX_UPLOAD_BYTES = 25 * 1024 * 1024      # 25 MB wire cap per photo
+UPLOAD_CHUNK_BYTES = 1024 * 1024         # read in 1 MB chunks
+MAX_IMAGE_PIXELS = 40_000_000            # ~40 MP decoded-frame ceiling
 
 
 def _annotate(image: np.ndarray, bulbs: list[dict]) -> str:
@@ -291,13 +318,44 @@ async def analyze(
             return _error(f"Model unavailable ({MODEL_ERROR}). "
                           "Use replay mode: add ?replay=1 to the URL.", 503)
 
-        raw = await file.read()
+        raw = bytearray()
+        # QA LOOP-Q2216: bounded read. file.read() used to slurp the whole
+        # upload into RAM unbounded -- a curl probe or a wedged client retry
+        # loop could hand the venue laptop gigabytes. Starlette spools the
+        # request body to disk, so this loop decides how much ever lands in
+        # memory. Real tray photos land at 2-8 MB after the phone's own
+        # downscale (see tests/test_upload_downscale.py).
+        while True:
+            chunk = await file.read(UPLOAD_CHUNK_BYTES)
+            if not chunk:
+                break
+            raw.extend(chunk)
+            if len(raw) > MAX_UPLOAD_BYTES:
+                mb = MAX_UPLOAD_BYTES // (1024 * 1024)
+                return _error(
+                    f"Photo exceeds the {mb} MB upload limit. Retake at a "
+                    "lower resolution -- the SAMA capture button compresses "
+                    "automatically -- and try again.", 413)
+        raw = bytes(raw)
         if not raw:
             return _error("Empty upload. Try taking the photo again.")
 
         image = cv2.imdecode(np.frombuffer(raw, np.uint8), cv2.IMREAD_COLOR)
         if image is None:
             return _error("Could not read that image. Try again.")
+
+        # QA LOOP-Q2216: pixel-bomb guard. A small FILE can decode into a
+        # huge frame -- a ~100 MP JPEG costs hundreds of MB of RAM exactly
+        # when two phones are already waiting on the model. Downscale, do
+        # not refuse: a valid wide shot of a tray still grades fine, and
+        # the response announces the resize instead of hiding it.
+        resized_from = None
+        height, width = image.shape[:2]
+        if height * width > MAX_IMAGE_PIXELS:
+            shrink = (MAX_IMAGE_PIXELS / float(height * width)) ** 0.5
+            image = cv2.resize(image, None, fx=shrink, fy=shrink,
+                               interpolation=cv2.INTER_AREA)
+            resized_from = [width, height]
 
         # Edge-case guard (untested field condition): a godown-after-dusk or
         # flash-blown frame decodes fine, passes every upstream check, and
@@ -352,10 +410,84 @@ async def analyze(
             "annotated_scale": (ANNOTATED_MAX_WIDTH / image.shape[1]
                                 if image.shape[1] > ANNOTATED_MAX_WIDTH else 1.0),
             "elapsed_ms": round(elapsed_ms, 1),
+            # Present only when the decode was oversized and got shrunk.
+            **({"resized_from": resized_from} if resized_from else {}),
         }
     except Exception as exc:  # noqa: BLE001
         traceback.print_exc()
         return _error(f"Analysis failed: {type(exc).__name__}", 500)
+
+
+# --------------------------------------------------------------------------
+# Finalisation -- text hygiene and timestamp trust
+# --------------------------------------------------------------------------
+
+# C0 control bytes + DEL never belong in a person's name. Tab/newline/CR
+# survive (harmless, occasionally meaningful); NUL especially must go,
+# because every C-string consumer of the database truncates at it.
+_CONTROL_CODEPOINTS = frozenset(range(0x20)) - {0x09, 0x0A, 0x0D} | {0x7F}
+
+
+def _clean_text(value, field: str, max_len: int) -> str:
+    """Sanitise one free-text field destined for a signed record.
+
+    QA LOOP-Q2216 policy:
+      * control bytes are stripped -- transport junk, not content;
+      * anything unencodable to UTF-8 (lone surrogates arrive intact through
+        json.loads) raises 400 naming the field;
+      * over-limit input raises 400 naming field and limit -- silently
+        truncating would ALTER a signed record without trace.
+    """
+    if value is None:
+        return ""
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        value = str(value)
+    if not isinstance(value, str):
+        raise ValueError(f"{field}: expected text.")
+    cleaned = "".join(ch for ch in value if ord(ch) not in _CONTROL_CODEPOINTS)
+    try:
+        cleaned.encode("utf-8")
+    except UnicodeEncodeError:
+        raise ValueError(
+            f"{field}: contains a character that cannot be stored "
+            "(invalid encoding). Remove unusual symbols and retry."
+        ) from None
+    if len(cleaned) > max_len:
+        raise ValueError(
+            f"{field}: too long ({len(cleaned)} characters, limit {max_len})."
+        )
+    return cleaned.strip()
+
+
+# A phone with a wrong clock may still take perfect photos; its TIMESTAMP,
+# though, goes onto a certificate used in arbitration. Anything further from
+# server time than this window loses its vote.
+CLOCK_SKEW_TOLERANCE = timedelta(hours=24)
+
+
+def _trusted_created_at(raw) -> tuple[str | None, str | None]:
+    """Vet a client-supplied timestamp for a certificate.
+
+    Returns (created_at_or_None, override_reason_or_None). None means "use
+    server time" -- which is also what an absent field gets, so the normal
+    frontend path stays flag-free; only PROVIDED-but-rejected values earn an
+    override reason, which the response reports back honestly.
+    """
+    if raw is None:
+        return None, None
+    if not isinstance(raw, str) or not raw.strip():
+        return None, "client timestamp was not usable text"
+    try:
+        parsed = datetime.fromisoformat(raw.strip())
+    except ValueError:
+        return None, "client timestamp was unreadable"
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    skew = abs(parsed - datetime.now(timezone.utc))
+    if skew > CLOCK_SKEW_TOLERANCE:
+        hours = CLOCK_SKEW_TOLERANCE.total_seconds() / 3600
+        return None, f"client clock off by more than {hours:.0f} h"
+    return raw.strip(), None
 
 
 @app.post("/finalize")
@@ -364,6 +496,27 @@ async def finalize(payload: dict):
         looks = payload.get("looks") or []
         if not looks:
             return _error("No looks captured. Photograph at least one tray.")
+
+        # QA LOOP-Q2216: free-text fields are sanitised BEFORE anything can
+        # reach the ledger or a public page. Unicode names are the norm
+        # here; lone surrogates, control bytes and novel-length blobs are
+        # not. A ValueError from _clean_text is a caller mistake -> 400.
+        try:
+            farmer_name = _clean_text(payload.get("farmer_name"),
+                                      "farmer_name", max_len=200)
+            officer_name = _clean_text(payload.get("officer_name"),
+                                       "officer_name", max_len=200)
+            centre_name = _clean_text(payload.get("centre_name"),
+                                      "centre_name", max_len=120)
+            lot_ref = _clean_text(payload.get("lot_ref"),
+                                  "lot_ref", max_len=120)
+        except ValueError as exc:
+            return _error(str(exc), 400)
+
+        # The server vouches for certificate timestamps: a client clock that
+        # is wrong (dead battery, manual setting) does not get to date a
+        # signed record into 1970 or next month.
+        created_at, ts_override = _trusted_created_at(payload.get("created_at"))
 
         result = grading.merge_looks(looks)
 
@@ -374,29 +527,60 @@ async def finalize(payload: dict):
         # no interval is rendered rather than an invented one.
         result.update(arbitration.defect_ci_fields(result, looks))
 
-        centre_name = payload.get("centre_name") or "Unassigned"
-        centre_id = payload.get("centre_id") or db.upsert_centre(centre_name)
+        centre_id = payload.get("centre_id") or db.upsert_centre(
+            centre_name or "Unassigned")
 
         written = db.insert_lot(
             centre_id=int(centre_id),
-            lot_ref=payload.get("lot_ref") or "UNLABELLED",
+            lot_ref=lot_ref or "UNLABELLED",
             result=result,
             meta={
-                "farmer_name": payload.get("farmer_name", ""),
-                "officer_name": payload.get("officer_name", ""),
+                "farmer_name": farmer_name,
+                "officer_name": officer_name,
                 "lat": payload.get("lat"),
                 "lon": payload.get("lon"),
                 "calibrated": payload.get("calibrated", False),
                 "scale_source": payload.get("scale_source"),
                 "scale_confidence": payload.get("scale_confidence"),
                 "looks": looks,
+                "created_at": created_at,
             },
+            # Idempotent retries: a double-tap or a timeout-retry must not
+            # mint a second certificate for the same physical lot.
+            dedupe=True,
         )
-        return {"lot_id": written["lot_id"], "row_hash": written["row_hash"],
-                # Per-look bulb row ids, shaped like the request's looks, so
-                # the UI can wire its contest button to real rows (RT-001 T-4).
-                "bulb_ids": written.get("bulb_ids"),
-                "result": result}
+        response = {"lot_id": written["lot_id"], "row_hash": written["row_hash"],
+                    # Per-look bulb row ids, shaped like the request's looks, so
+                    # the UI can wire its contest button to real rows (RT-001 T-4).
+                    "bulb_ids": written.get("bulb_ids"),
+                    "result": result,
+                    "duplicate": bool(written.get("duplicate"))}
+        if ts_override:
+            # Honest substitution: say so rather than quietly rewriting the
+            # client's idea of when this happened.
+            response["server_timestamp_used"] = True
+            response["timestamp_note"] = ts_override
+        return response
+    except UnicodeEncodeError:
+        # Garbage nested deeper than the per-field cleaner reaches (e.g.
+        # inside look bulbs) surfaces at the sqlite bind. Still a caller
+        # mistake, still 400 with a path forward -- not a bare 500 shrug.
+        traceback.print_exc()
+        return _error("Some text field contains characters that cannot be "
+                      "stored (invalid encoding). Remove unusual symbols "
+                      "and retry.", 400)
+    except sqlite3.OperationalError as exc:
+        traceback.print_exc()
+        lowered = str(exc).lower()
+        if "disk" in lowered or "full" in lowered or "space" in lowered:
+            # SQLITE_FULL lands here. The critical question for an officer
+            # mid-dispute is whether evidence half-saved: it did not -- the
+            # insert transaction rolled back whole.
+            return _error("Storage is full -- the certificate was NOT saved "
+                          "and nothing was written. Free disk space on the "
+                          "server (or archive old lots), then press Finalize "
+                          "again.", 503)
+        return _error(f"Could not save lot: {type(exc).__name__}", 500)
     except Exception as exc:  # noqa: BLE001
         traceback.print_exc()
         return _error(f"Could not save lot: {type(exc).__name__}", 500)
@@ -595,7 +779,7 @@ def verify_page(lot_id: int, request: Request):
         return _error_page("verify.html is missing on this machine.", 404)
     try:
         page = path.read_text(encoding="utf-8").replace(
-            '"__LOT_DATA__"', json.dumps(data, default=str)
+            '"__LOT_DATA__"', _json_for_script(data)
         ).replace(
             "__REPORT_URL__", str(request.base_url).rstrip("/") + f"/report/{lot_id}"
         )
