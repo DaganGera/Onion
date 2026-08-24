@@ -9,6 +9,7 @@ read when it breaks on demo day in front of judges.
 from __future__ import annotations
 
 import base64
+import html as html_mod
 import io
 import json
 import time
@@ -18,8 +19,10 @@ from pathlib import Path
 import cv2
 import numpy as np
 from fastapi import FastAPI, Form, UploadFile, File, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app import db, grading
 from app import arbitration
@@ -87,11 +90,60 @@ def _error(message: str, status: int = 400) -> JSONResponse:
     return JSONResponse({"error": message}, status_code=status)
 
 
+# --- global catch-alls ------------------------------------------------------
+# Belt and braces under the per-endpoint try/excepts. If anything slips past
+# them, these guarantee a JSON body in the _error() shape instead of a raw
+# 500 or Starlette's plain-text default. Details go to the console log, not
+# to the client.
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    traceback.print_exc()
+    return _error("Internal server error. Please retry.", 500)
+
+
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+    """Unmatched routes and abort()s arrive here, not as plain text."""
+    return _error(str(exc.detail), status=exc.status_code)
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_error_handler(request: Request, exc: RequestValidationError):
+    """FastAPI's default 422 uses a 'detail' key the frontend never reads."""
+    try:
+        first = exc.errors()[0]
+        where = ".".join(str(v) for v in first.get("loc", []))
+        message = f"Invalid request: {first.get('msg', 'bad input')}"
+        if where:
+            message += f" ({where})"
+    except Exception:  # noqa: BLE001 -- never let the error path itself fail
+        message = "Invalid request."
+    return _error(message, 422)
+
+
+def _error_page(message: str, status: int = 500) -> HTMLResponse:
+    """Last-resort page for browser-facing routes. Readable on a phone,
+    never a traceback."""
+    return HTMLResponse(
+        "<h1>SAMA</h1>"
+        f"<p>{html_mod.escape(message)}</p>"
+        '<p><a href="/">Back to home</a></p>',
+        status_code=status,
+    )
+
+
 def _serve(name: str) -> HTMLResponse:
     path = STATIC / name
     if not path.exists():
-        return HTMLResponse(f"<h1>{name} not found</h1>", status_code=404)
-    return HTMLResponse(path.read_text(encoding="utf-8"))
+        return _error_page(f"Page {name} is missing on this machine.", 404)
+    try:
+        return HTMLResponse(path.read_text(encoding="utf-8"))
+    except Exception:  # noqa: BLE001 -- unreadable file must still answer
+        traceback.print_exc()
+        return _error_page(f"Could not load {name}. Try refreshing; if it "
+                           "persists, restart the server.", 503)
 
 
 # --------------------------------------------------------------------------
@@ -134,22 +186,27 @@ def report(lot_id: int, request: Request) -> HTMLResponse:
 
     path = STATIC / "report.html"
     if not path.exists():
-        return HTMLResponse("<h1>report.html missing</h1>", status_code=404)
+        return _error_page("report.html is missing on this machine.", 404)
 
     # The QR must survive being scanned off a phone screen in a market, so it
     # carries an absolute URL. Over the cloudflared tunnel that is the public
     # HTTPS address; on localhost it degrades to the LAN URL, which still
     # works for anyone on the same bench network.
     verify_url = str(request.base_url).rstrip("/") + f"/verify/{lot_id}"
-    payload = json.dumps(lot, default=str)
-    html = path.read_text(encoding="utf-8").replace(
-        '"__LOT_DATA__"', payload
-    ).replace(
-        "__VERIFY_URL__", verify_url
-    ).replace(
-        "__QR_DATA__", _qr_data_uri(verify_url) or ""
-    )
-    return HTMLResponse(html)
+    try:
+        payload = json.dumps(lot, default=str)
+        page = path.read_text(encoding="utf-8").replace(
+            '"__LOT_DATA__"', payload
+        ).replace(
+            "__VERIFY_URL__", verify_url
+        ).replace(
+            "__QR_DATA__", _qr_data_uri(verify_url) or ""
+        )
+    except Exception:  # noqa: BLE001 -- a broken template must still answer
+        traceback.print_exc()
+        return _error_page(f"The certificate page for lot {lot_id} could "
+                           "not be built. Try again.", 503)
+    return HTMLResponse(page)
 
 
 # --------------------------------------------------------------------------
@@ -352,29 +409,55 @@ def api_lots(centre_id: int | None = None, limit: int = 20):
         return _error(f"{type(exc).__name__}", 500)
 
 
+def _list_replay_ids() -> list[int]:
+    """Replay numbers present in the cache, tolerating a messy cache dir.
+
+    QA audit B-001: a stray file such as replay_.json or replay_notes.json
+    used to raise ValueError from int() and take /api/health down with it.
+    Junk names are skipped, duplicates collapse, and an unscannable directory
+    degrades to "none available" instead of an exception.
+    """
+    ids: set[int] = set()
+    try:
+        candidates = list(CACHE.glob("replay_*.json"))
+    except Exception as exc:  # noqa: BLE001 -- health must answer regardless
+        print(f"WARNING: cannot scan cache dir {CACHE} -- "
+              f"{type(exc).__name__}: {exc}")
+        return []
+    for p in candidates:
+        try:
+            ids.add(int(p.stem.split("_")[1]))
+        except (ValueError, IndexError):
+            continue
+    return sorted(ids)
+
+
 @app.get("/api/replay/{n}")
 def api_replay(n: int):
     """Cached /analyze response. The offline demo path -- no model, no GPU,
     no network. If this breaks, the demo has no fallback."""
     path = CACHE / f"replay_{n}.json"
     if not path.exists():
-        available = sorted(p.stem for p in CACHE.glob("replay_*.json"))
-        return _error(f"No cached replay {n}. Available: {available}", 404)
+        return _error(f"No cached replay {n}. Available: {_list_replay_ids()}",
+                      404)
     try:
         return json.loads(path.read_text(encoding="utf-8"))
     except json.JSONDecodeError:
         return _error(f"Replay file {n} is corrupt.", 500)
+    except (OSError, UnicodeDecodeError) as exc:
+        print(f"WARNING: replay {n} read failed -- {type(exc).__name__}: {exc}")
+        return _error(f"Replay file {n} could not be read "
+                      f"({type(exc).__name__}).", 500)
 
 
 @app.get("/api/health")
 def api_health():
-    replays = sorted(int(p.stem.split("_")[1]) for p in CACHE.glob("replay_*.json"))
     return {
         "model_loaded": MODEL is not None,
         "model_error": MODEL_ERROR,
         "e2e_mode": E2E_MODE,
         "constants": grading.CONSTANTS,
-        "replays_available": replays,
+        "replays_available": _list_replay_ids(),
     }
 
 
@@ -434,13 +517,18 @@ def verify_page(lot_id: int, request: Request):
         return HTMLResponse("<h1>No such certificate</h1>", status_code=404)
     path = STATIC / "verify.html"
     if not path.exists():
-        return HTMLResponse("<h1>verify.html missing</h1>", status_code=404)
-    html = path.read_text(encoding="utf-8").replace(
-        '"__LOT_DATA__"', json.dumps(data, default=str)
-    ).replace(
-        "__REPORT_URL__", str(request.base_url).rstrip("/") + f"/report/{lot_id}"
-    )
-    return HTMLResponse(html)
+        return _error_page("verify.html is missing on this machine.", 404)
+    try:
+        page = path.read_text(encoding="utf-8").replace(
+            '"__LOT_DATA__"', json.dumps(data, default=str)
+        ).replace(
+            "__REPORT_URL__", str(request.base_url).rstrip("/") + f"/report/{lot_id}"
+        )
+    except Exception:  # noqa: BLE001 -- a broken template must still answer
+        traceback.print_exc()
+        return _error_page(f"The verification page for certificate {lot_id} "
+                           "could not be built. Try again.", 503)
+    return HTMLResponse(page)
 
 
 # --------------------------------------------------------------------------

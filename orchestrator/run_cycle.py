@@ -54,7 +54,7 @@ def tests_pass():
 
 def opencode_run(agent, prompt):
     """Run a task through OpenCode as a specific agent on the locked model."""
-    cmd = ["opencode", "run", "--model", MODEL, "--agent", agent, prompt]
+    cmd = ["opencode.cmd", "run", "--model", MODEL, "--agent", agent, prompt]
     return sh(cmd, timeout=1800)
 
 
