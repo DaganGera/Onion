@@ -80,3 +80,93 @@ nightly backup are designed on paper but not built — the honest scaling
 story is one process per centre, proven cheap, with aggregation as the
 explicit next milestone."
 *(Quote BOM/backup only after P5 fixes them in SCALING.md.)*
+
+---
+
+## Round 2 — LOOP-J2259 · CV/ML professor
+
+### A1. "Your headline numbers all come from your own generator. What transfers to real onions?" — [READY AFTER P6]
+"I'll give you the uncomfortable part first, because it's already printed in
+our own status page: every accuracy number we quote was measured on synthetic
+trays, and our own words are 'the model solved a drawing, not onions — expect
+real mAP far lower'. So here is what transfers with evidence and what doesn't.
+Transfers: the millimetre chain — we planted a known 1.06x magnification into
+the generator and the calibration script recovered it within 1.8 percent,
+which is arithmetic that holds on any photo. Occlusion physics — defects are
+spherical caps on a three-dimensional bulb, so back-facing rot is invisible to
+any camera at any angle; the fact that a second look halves our miss rate from
+20.5 to 10.8 percent is geometry, not a colour shortcut. And the entire
+software path runs end to end. Does not transfer: absolute mAP, defect-class
+appearance, and the fitted correction factors — which is exactly why those
+factors live in a JSON file rewritten by calibration scripts, never hardcoded,
+with 're-fit after your first real shoot' written above them. The sampling
+protocol for that shoot — quotas, doubles oversampling because it's our rarest
+and weakest class, caliper truth, holdout discipline of different day and
+different phone — is written down."
+*(Deliver the protocol specifics only after P6 lands REAL_SHOOT_PROTOCOL.md.)*
+
+### A2. "Your pitch MAE was measured at conf 0.35 but you ship 0.25." — [READY AFTER P7]
+"You're right, and I won't defend it with hand-waving. Our run-config helper
+pins end-to-end mode, resolution and max detections through one shared module
+so scripts can't silently drift from deployment — but confidence was left to
+the caller, and the caller diverged: the app predicts at 0.25, the eval script
+defaulted to 0.35. Worse, the direction of the error isn't flattering: our lot
+merge counts every detection's predicted label regardless of its decision, so
+the extra boxes admitted between 0.25 and 0.35 are additional low-confidence
+votes inside the certified statistic, not filtered noise. So we treat the 1.2
+point Grade-A error as stale until re-measured at the shipped threshold. We've
+now added a parity test that fails the build if those two configs ever
+disagree again — the fix is one line today and structural forever."
+*(Only claim 're-measured' once P7's re-run actually happens on GPU; until
+then say 'stale, parity-locked'.)*
+
+### A3. "Show me 0.75 means something. Open the calibration panel." — [READY AFTER P8]
+"Gladly — and note we wrote that attack ourselves: the dashboard literally
+says if stated confidence doesn't match observed accuracy, then the ACCEPT
+line at 0.75 is decoration. The measurement runs the deployed inference path,
+matches every detection to ground truth at IoU 0.5, and bins stated confidence
+against observed accuracy — reporting ECE, the worst bin, a temperature-scaling
+fit, and the smallest cut that is right at least ninety-five percent of the
+time with meaningful support. Two design points I want you to notice: when no cut
+meets the target, the script returns NO recommendation rather than quietly
+lowering the bar, and writing a new threshold into the app requires an explicit
+opt-in flag that refuses values outside a sane band — a measurement cannot
+launder itself into certificate policy. Here is the reliability curve, and here
+is our ECE on the holdout split."
+*(Quote ECE/recommendation ONLY after P8 has actually generated
+calibration.json and verified /api/calibration says available:true.)*
+
+### A4. "Trace what happens to a REFER'd bulb. Who is the human?" — [READY AFTER P9]
+"There isn't one, and the old certificate sentence claimed otherwise — that's
+the strongest thing I'll concede today. Traced honestly: below 0.75 the bulb
+is flagged REFER, the certificate counts how many, and — this is the part that
+matters — their model-assigned classes still contribute to the certified
+percentages. No notification, no queue, no inspector. We've replaced the false
+sentence with the plain truth on the method note. What remains true around it:
+the band is thin — measured at 1.4 percent of predictions — so the exposure is
+bounded; every bulb row is individually stored and disputable through the
+public dispute endpoint; and the annotated tray photographs ship ON the
+certificate itself, so any human holding the paper can audit the machine's
+calls without our software in the room. REFER is a disclosure mechanism today,
+not a workflow — and now the document says so."
+*(Do not say 'thin' with the 1.4% number unless STATUS round-2 figures are
+re-confirmed after the real-data retrain.)*
+
+### A5. "Who funds the data flywheel across six hundred mandis?" — [READY AFTER P10]
+"What we watch today: every centre periodically grades a sealed reference tray
+of known composition, and the dashboard plots each centre's latest score
+against its own settled baseline — drop more than five points and it prints
+RECALIBRATE, which catches the worn mat, the changed phone, the degraded
+lighting. Every certificate also stores its scale rung and every bulb's
+decision, so per-centre refer-rate trends and rung mixtures are queryable
+right now with zero new infrastructure. What we don't have, in writing, under
+a heading called NOT BUILT: input-distribution monitoring — nothing today
+detects that Kurnool switched variety and drifted out of our training data;
+automated retraining triggers; and a priced labelling pipeline. The economics
+sketch: model-assisted pre-labelling makes humans correctors rather than
+labellers, which cuts cost per image by an order of magnitude in common
+practice — but we refuse to quote you rupees until we've timed real
+correction work, and the template with blanks is in our notes where a
+fabricated number would look better."
+*(Cost placeholders stay blank until someone times a real labelling session;
+cite DATA_FLYWHEEL.md after P10 lands.)*
