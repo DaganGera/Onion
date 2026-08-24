@@ -26,6 +26,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app import db, grading
 from app import arbitration
+from app import capture_quality
 # Aliased, not bare: /analyze has a local variable named `scale`, and a bare
 # `from app import scale` would shadow-trap it (UnboundLocalError waiting to
 # happen on the next edit).
@@ -297,6 +298,14 @@ async def analyze(
         if image is None:
             return _error("Could not read that image. Try again.")
 
+        # Edge-case guard (untested field condition): a godown-after-dusk or
+        # flash-blown frame decodes fine, passes every upstream check, and
+        # would otherwise reach the detector -- which happily emits boxes on
+        # noise. Refuse the unusable; annotate the merely imperfect.
+        quality = capture_quality.assess_capture_quality(image)
+        if quality.get("blocked"):
+            return _error(capture_quality.rejection_message(quality), 422)
+
         started = time.perf_counter()
         # Reuse this lot's last good scale if every marker is buried in THIS
         # photo. The mat and the phone barely move between two looks at one
@@ -337,6 +346,7 @@ async def analyze(
             "bulbs": bulbs,
             "n_bulbs": len(bulbs),
             "scale": scale.to_dict(),
+            "quality": quality,
             "annotated": _annotate(image, bulbs),
             "annotated_scale": (ANNOTATED_MAX_WIDTH / image.shape[1]
                                 if image.shape[1] > ANNOTATED_MAX_WIDTH else 1.0),
@@ -355,6 +365,13 @@ async def finalize(payload: dict):
             return _error("No looks captured. Photograph at least one tray.")
 
         result = grading.merge_looks(looks)
+
+        # RT-001 S-3: the defect percentage drove rejections but shipped as a
+        # bare point estimate. Attach a Wilson interval around the same worst-
+        # look statistic (occlusion-scaled) so the certificate's most-disputed
+        # number carries its own uncertainty. Empty dict on degenerate input --
+        # no interval is rendered rather than an invented one.
+        result.update(arbitration.defect_ci_fields(result, looks))
 
         centre_name = payload.get("centre_name") or "Unassigned"
         centre_id = payload.get("centre_id") or db.upsert_centre(centre_name)

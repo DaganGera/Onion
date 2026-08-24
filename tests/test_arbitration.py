@@ -187,3 +187,85 @@ def test_sufficiency_rejects_bad_targets():
         arb.sample_sufficiency(10, target_half_width_pct=0)
     with pytest.raises(ValueError):
         arb.sample_sufficiency(-1)
+
+
+# --------------------------------------------------------------------------
+# Defect-rate interval (RT-001 S-3): the rejection-driving number gets an
+# uncertainty band. Loop I2211.
+# --------------------------------------------------------------------------
+
+
+def test_defect_interval_matches_wilson_when_correction_is_one():
+    out = arb.defect_rate_interval(5, 35, 1.0)
+    lo, hi = arb.wilson_pct(5, 35)
+    assert out["k"] == 5 and out["n"] == 35
+    assert out["ci_low"] == pytest.approx(round(lo, 2))
+    assert out["ci_high"] == pytest.approx(round(hi, 2))
+
+
+def test_defect_interval_divides_by_occlusion_factor_upward():
+    # observed = factor x true, so true = observed / factor; with a factor
+    # below 1 the interval must move UP (more defects), never down.
+    base = arb.defect_rate_interval(5, 35, 1.0)
+    corrected = arb.defect_rate_interval(5, 35, 0.7886)
+    assert corrected["ci_low"] >= base["ci_low"]
+    assert corrected["ci_high"] > base["ci_high"]
+    assert corrected["correction_applied"] == 0.7886
+
+
+def test_defect_interval_clamps_to_100():
+    out = arb.defect_rate_interval(30, 35, 0.3)
+    assert out["ci_low"] <= out["ci_high"] <= 100.0
+
+
+def test_defect_interval_degenerate_counts_are_safe():
+    empty = arb.defect_rate_interval(0, 0)
+    assert empty == {"k": 0, "n": 0, "ci_low": 0.0, "ci_high": 100.0,
+                     "correction_applied": 1.0}
+    # k above n must clamp, not crash Wilson's sqrt(p(1-p)).
+    weird = arb.defect_rate_interval(40, 35)
+    assert weird["k"] == 35 and 0.0 <= weird["ci_low"] <= weird["ci_high"] <= 100.0
+
+
+def test_defect_interval_broken_correction_falls_back_to_identity():
+    for junk in (None, 0, -2, "abc", float("nan")):
+        out = arb.defect_rate_interval(5, 35, junk)
+        assert out["correction_applied"] == 1.0
+        assert out["ci_low"] > 0.0   # a real interval, not a silent zero
+
+
+def test_defect_ci_fields_picks_the_worst_look_and_reconstructs_k():
+    result = {"defect_rate_per_look": [8.57, 20.0],
+              "occlusion_factor_applied": 0.877,
+              "n_bulb_observations": 70}
+    looks = [[{"cls": "sound"}] * 32 + [{"cls": "rotten"}] * 3,
+             [{"cls": "sound"}] * 28 + [{"cls": "rotten"}] * 7]
+    fields = arb.defect_ci_fields(result, looks)
+    # worst look is 20.0% of 35 bulbs -> k=7
+    assert fields["defect_ci_k"] == 7
+    assert fields["defect_ci_n"] == 35
+    assert 0 < fields["defect_ci_low"] < fields["defect_ci_high"] <= 100.0
+
+
+def test_defect_ci_fields_single_rate_without_looks_uses_total_n():
+    result = {"defect_rate_per_look": [20.0],
+              "occlusion_factor_applied": 0.877,
+              "n_bulb_observations": 70}
+    fields = arb.defect_ci_fields(result, None)
+    assert fields["defect_ci_n"] == 70
+    assert fields["defect_ci_k"] == 14
+
+
+def test_defect_ci_fields_refuses_to_invent_an_interval():
+    # No rates -> nothing. Multi-rate without look sizes -> nothing: a
+    # missing interval renders as no interval, never as a guessed one.
+    assert arb.defect_ci_fields({}, [[{"cls": "sound"}]]) == {}
+    assert arb.defect_ci_fields({"defect_rate_per_look": []}, []) == {}
+    multi = {"defect_rate_per_look": [10.0, 20.0], "n_bulb_observations": 70}
+    assert arb.defect_ci_fields(multi, None) == {}
+
+
+def test_defect_ci_fields_tolerates_null_looks_like_merge_looks_does():
+    result = {"defect_rate_per_look": [25.0], "occlusion_factor_applied": 1.0}
+    fields = arb.defect_ci_fields(result, [None, [{"cls": "rotten"}] * 4])
+    assert fields["defect_ci_n"] == 4 and fields["defect_ci_k"] == 1

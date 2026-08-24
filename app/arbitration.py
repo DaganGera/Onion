@@ -187,6 +187,82 @@ def compare_lots(lot_a: dict, lot_b: dict, alpha: float = 0.05) -> dict:
 
 
 # --------------------------------------------------------------------------
+# Defect-rate uncertainty -- the most-disputed number gets an interval too
+# --------------------------------------------------------------------------
+
+
+def defect_rate_interval(k: int, n: int, correction: float = 1.0) -> dict:
+    """95% Wilson interval around the certified defect rate, occlusion-scaled.
+
+    The certificate's defect rate is the worst per-look rate divided by the
+    occlusion correction factor (grading.py D4). This interval describes that
+    SAME statistic: Wilson bounds on k defective of n examined bulb-
+    observations in the selected look, then both endpoints divided by the
+    correction factor (observed = factor x true, so true = observed / factor),
+    clamped to [0, 100].
+
+    It inherits the max-per-look estimator's caveats (RT-001 S-1) -- it is
+    sampling error on one view, not whole-lot variance -- and the UI copy says
+    so. A bare point estimate on the rejection-driving number was worse.
+    """
+    if n <= 0:
+        return {"k": 0, "n": 0, "ci_low": 0.0, "ci_high": 100.0,
+                "correction_applied": 1.0}
+    try:
+        c = float(correction)
+    except (TypeError, ValueError):
+        c = 1.0
+    if not (c > 0.0):   # also catches NaN: a broken factor must widen, not vanish
+        c = 1.0
+    # Clamp both counts: reconstruction from rounded percentages can land k
+    # a hair outside [0, n], and Wilson's sqrt(p(1-p)) is undefined there.
+    kk = int(max(0, min(int(k), int(n))))
+    nn = max(1, int(n))
+    lo, hi = wilson_pct(kk, nn)
+    return {
+        "k": kk,
+        "n": int(n),
+        "ci_low": round(min(100.0, lo / c), 2),
+        "ci_high": round(min(100.0, hi / c), 2),
+        "correction_applied": round(c, 4),
+    }
+
+
+def defect_ci_fields(result: dict, looks: list | None = None) -> dict:
+    """Build the defect-CI keys merged into result_json at /finalize.
+
+    Reconstructs (k, n) of the worst look from the ALREADY-PUBLISHED per-look
+    rates in `result` plus each look's size, so this can never drift from the
+    printed statistic the way a second implementation of the class-counting
+    rule would. Returns {} when the inputs are insufficient -- callers render
+    no interval rather than a made-up one.
+    """
+    rates = (result or {}).get("defect_rate_per_look") or []
+    if not rates:
+        return {}
+    sizes = [len(look or []) for look in (looks or [])]
+    # merge_looks emits one rate per NON-EMPTY look, in order. Pair them up;
+    # if looks were not supplied (or lengths disagree), fall back to treating
+    # every observation as one look only when there is exactly one rate.
+    pairs = list(zip(rates, [s for s in sizes if s > 0]))
+    if len(pairs) != len(rates):
+        total = int((result or {}).get("n_bulb_observations") or 0)
+        pairs = [(rates[0], total)] if len(rates) == 1 and total > 0 else []
+    if not pairs:
+        return {}
+
+    rate_pct, n = max(pairs, key=lambda p: p[0])
+    k = int(round(rate_pct * n / 100.0))
+    fields = defect_rate_interval(k, n, (result or {}).get("occlusion_factor_applied"))
+    return {
+        "defect_ci_k": fields["k"],
+        "defect_ci_n": fields["n"],
+        "defect_ci_low": fields["ci_low"],
+        "defect_ci_high": fields["ci_high"],
+    }
+
+
+# --------------------------------------------------------------------------
 # Money: what should this lot be PAID?
 # --------------------------------------------------------------------------
 

@@ -284,6 +284,10 @@ const I18N = {
     replayExhaustedTitle: 'Demo cache exhausted',
     replayExhaustedBody: 'All cached trays have been shown. '
                        + 'Restarting from the first tray.',
+    dimWarn: 'Light is poor — sizes and colours are less reliable. '
+           + 'Daylight or a work light is better for the next look.',
+    blurWarn: 'Photo looks blurry — hold the phone steady or rest it on the '
+            + 'tray edge for the next look.',
     referredTitle: n => `Referred to inspector — ${n} bulbs`,
   },
   hi: {
@@ -323,6 +327,10 @@ const I18N = {
     replayExhaustedTitle: 'डेमो कैश समाप्त हो गई',
     replayExhaustedBody: 'सभी कैश की गई ट्रे दिखा दी गई हैं। '
                        + 'पहली ट्रे से फिर शुरू कर रहे हैं।',
+    dimWarn: 'रोशनी कम है — साइज़ और रंग कम भरोसेमंद हैं। अगली तस्वीर '
+           + 'दिन की रोशनी या लाइट में लें।',
+    blurWarn: 'तस्वीर धुंधली लग रही है — अगली बार फ़ोन को स्थिर रखें '
+            + 'या ट्रे के किनारे पर टिकाकर लें।',
     referredTitle: n => `निरीक्षक को भेजा गया — ${n} प्याज़`,
   },
 };
@@ -559,6 +567,18 @@ async function submit(blob) {
       banner('');
     }
 
+    // Capture-quality advisories (godown lighting, hand-shake blur). The
+    // server already refused truly unusable frames with an actionable error;
+    // these are the "usable but imperfect" cases. Never overrides a
+    // calibration banner -- those matter more -- so only shown when the
+    // scale ladder reported nothing worse than a minor note.
+    const q = data.quality;
+    if (q && q.checked && q.warnings && q.warnings.length &&
+        sc.calibrated && (sc.confidence ?? 1) >= 0.6 &&
+        !sc.perspective_skew) {
+      banner(q.warnings.includes('dim') ? t('dimWarn') : t('blurWarn'), 'warn');
+    }
+
     busy(false);
     if (state.lookIndex === 0) {
       state.lookIndex = 1;
@@ -711,7 +731,15 @@ function renderResults(res) {
       <td colspan="2" class="py-1.5 text-right font-bold">${res.defect_rate_raw.toFixed(1)}%</td></tr>`);
   rows.push(`<tr><td class="py-1.5 text-slate-600">Corrected for occlusion</td>
       <td colspan="2" class="py-1.5 text-right text-slate-600">${res.defect_rate_corrected.toFixed(1)}%</td></tr>`);
-  $('defectTable').innerHTML = rows.join('');
+  // RT-001 S-3: the corrected defect rate used to ship with no uncertainty.
+  // Same statistic, now with its interval -- basis named so nobody reads it
+  // as whole-lot variance.
+  let defectCILine = '';
+  if (res.defect_ci_n > 0) {
+    const dhalf = ((res.defect_ci_high - res.defect_ci_low) / 2).toFixed(1);
+    defectCILine = `<div class="text-xs text-slate-500 mt-2">Defect interval: ${res.defect_ci_low.toFixed(1)}–${res.defect_ci_high.toFixed(1)}% (±${dhalf} pts, 95% Wilson on the least-occluded view)</div>`;
+  }
+  $('defectTable').innerHTML = rows.join('') + defectCILine;
 
   if (res.n_referred > 0) {
     $('referBox').classList.remove('hidden');
