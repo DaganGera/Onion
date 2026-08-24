@@ -19,3 +19,5 @@
 {"ts": "2026-08-24T21:38:48+05:30", "agent": "master", "event": "baseline_tests", "detail": "pass=True 127 passed, 1 warning in 2.84s"}
 {"ts": "2026-08-24T21:46:36+05:30", "agent": "frontend-engineer", "event": "post_tests", "detail": "pass=True 127 passed, 1 warning in 2.79s"}
 {"ts": "2026-08-24T21:46:36+05:30", "agent": "master", "event": "verdict", "detail": "ACCEPTED for task given to frontend-engineer"}
+{"ts": "2026-08-24T22:04:27+05:30", "agent": "master", "event": "loop_start", "detail": "budget_hours=8.0"}
+{"ts": "2026-08-24T22:04:31+05:30", "agent": "master", "event": "cycle_start", "detail": "{'cycle': 1, 'agent': 'backend-engineer', 'phase': 'B/C/D-loop'}"}
