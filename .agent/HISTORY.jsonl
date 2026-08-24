@@ -194,3 +194,6 @@
 {"ts": "2026-08-25T03:38:17+05:30", "agent": "master", "event": "cycle_committed", "detail": "344 passed, 1 warning in 6.18s"}
 {"ts": "2026-08-25T03:38:24+05:30", "agent": "master", "event": "cycle_start", "detail": "{'cycle': 48, 'agent': 'demo-wow', 'phase': 'B/C/D-loop'}"}
 {"ts": "2026-08-25T03:39:43+05:30", "agent": "demo-wow", "event": "cycle_result", "detail": "{'agent': 'demo-wow', 'rc': 1, 'tail': ''}"}
+{"ts": "2026-08-25T03:39:49+05:30", "agent": "master", "event": "cycle_committed", "detail": "344 passed, 1 warning in 6.18s"}
+{"ts": "2026-08-25T03:39:56+05:30", "agent": "master", "event": "cycle_start", "detail": "{'cycle': 49, 'agent': 'frontier-tech', 'phase': 'B/C/D-loop'}"}
+{"ts": "2026-08-25T04:01:35+05:30", "agent": "frontier-tech", "event": "cycle_result", "detail": "{'agent': 'frontier-tech', 'rc': 0, 'tail': '\\n```\\npy -3.11 -m pytest tests/test_calibration.py -q        # 31 passed\\npy -3.11 -m pytest -q                                  # 375 passed\\npython scripts/eval_calibration.py --split valid       # regenerates the report\\nuvicorn app.main:app --port 8000 & python scripts/smoke_test.py --port 8000\\n```\\n'}"}
