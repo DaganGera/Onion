@@ -1,0 +1,24 @@
+{
+  "phase": "B-core-correctness",
+  "started": "2026-08-24T19:00:00+05:30",
+  "budget_hours": 48,
+  "current_goal": "Audit SAMA end-to-end, fix highest-value correctness/robustness gaps, keep tests green, improve demo reliability.",
+  "active_agents": [],
+  "queued_tasks": [],
+  "completed_tasks": [],
+  "failed_tasks": [],
+  "last_successful_action": "baseline: 68 pytest green; opencode model verified as openrouter/stealth/ox-alpha",
+  "last_rejected_change": null,
+  "top_risks": [
+    "synthetic-only model evidence",
+    "T8 phone-over-tunnel untested",
+    "mat not physically printed/calipered"
+  ],
+  "blockers": [],
+  "last_audit": null,
+  "next_planned_actions": [
+    "run first full audit cycle",
+    "dispatch highest-value task per specialist",
+    "record decisions and history"
+  ]
+}

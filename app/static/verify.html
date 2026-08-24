@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SAMA — Certificate Verification</title>
+<script src="/static/vendor/tailwind.js"></script>
+<style>body { -webkit-tap-highlight-color: transparent; }</style>
+</head>
+<body class="bg-slate-100 text-slate-900 min-h-screen">
+
+<header class="bg-emerald-900 text-white px-4 py-3 flex items-center justify-between">
+  <div>
+    <div class="text-lg font-bold tracking-wide">SAMA</div>
+    <div class="text-[11px] text-emerald-200 -mt-0.5">Certificate Verification · DoCA</div>
+  </div>
+</header>
+
+<main id="content" class="max-w-xl mx-auto p-4 space-y-4 pb-16">
+  <div id="verdict" class="rounded-xl border-4 p-6 text-center font-black text-2xl">Checking…</div>
+
+  <!-- headline numbers, same visual weight as the capture app -->
+  <div class="bg-white rounded-xl p-5 border-2 border-slate-200 text-center">
+    <div class="text-sm font-semibold text-slate-500 uppercase tracking-wide">Grade A proportion</div>
+    <div class="flex items-baseline justify-center gap-2 mt-1">
+      <span id="gradeA" class="text-5xl font-black text-emerald-800"></span>
+      <span id="gradeCI" class="text-xl font-bold text-slate-500"></span>
+    </div>
+    <div id="sampleLine" class="text-xs text-slate-500 mt-1"></div>
+  </div>
+
+  <div class="bg-white rounded-xl p-4 border-2 border-slate-200 space-y-2 text-sm">
+    <h2 class="font-bold text-slate-700 uppercase text-xs tracking-widest">Certificate details</h2>
+    <div class="grid grid-cols-2 gap-x-4 gap-y-1">
+      <span class="text-slate-500">Lot reference</span><span id="lotRef" class="font-semibold text-right"></span>
+      <span class="text-slate-500">Centre</span><span id="centre" class="font-semibold text-right"></span>
+      <span class="text-slate-500">Farmer</span><span id="farmer" class="font-semibold text-right"></span>
+      <span class="text-slate-500">Officer</span><span id="officer" class="font-semibold text-right"></span>
+      <span class="text-slate-500">Issued</span><span id="stamp" class="font-semibold text-right"></span>
+      <span class="text-slate-500">Defect rate</span><span id="defect" class="font-semibold text-right"></span>
+    </div>
+  </div>
+
+  <!-- the chain, drawn as blocks: green = hash verified, red = altered -->
+  <div class="bg-white rounded-xl p-4 border-2 border-slate-200">
+    <h2 class="font-bold text-slate-700 uppercase text-xs tracking-widest mb-2">
+      Record chain — <span id="chainSummary"></span>
+    </h2>
+    <div id="chain" class="space-y-1"></div>
+    <p class="text-[11px] text-slate-500 mt-3">
+      Every record's SHA-256 covers its own contents plus the previous record at this centre.
+      Editing a stored value without recomputing its hash is detected here.
+      Tamper-evident, not tamper-proof: someone with full database access could recompute the
+      whole chain — which is why certificates are signed on-device by both parties too.
+    </p>
+  </div>
+
+  <a href="__REPORT_URL__" target="_blank"
+     class="block text-center bg-emerald-800 text-white font-bold py-3 rounded-lg no-underline">
+    Open the full certificate
+  </a>
+</main>
+
+<script>
+const DATA = "__LOT_DATA__";
+const $ = id => document.getElementById(id);
+
+(function render() {
+  const lot = DATA.lot || {};
+  const chain = DATA.chain || {};
+
+  const okRecord = chain.intact && lot.this_record_ok;
+  const v = $('verdict');
+  if (okRecord) {
+    v.textContent = '✔ CERTIFICATE VERIFIED';
+    v.className = 'rounded-xl border-4 p-6 text-center font-black text-2xl ' +
+      'bg-emerald-50 border-emerald-600 text-emerald-800';
+  } else {
+    v.textContent = '✖ TAMPERED RECORD DETECTED';
+    v.className = 'rounded-xl border-4 p-6 text-center font-black text-2xl ' +
+      'bg-red-50 border-red-600 text-red-800';
+  }
+
+  $('gradeA').textContent = (lot.grade_a_pct ?? 0).toFixed(1) + '%';
+  const half = (((lot.ci_high ?? 0) - (lot.ci_low ?? 0)) / 2).toFixed(1);
+  $('gradeCI').textContent = '± ' + half + '%';
+  $('sampleLine').textContent =
+    `${lot.n_bulbs ?? 0} bulb-observations · ${lot.n_looks ?? 0} looks · 95% confidence`;
+
+  $('lotRef').textContent = lot.lot_ref || '—';
+  $('centre').textContent = lot.centre_name || '—';
+  $('farmer').textContent = lot.farmer_name || '—';
+  $('officer').textContent = lot.officer_name || '—';
+  $('stamp').textContent = lot.created_at ? new Date(lot.created_at).toLocaleString() : '—';
+  const res = DATA.lot && DATA.lot.defect_pct != null ? DATA.lot.defect_pct : null;
+  $('defect').textContent = res != null ? res.toFixed(1) + '%' : '—';
+
+  const nOk = (chain.audit || []).filter(a => a.ok).length;
+  $('chainSummary').textContent =
+    chain.intact ? `${nOk}/${chain.records_checked} records intact`
+                 : `${nOk}/${chain.records_checked} intact — break detected`;
+
+  $('chain').innerHTML = (chain.audit || []).map(a => {
+    const isThis = a.lot_id === lot.id;
+    return `<div class="flex items-center justify-between rounded px-3 py-2 text-sm ${
+      a.ok ? 'bg-emerald-50' : 'bg-red-100'}">
+      <span class="font-mono text-xs text-slate-500">#${a.lot_id}${isThis ? ' — THIS certificate' : ''}</span>
+      <span class="font-bold ${a.ok ? 'text-emerald-700' : 'text-red-700'}">
+        ${a.ok ? '✔ hash OK' : '✖ ALTERED'}</span></div>`;
+  }).join('');
+})();
+</script>
+</body>
+</html>

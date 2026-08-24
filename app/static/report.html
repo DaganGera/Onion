@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SAMA — Quality Certificate</title>
+<script src="/static/vendor/tailwind.js"></script>
+<style>
+  @media print {
+    .no-print { display: none !important; }
+    body { background: #fff !important; }
+    .sheet { box-shadow: none !important; border: none !important; margin: 0 !important; }
+    @page { size: A4; margin: 12mm; }
+  }
+  body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+</style>
+</head>
+<body class="bg-slate-200 text-slate-900">
+
+<div class="sheet max-w-3xl mx-auto my-6 bg-white p-8 shadow-lg">
+
+  <!-- header -->
+  <div class="flex items-start justify-between border-b-4 border-emerald-900 pb-4">
+    <div>
+      <div class="text-3xl font-black tracking-tight text-emerald-900">SAMA</div>
+      <div class="text-sm font-semibold text-slate-600">Onion Lot Quality Certificate</div>
+      <div class="text-xs text-slate-500 mt-1">
+        Ministry of Consumer Affairs, Food &amp; Public Distribution<br>
+        Department of Consumer Affairs
+      </div>
+    </div>
+    <div class="text-right text-xs text-slate-600">
+      <div class="font-bold text-lg text-slate-900" id="lotRef"></div>
+      <div id="centre"></div>
+      <div id="stamp"></div>
+      <div id="geo" class="text-slate-400"></div>
+    </div>
+  </div>
+
+  <!-- headline -->
+  <div class="grid grid-cols-3 gap-4 my-6">
+    <div class="col-span-2 border-2 border-emerald-900 rounded-lg p-5 text-center">
+      <div class="text-xs font-bold uppercase tracking-widest text-slate-500">Grade A proportion</div>
+      <div class="flex items-baseline justify-center gap-3 mt-1">
+        <span id="gradeA" class="text-6xl font-black text-emerald-900"></span>
+        <span id="gradeCI" class="text-2xl font-bold text-slate-500"></span>
+      </div>
+      <div id="sampleLine" class="text-xs text-slate-500 mt-2"></div>
+      <div id="scaleBadge" class="text-xs mt-2 inline-block px-2 py-1 rounded font-bold"></div>
+    </div>
+    <div class="border-2 border-slate-300 rounded-lg p-4">
+      <div class="text-xs font-bold uppercase tracking-widest text-slate-500">Defect rate</div>
+      <div id="defectRate" class="text-3xl font-black text-slate-800 mt-1"></div>
+      <div id="defectRaw" class="text-xs text-slate-500"></div>
+      <div class="text-xs font-bold uppercase tracking-widest text-slate-500 mt-3">Referred</div>
+      <div id="referred" class="text-2xl font-bold text-amber-700"></div>
+    </div>
+  </div>
+
+  <!-- breakdown -->
+  <div class="grid grid-cols-2 gap-6">
+    <div>
+      <h3 class="font-bold text-sm uppercase tracking-wide text-slate-700 border-b border-slate-300 pb-1">Size grades</h3>
+      <table class="w-full text-sm mt-2"><tbody id="gradeTable"></tbody></table>
+    </div>
+    <div>
+      <h3 class="font-bold text-sm uppercase tracking-wide text-slate-700 border-b border-slate-300 pb-1">Defect classes</h3>
+      <table class="w-full text-sm mt-2"><tbody id="classTable"></tbody></table>
+    </div>
+  </div>
+
+  <!-- method note: the certificate has to state its own limits, or it is
+       not honestly contestable -->
+  <div class="mt-6 bg-slate-50 border border-slate-300 rounded p-3 text-xs text-slate-600">
+    <span class="font-bold">Method.</span>
+    Bulb sizes measured against a printed eight-marker ArUco calibration mat (40.0 mm
+    squares) lying in the same plane as the tray, graded to ICAR-DOGR bands. Where markers
+    were obscured, scale was recovered from whatever reference remained and the reduced
+    quality is stated above. The Grade A proportion is a sample estimate with a 95%
+    Wilson confidence interval, not a census of the lot. Bulbs below the confidence
+    threshold are referred to a human inspector rather than auto-graded.
+    <span id="calibNote"></span>
+  </div>
+
+  <!-- signatures -->
+  <div class="grid grid-cols-2 gap-8 mt-6 pt-4 border-t-2 border-slate-300">
+    <div>
+      <div class="text-xs uppercase tracking-widest text-slate-500">Farmer</div>
+      <div id="farmer" class="text-lg font-bold mt-1"></div>
+      <div class="text-xs text-emerald-700 font-semibold mt-1">✓ Confirmed on device</div>
+    </div>
+    <div>
+      <div class="text-xs uppercase tracking-widest text-slate-500">Procurement officer</div>
+      <div id="officer" class="text-lg font-bold mt-1"></div>
+      <div class="text-xs text-emerald-700 font-semibold mt-1">✓ Confirmed on device</div>
+    </div>
+  </div>
+
+  <div id="disputeNote" class="hidden mt-4 border-2 border-red-400 bg-red-50 rounded p-3 text-sm">
+    <span class="font-bold text-red-800">Disputed bulbs recorded:</span>
+    <span id="disputeCount"></span>
+  </div>
+
+  <!-- images -->
+  <div id="shots" class="mt-6 grid grid-cols-2 gap-3"></div>
+
+  <!-- chain -->
+  <div class="mt-6 pt-3 border-t border-slate-300 flex items-start gap-4">
+    <div class="shrink-0 text-center">
+      <img id="qr" src="__QR_DATA__" alt="Verification QR code"
+           class="w-28 h-28 border border-slate-300 rounded">
+      <div class="text-[9px] uppercase tracking-widest text-slate-500 mt-1">Scan to verify</div>
+    </div>
+    <div class="min-w-0">
+      <div class="text-[10px] uppercase tracking-widest text-slate-500">Record hash (SHA-256)</div>
+      <div id="hash" class="font-mono text-[10px] break-all text-slate-700"></div>
+      <div class="text-[10px] text-slate-500 mt-1">
+        Chained to the previous record at this centre. Altering any earlier record breaks every
+        hash after it. Tamper-evident, not tamper-proof.
+      </div>
+      <a id="verifyLink" href="__VERIFY_URL__" target="_blank"
+         class="text-[11px] font-semibold text-emerald-800 underline break-all">Anyone can verify this certificate: <span id="verifyUrlText"></span></a>
+    </div>
+  </div>
+</div>
+
+<div class="no-print max-w-3xl mx-auto pb-10 px-4 grid grid-cols-2 gap-3">
+  <button onclick="window.print()" class="bg-emerald-800 text-white font-bold py-4 rounded-lg">Download PDF</button>
+  <a id="wa" class="bg-green-600 text-white font-bold py-4 rounded-lg text-center">Share on WhatsApp</a>
+</div>
+
+<script>
+const LOT = "__LOT_DATA__";
+const $ = id => document.getElementById(id);
+
+(function render() {
+  const res = LOT.result || {};
+  $('lotRef').textContent = LOT.lot_ref || '—';
+  $('centre').textContent = (LOT.centre_name || '') + (LOT.district ? ' · ' + LOT.district : '');
+  $('stamp').textContent = new Date(LOT.created_at).toLocaleString();
+  $('geo').textContent = (LOT.lat && LOT.lon)
+    ? `${LOT.lat.toFixed(4)}, ${LOT.lon.toFixed(4)}` : 'GPS unavailable';
+
+  $('gradeA').textContent = (res.grade_a_pct ?? 0).toFixed(1) + '%';
+  const half = (((res.grade_a_ci_high ?? 0) - (res.grade_a_ci_low ?? 0)) / 2).toFixed(1);
+  $('gradeCI').textContent = '± ' + half;
+  $('sampleLine').textContent =
+    `${res.n_bulb_observations ?? 0} bulb-observations · ${res.n_looks ?? 0} looks · ` +
+    `${res.n_trays ?? 0} tray(s) · 95% CI ${(res.grade_a_ci_low ?? 0).toFixed(1)}–${(res.grade_a_ci_high ?? 0).toFixed(1)}%`;
+
+  $('defectRate').textContent = (res.defect_rate_corrected ?? 0).toFixed(1) + '%';
+  $('defectRaw').textContent = 'observed ' + (res.defect_rate_raw ?? 0).toFixed(1) + '%, corrected for occlusion';
+  $('referred').textContent = (res.n_referred ?? 0) + ' bulbs';
+
+  const gp = res.grade_pcts || {}, gc = res.grade_counts || {};
+  $('gradeTable').innerHTML = ['A', 'B', 'C', 'UNDERSIZED'].map(g =>
+    `<tr class="border-b border-slate-200"><td class="py-1">${g}</td>
+     <td class="py-1 text-right font-semibold">${gc[g] ?? 0}</td>
+     <td class="py-1 text-right text-slate-500">${(gp[g] ?? 0).toFixed(1)}%</td></tr>`).join('');
+
+  const cp = res.class_pcts || {}, cc = res.class_counts || {};
+  $('classTable').innerHTML = Object.keys(cc).map(n =>
+    `<tr class="border-b border-slate-200"><td class="py-1 capitalize">${n.replace('_', ' ')}</td>
+     <td class="py-1 text-right font-semibold">${cc[n]}</td>
+     <td class="py-1 text-right text-slate-500">${(cp[n] ?? 0).toFixed(1)}%</td></tr>`).join('');
+
+  // Measurement quality belongs ON the certificate, not just in the app.
+  // Whoever signs this has to be able to see that the reference was degraded.
+  const conf = LOT.scale_conf;
+  const src = LOT.scale_source || 'unknown';
+  const badge = $('scaleBadge');
+  const SOURCE_TEXT = {
+    homography: 'Full calibration mat',
+    homography_weak: 'Partial mat (2 markers)',
+    single_marker: 'Single marker only',
+    mat_edge: 'Mat outline only, no marker',
+    carried: 'Scale reused from an earlier look',
+    none: 'No reference',
+  };
+  if (conf === null || conf === undefined) {
+    badge.style.display = 'none';
+  } else if (conf >= 0.85) {
+    badge.textContent = 'Measurement quality: GOOD - ' + (SOURCE_TEXT[src] || src);
+    badge.className = 'text-xs mt-2 inline-block px-2 py-1 rounded font-bold bg-emerald-100 text-emerald-900';
+  } else if (conf >= 0.6) {
+    badge.textContent = 'Measurement quality: REDUCED - ' + (SOURCE_TEXT[src] || src);
+    badge.className = 'text-xs mt-2 inline-block px-2 py-1 rounded font-bold bg-amber-200 text-amber-950';
+  } else {
+    badge.textContent = 'Measurement quality: LOW - ' + (SOURCE_TEXT[src] || src);
+    badge.className = 'text-xs mt-2 inline-block px-2 py-1 rounded font-bold bg-red-200 text-red-900';
+  }
+
+  $('calibNote').textContent = LOT.calibrated
+    ? ' Calibration mat detected; sizes are absolute.'
+    : ' WARNING: calibration mat NOT detected for this lot. Sizes are relative estimates only.';
+
+  $('farmer').textContent = LOT.farmer_name || '—';
+  $('officer').textContent = LOT.officer_name || '—';
+
+  const disputed = (LOT.bulbs || []).filter(b => b.disputed).length;
+  if (disputed) {
+    $('disputeNote').classList.remove('hidden');
+    $('disputeCount').textContent = disputed;
+  }
+
+  $('hash').textContent = LOT.row_hash || '';
+  $('verifyUrlText').textContent = location.origin + '/verify/' + LOT.id;
+  if (!$('qr').getAttribute('src')) { $('qr').style.display = 'none'; }
+  $('wa').href = 'https://wa.me/?text=' +
+    encodeURIComponent(`SAMA certificate ${LOT.lot_ref}: ${(res.grade_a_pct ?? 0).toFixed(1)}% Grade A (±${half}). Verify: ${location.origin}/verify/${LOT.id}`);
+})();
+</script>
+</body>
+</html>
