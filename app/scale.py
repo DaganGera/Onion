@@ -49,7 +49,18 @@ from app.mat_layout import (
     MARKER_MM, MAT_CORNERS_MM, MAT_H_MM, MAT_W_MM, marker_corners_mm,
 )
 
-ARUCO_DICT = cv2.aruco.DICT_4X4_50
+# Guarded at import (RT-001 D-1): plain opencv-python has no cv2.aruco
+# submodule at all. A bare `cv2.aruco.DICT_4X4_50` here used to raise
+# AttributeError before uvicorn even bound -- killing pages, replay,
+# dashboard and verify along with capture. Import must never raise; only
+# /analyze is allowed to degrade for this.
+try:
+    ARUCO_DICT = cv2.aruco.DICT_4X4_50
+except AttributeError:
+    ARUCO_DICT = None
+
+ARUCO_AVAILABLE = ARUCO_DICT is not None
+
 SKEW_TOLERANCE = 0.08
 
 # Confidence attached to each rung. Used to decide whether to warn the
@@ -67,10 +78,32 @@ SOURCE_CONFIDENCE = {
 # not as a certified ICAR-DOGR grade.
 GRADING_FLOOR = 0.35
 
-_DETECTOR = cv2.aruco.ArucoDetector(
-    cv2.aruco.getPredefinedDictionary(ARUCO_DICT),
-    cv2.aruco.DetectorParameters(),
-)
+_DETECTOR = None          # built lazily by get_detector(); never at import
+_DETECTOR_BROKEN = False  # set once if construction fails; stops retrying
+
+
+def get_detector():
+    """Build the ArUco detector on first use instead of at import time.
+
+    Returns None when cv2.aruco is unavailable so callers can degrade
+    explicitly (main.py /analyze answers with a clear JSON error). Never
+    raises. The built detector is cached for the life of the process.
+    """
+    global _DETECTOR, _DETECTOR_BROKEN
+    if _DETECTOR is not None:
+        return _DETECTOR
+    if _DETECTOR_BROKEN or not ARUCO_AVAILABLE:
+        return None
+    try:
+        _DETECTOR = cv2.aruco.ArucoDetector(
+            cv2.aruco.getPredefinedDictionary(ARUCO_DICT),
+            cv2.aruco.DetectorParameters(),
+        )
+    except Exception as exc:  # noqa: BLE001 -- construction must never raise
+        _DETECTOR_BROKEN = True
+        print(f"WARNING: ArUco detector unavailable -- "
+              f"{type(exc).__name__}: {exc}")
+    return _DETECTOR
 
 
 @dataclass
@@ -225,11 +258,18 @@ def detect_scale(image_bgr, carried: ScaleResult | None = None) -> ScaleResult:
 
     height, width = image_bgr.shape[:2]
 
-    try:
-        grey = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2GRAY)
-        corners, ids, _ = _DETECTOR.detectMarkers(grey)
-    except cv2.error:
+    detector = get_detector()
+    if detector is None:
+        # No cv2.aruco on this machine: skip the marker rungs entirely. The
+        # ladder still walks (carried / mat_edge / none), so detect_scale
+        # keeps its "never raises" contract even in a broken environment.
         corners, ids = [], None
+    else:
+        try:
+            grey = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2GRAY)
+            corners, ids, _ = detector.detectMarkers(grey)
+        except cv2.error:
+            corners, ids = [], None
 
     found: list[tuple[int, np.ndarray]] = []
     if ids is not None:

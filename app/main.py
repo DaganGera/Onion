@@ -26,6 +26,10 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app import db, grading
 from app import arbitration
+# Aliased, not bare: /analyze has a local variable named `scale`, and a bare
+# `from app import scale` would shadow-trap it (UnboundLocalError waiting to
+# happen on the next edit).
+from app import scale as scale_mod
 
 ROOT = Path(__file__).resolve().parents[1]
 STATIC = Path(__file__).parent / "static"
@@ -271,6 +275,16 @@ async def analyze(
     tray_id: str = Form("T1"),
 ):
     try:
+        # RT-001 D-1: on a machine with plain opencv-python there is no
+        # cv2.aruco at all. Import no longer dies (guarded in app/scale.py);
+        # capture alone degrades, loudly, while pages/replay/dashboard/verify
+        # keep serving. Fail before reading the upload -- nothing downstream
+        # can proceed without a calibration module.
+        if scale_mod.get_detector() is None:
+            return _error("calibration module unavailable -- install "
+                          "opencv-contrib-python (cv2.aruco is missing). "
+                          "Replay mode still works: add ?replay=1.", 503)
+
         if MODEL is None:
             return _error(f"Model unavailable ({MODEL_ERROR}). "
                           "Use replay mode: add ?replay=1 to the URL.", 503)
@@ -361,6 +375,9 @@ async def finalize(payload: dict):
             },
         )
         return {"lot_id": written["lot_id"], "row_hash": written["row_hash"],
+                # Per-look bulb row ids, shaped like the request's looks, so
+                # the UI can wire its contest button to real rows (RT-001 T-4).
+                "bulb_ids": written.get("bulb_ids"),
                 "result": result}
     except Exception as exc:  # noqa: BLE001
         traceback.print_exc()
@@ -369,9 +386,19 @@ async def finalize(payload: dict):
 
 @app.post("/dispute/{bulb_id}")
 def dispute(bulb_id: int):
+    """Record a farmer's contest on one stored bulb row (RT-001 T-4).
+
+    Disputes annotate the evidence, like the bulb rows themselves -- they sit
+    outside the hash chain and do not alter any certified number. An unknown
+    id is a 404 so the client can never show 'logged' without a row actually
+    changing.
+    """
     try:
-        return {"ok": db.mark_disputed(bulb_id)}
+        if not db.mark_disputed(bulb_id):
+            return _error(f"No saved bulb record {bulb_id} to dispute.", 404)
+        return {"ok": True, "bulb_id": bulb_id}
     except Exception as exc:  # noqa: BLE001
+        traceback.print_exc()
         return _error(f"Could not log dispute: {type(exc).__name__}", 500)
 
 
@@ -456,6 +483,9 @@ def api_health():
         "model_loaded": MODEL is not None,
         "model_error": MODEL_ERROR,
         "e2e_mode": E2E_MODE,
+        # RT-001 D-1 diagnosis aid: False here explains a 503 from /analyze
+        # without needing console access on the venue machine.
+        "aruco_available": scale_mod.ARUCO_AVAILABLE,
         "constants": grading.CONSTANTS,
         "replays_available": _list_replay_ids(),
     }

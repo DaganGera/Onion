@@ -322,6 +322,9 @@ const state = {
   calibrated: true, skew: false, replayN: 0,
   scaleSource: null, scaleConfidence: null, worstConfidence: null,
   lat: null, lon: null, result: null, lotId: null,
+  // Bulb row ids from /finalize, shaped like state.looks ([look][bulb] -> id),
+  // plus the ids already disputed in this session (RT-001 T-4).
+  bulbIds: null, disputed: new Set(), currentBulbId: null,
   farmerOk: false, officerOk: false,
 };
 
@@ -491,6 +494,11 @@ $('finishBtn').onclick = async () => {
     const d = await r.json();
     if (d.error) throw new Error(d.error);
     state.result = d.result; state.lotId = d.lot_id;
+    // Bulb rows were just written by /finalize and their ids mirror
+    // state.looks exactly, so every bulb on screen now has a real row the
+    // dispute endpoint can point at.
+    state.bulbIds = d.bulb_ids || null;
+    state.disputed = new Set();
     renderResults(d.result);
     loadInsights(d.lot_id);
     busy(false);
@@ -611,13 +619,13 @@ function renderResults(res) {
     const img = document.createElement('img');
     img.src = shot.annotated;
     img.className = 'w-full rounded-lg border-2 border-slate-200';
-    img.onclick = e => openSheet(shot, img, e);
+    img.onclick = e => openSheet(shot, i, img, e);
     wrap.appendChild(img);
     shots.appendChild(wrap);
   });
 }
 
-function openSheet(shot, img, ev) {
+function openSheet(shot, lookIdx, img, ev) {
   const rect = img.getBoundingClientRect();
   const sx = (ev.clientX - rect.left) / rect.width * img.naturalWidth;
   const sy = (ev.clientY - rect.top) / rect.height * img.naturalHeight;
@@ -625,10 +633,22 @@ function openSheet(shot, img, ev) {
   // the annotated image is downscaled server-side; bboxes are in original
   // coordinates, so map them through the same factor before hit-testing
   const k = shot.annotated_scale ?? 1;
-  const hit = (shot.bulbs || []).find(b =>
-    sx >= b.bbox[0] * k && sx <= b.bbox[2] * k &&
-    sy >= b.bbox[1] * k && sy <= b.bbox[3] * k);
+  const bulbs = shot.bulbs || [];
+  let hit = null, hitIdx = -1;
+  for (let j = 0; j < bulbs.length; j++) {
+    const b = bulbs[j];
+    if (sx >= b.bbox[0] * k && sx <= b.bbox[2] * k &&
+        sy >= b.bbox[1] * k && sy <= b.bbox[3] * k) { hit = b; hitIdx = j; break; }
+  }
   if (!hit) return;
+
+  // This sheet can only open after finalising, so the row ids exist. If the
+  // server is older and sent none, disputeBtn degrades honestly rather than
+  // pretending a dispute was logged.
+  state.currentBulbId =
+    (state.bulbIds && state.bulbIds[lookIdx])
+      ? (state.bulbIds[lookIdx][hitIdx] ?? null)
+      : null;
 
   const c = document.createElement('canvas');
   const w = (hit.bbox[2] - hit.bbox[0]) * k, h = (hit.bbox[3] - hit.bbox[1]) * k;
@@ -636,17 +656,38 @@ function openSheet(shot, img, ev) {
   c.getContext('2d').drawImage(img, hit.bbox[0] * k, hit.bbox[1] * k, w, h, 0, 0, w, h);
   $('sheetCrop').src = c.toDataURL();
 
+  const disputedLine =
+    (state.currentBulbId && state.disputed.has(state.currentBulbId))
+      ? '<div class="mt-1 text-sm font-bold text-red-700">DISPUTED — recorded on the certificate</div>'
+      : '';
   $('sheetInfo').innerHTML =
     `<div class="text-xl font-bold capitalize">${hit.cls_name.replace('_', ' ')}</div>
      <div class="text-slate-600">${hit.diameter_mm ? hit.diameter_mm.toFixed(0) + ' mm · Grade ' + hit.size_grade : 'size unavailable'}</div>
      <div class="mt-1 text-sm ${hit.decision === 'REFER' ? 'text-amber-700 font-bold' : 'text-slate-500'}">
-       confidence ${(hit.confidence * 100).toFixed(0)}% · ${hit.decision}</div>`;
+       confidence ${(hit.confidence * 100).toFixed(0)}% · ${hit.decision}</div>${disputedLine}`;
   $('sheetWrap').classList.remove('hidden');
 }
 $('closeSheet').onclick = $('sheetBg').onclick = () => $('sheetWrap').classList.add('hidden');
-$('disputeBtn').onclick = () => {
+// RT-001 T-4: this used to be decorative -- it fired no request and the
+// banner lied. The bulb row id comes from /finalize, so a tap here really
+// does POST /dispute/{id}; every outcome is reported truthfully.
+$('disputeBtn').onclick = async () => {
+  const bulbId = state.currentBulbId;
   $('sheetWrap').classList.add('hidden');
-  banner('Dispute logged on the certificate.', 'warn');
+  if (!bulbId) {
+    banner('Dispute NOT recorded — no saved bulb record for this look.', 'bad');
+    return;
+  }
+  try {
+    const r = await fetch('/dispute/' + bulbId, { method: 'POST' });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok || d.error) throw new Error(d.error || ('HTTP ' + r.status));
+    state.disputed.add(bulbId);
+    banner('Dispute logged on certificate #' + state.lotId +
+           ' (bulb record ' + bulbId + '). It shows on the certificate page.', 'warn');
+  } catch (e) {
+    banner('Could not log dispute: ' + e.message + ' — nothing was recorded.', 'bad');
+  }
 };
 
 // ---------- sign-off ----------

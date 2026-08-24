@@ -15,10 +15,15 @@
       "agent": "qa-engineer",
       "task": "TASK Q-001: Failure-injection test suite. Create tests/test_failure_injection.py covering: POST /analyze with empty body, non-image bytes, truncated JPEG, huge random bytes; GET /api/replay/999 (missi",
       "tests": "108 passed, 1 warning in 2.18s"
+    },
+    {
+      "agent": "backend-engineer",
+      "task": "TASK B-002: Fix two findings from .agent/redteam/RT-001.md: (1) The dispute workflow is dead code - find where app/static/index.html or report.html fires the dispute action and wire it to POST /disput",
+      "tests": "127 passed, 1 warning in 2.85s"
     }
   ],
   "failed_tasks": [],
-  "last_successful_action": "ACCEPTED: TASK Q-001: Failure-injection test suite. Create tests/test_failure_injection.py covering: POST /analyze with empty body",
+  "last_successful_action": "ACCEPTED: TASK B-002: Fix two findings from .agent/redteam/RT-001.md: (1) The dispute workflow is dead code - find where app/stati",
   "last_rejected_change": null,
   "top_risks": [
     "synthetic-only model evidence",

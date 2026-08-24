@@ -17,13 +17,20 @@ import cv2
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from app.mat_layout import MARKER_MM
-from app.scale import _DETECTOR, _mean_side_px, detect_scale
+from app.scale import _mean_side_px, detect_scale, get_detector
 
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("image", type=Path)
     args = ap.parse_args()
+
+    detector = get_detector()
+    if detector is None:
+        print("FAIL - cv2.aruco unavailable. Install opencv-contrib-python:")
+        print("  pip uninstall opencv-python opencv-contrib-python")
+        print("  pip install opencv-contrib-python>=4.7")
+        return 1
 
     image = cv2.imread(str(args.image))
     if image is None:
@@ -41,7 +48,7 @@ def main() -> int:
         return 1
 
     grey = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    corners, ids, _ = _DETECTOR.detectMarkers(grey)
+    corners, ids, _ = detector.detectMarkers(grey)
     if ids is not None:
         print()
         for corner, marker_id in zip(corners, ids.ravel()):

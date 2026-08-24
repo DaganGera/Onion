@@ -201,9 +201,16 @@ def insert_lot(centre_id: int, lot_ref: str, result: dict, meta: dict) -> dict:
         )
         lot_id = int(cur.lastrowid)
 
+        # Bulb ids come back shaped exactly like meta["looks"] ([look][bulb]),
+        # so the UI can map what it is showing back to the stored row it came
+        # from. Without this the contest button had no honest id to point at
+        # (RT-001 T-4). The ids are plain annotations -- they are NOT part of
+        # the hashed payload and never were part of the bulbs table's contract.
+        bulb_ids: list[list[int]] = []
         for look_index, look in enumerate(meta.get("looks", [])):
-            for bulb in look:
-                conn.execute(
+            look_ids: list[int] = []
+            for bulb in (look or []):
+                bulb_cur = conn.execute(
                     """INSERT INTO bulbs (lot_id, look_index, bbox_json, cls,
                                           confidence, diameter_mm, size_grade, decision)
                        VALUES (?,?,?,?,?,?,?,?)""",
@@ -212,9 +219,12 @@ def insert_lot(centre_id: int, lot_ref: str, result: dict, meta: dict) -> dict:
                      bulb.get("confidence"), bulb.get("diameter_mm"),
                      bulb.get("size_grade"), bulb.get("decision")),
                 )
+                look_ids.append(int(bulb_cur.lastrowid))
+            bulb_ids.append(look_ids)
 
         conn.commit()
-        return {"lot_id": lot_id, "row_hash": row_hash, "prev_hash": prev}
+        return {"lot_id": lot_id, "row_hash": row_hash, "prev_hash": prev,
+                "bulb_ids": bulb_ids}
     finally:
         conn.close()
 
