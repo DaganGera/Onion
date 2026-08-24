@@ -194,3 +194,45 @@ Verification: `py -3.11 -m pytest tests -q` → 190 passed (17 new in
 `tests/test_twin.py`); `python scripts/smoke_test.py` → ALL PASS including 5 new
 twin checks; live `GET /api/twin/45?severity=0.2` returns deterministic labelled
 JSON. Live uvicorn on :8000 restarted onto current code.
+
+---
+
+## India-access pass (LOOP-A2223) — deadlines, one retry, save-and-retry on every request
+
+Picked the highest-value open item from the five-candidate list: **network
+timeout + retry-once + "save and retry" on every fetch** (the other four were
+already covered by earlier passes: client-side downscale ≤1600px/q80 with honest
+KB line — A2212; Tailwind vendored to `static/vendor/tailwind.js` so the offline
+demo loads zero CDN bytes; i18n largely complete; IMPACT_EVIDENCE.md carries the
+per-lot cost story).
+
+What changed (`app/static/index.html` only):
+
+- `saFetch(url, opts, timeoutMs)`: AbortController deadline (15 s JSON,
+  60 s photo/finalize uploads), retries EXACTLY once after a 1.5 s backoff and
+  ONLY when the server never answered (radio drop / stalled DNS / our deadline).
+  A real HTTP answer — even a 500 — is final and never repeated. Failures throw
+  typed `NetError{timeout|unreachable}` so callers can print WHY in Hindi or
+  English. Engines without AbortController lose only the deadline, not the request.
+- All seven call sites routed through it: `/api/centres`, `/api/replay/N`,
+  `/analyze`, `/finalize`, `/api/sufficiency`, `/api/price-band`, `/dispute`.
+- Retry safety proven endpoint-by-endpoint before wiring: /analyze writes no DB
+  rows; /finalize is server-deduped (`dedupe=True`, built for exactly this);
+  /dispute is a boolean UPDATE. Nothing can double-apply.
+- Save-and-retry bar: if /analyze fails even after the automatic retry, the
+  compressed photo AND its exact prepared FormData wait in memory; a red bar
+  offers "↻ Retry upload" (≥48 px touch target, bilingual) which re-sends
+  byte-for-byte without re-photographing, and "Discard" which says plainly that
+  nothing was analysed. The officer never re-shoots a good tray over a network
+  hiccup.
+- submit()'s success tail extracted into acceptLook(), shared by capture and
+  resend so both paths stay identical (scale-rung banners, quality advisories,
+  lookIndex advance, tally, LOOP-I2222 checkpoint).
+
+Verification: `py -3.11 -m pytest tests -q` → 332 passed (40 new in
+`tests/test_network_resilience.py`; test_session_resume's checkpoint-ordering
+contract strengthened to cover the shared success path). Inline script passes
+`node --check`. Live uvicorn over plain HTTP: `/`, `/static/index.html`,
+`/api/replay/0`, `/api/centres` all 200; real multipart POST of a 1.25 MB
+1600px JPEG → `/analyze` 200 in 1.3 s against the 60 s deadline (~10x headroom
+at rural-3G uplink speeds).

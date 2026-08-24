@@ -109,6 +109,21 @@
     <!-- India-access: honest data cost of the LAST upload, shown right where
          the operator waits. Numbers only -- readable at low literacy. -->
     <div id="dataLine" class="hidden mt-1 text-center text-sm font-semibold text-emerald-700"></div>
+    <!-- LOOP-A2223: when a capture cannot reach the server even after the
+         automatic timeout-retry, the compressed photo is KEPT on the phone
+         and this bar offers one-tap resend. The officer never re-photographs
+         because of a network hiccup, and never stares at a silent spinner. -->
+    <div id="pendingBar" class="hidden mt-2 p-3 bg-red-50 border-2 border-red-400 rounded-lg">
+      <div id="pendingText" class="text-sm font-semibold text-red-800 leading-snug"></div>
+      <div class="flex gap-2 mt-2">
+        <button id="pendingRetry"
+                class="flex-1 min-h-[48px] bg-red-700 text-white text-base font-bold rounded-lg active:bg-red-800"
+                data-i18n="retryUpload">↻ Retry upload</button>
+        <button id="pendingDiscard"
+                class="min-h-[48px] px-5 border-2 border-red-400 text-red-800 text-sm font-semibold rounded-lg active:bg-red-100"
+                data-i18n="discardShot">Discard</button>
+      </div>
+    </div>
     <button id="shutter" class="w-full bg-emerald-800 text-white text-lg font-bold py-5 rounded-lg active:bg-emerald-900" data-i18n="capture">
       Capture
     </button>
@@ -325,6 +340,16 @@ const I18N = {
     photoOptimised: (o, s, p) => `Photo compressed: ${o} → ${s} (${p}% less data)`,
     photoAsIs: s => `Photo sent as-is — ${s}`,
     sessionSaved: kb => ` · session saved ${kb}`,
+    // LOOP-A2223: readable network failures with a way forward. When the
+    // automatic timeout-retry also fails, the photo waits on the phone.
+    netFailTitle: 'Network problem',
+    netTimeout: 'no answer from the server',
+    netUnreachable: 'could not reach the server',
+    pendingSaved: kb => `Photo kept on this phone (${kb}) — tap retry when `
+                     + 'the network returns.',
+    retryUpload: '↻ Retry upload',
+    discardShot: 'Discard',
+    pendingDiscarded: 'Unsent photo discarded.',
     // LOOP-I2222: the phone closed this page mid-lot (tab discarded, reload,
     // accidental back). Offer the saved session instead of a wiped form.
     resumeTitle: 'Unfinished lot found',
@@ -389,6 +414,14 @@ const I18N = {
     photoOptimised: (o, s, p) => `फ़ोटो छोटी की गई: ${o} → ${s} (${p}% कम डेटा)`,
     photoAsIs: s => `फ़ोटो जैसी है वैसी भेजी — ${s}`,
     sessionSaved: kb => ` · कुल बचत ${kb}`,
+    netFailTitle: 'नेटवर्क समस्या',
+    netTimeout: 'सर्वर से जवाब नहीं मिला',
+    netUnreachable: 'सर्वर तक पहुँच नहीं पाए',
+    pendingSaved: kb => `फ़ोटो फ़ोन में सुरक्षित है (${kb}) — नेटवर्क लौटने `
+                     + 'पर “फिर से भेजें” दबाएँ।',
+    retryUpload: '↻ फिर से भेजें',
+    discardShot: 'हटाएँ',
+    pendingDiscarded: 'बिना भेजी तस्वीर हटा दी गई।',
     resumeTitle: 'अधूरा लॉट मिला',
     resumeBody: (n, when) => `${when} की ${n} तस्वीरें इसी डिवाइस पर सुरक्षित हैं।`,
     resumeBtn: 'उसी लॉट पर जारी रखें',
@@ -414,6 +447,7 @@ function applyLang() {
     state.lookIndex === 1 ? t('look2') : (state.trayCount ? t('lookNext') : t('look1'));
   if (!$('busy').classList.contains('hidden')) $('busyText').textContent = t('analysing');
   renderDataLine();   // India-access line re-renders in the new language
+  renderPending();    // LOOP-A2223: so does the save-and-retry bar
 }
 $('langBtn').onclick = () => {
   LANG = LANG === 'en' ? 'hi' : 'en';
@@ -434,6 +468,116 @@ const state = {
   // lastUpload drives the live capture line; savedKB is the honest session
   // total actually deducted (0 when nothing was resized).
   lastUpload: null, savedKB: 0, uploadLog: [],
+  // LOOP-A2223: an upload that failed even after the automatic retry waits
+  // here ({ fd, origKB, sentKB, kind }) with a one-tap resend bar. In-memory
+  // by design -- blobs cannot survive JSON checkpointing -- so the offer is
+  // only made while the page is alive; the honest wording says "kept on this
+  // phone", not "saved forever".
+  pending: null,
+};
+
+// ---------- LOOP-A2223: every request gets a deadline + one retry ----------
+// On rural 3G a wedged request used to hang the busy overlay forever: no
+// words, no way out, the operator's only remedy was killing the page and
+// losing the capture flow. Every network call in this file goes through
+// saFetch:
+//
+//   deadline    -> AbortController fires at 60 s for photo/finalize uploads,
+//                  15 s for everything else (constants below).
+//   retry ONCE  -> only when the server NEVER answered (radio drop, stalled
+//                  DNS, our own deadline). A real HTTP answer -- even a 500
+//                  -- is final and is never blindly repeated.
+//   typed error -> NetError carries .netKind so callers can print WHY in the
+//                  operator's language instead of a raw exception string.
+//
+// Retry safety was checked endpoint by endpoint before wiring this in:
+// /analyze writes nothing to the database; /finalize dedupes server-side
+// (db.insert_lot dedupe=True exists precisely for timeout-retries);
+// /dispute is a boolean UPDATE. None of them can double-apply.
+//
+// POSITION MATTERS: this block sits ABOVE the /api/centres request further
+// down, which fires during initial evaluation. saFetch's default parameter
+// reads NET_TIMEOUT_MS at call time -- a const declared below that call
+// would be a TDZ ReferenceError and kill the whole script (the exact
+// accident class documented at the top of this file).
+const NET_TIMEOUT_MS = 15000;
+const ANALYZE_TIMEOUT_MS = 60000;
+const RETRY_BACKOFF_MS = 1500;
+
+class NetError extends Error {
+  constructor(kind) { super('network ' + kind); this.netKind = kind; }
+}
+
+async function saFetch(url, opts = {}, timeoutMs = NET_TIMEOUT_MS) {
+  const once = () => {
+    // Older engines without AbortController simply lose the deadline, never
+    // the request itself.
+    if (typeof AbortController === 'undefined') return fetch(url, opts);
+    const ctl = new AbortController();
+    const timer = setTimeout(() => ctl.abort(), timeoutMs);
+    return fetch(url, Object.assign({}, opts, { signal: ctl.signal }))
+      .finally(() => clearTimeout(timer));
+  };
+  try {
+    return await once();
+  } catch (first) {
+    await new Promise(r => setTimeout(r, RETRY_BACKOFF_MS));
+    try {
+      return await once();
+    } catch (second) {
+      throw new NetError(
+        second && second.name === 'AbortError' ? 'timeout' : 'unreachable');
+    }
+  }
+}
+
+const netKey = e =>
+  (e && e.netKind === 'timeout') ? 'netTimeout' : 'netUnreachable';
+
+// The one expensive POST, shared by first capture AND the pending-resend
+// button so both paths behave identically.
+async function postAnalyze(fd) {
+  const r = await saFetch('/analyze', { method: 'POST', body: fd },
+                          ANALYZE_TIMEOUT_MS);
+  const data = await r.json().catch(() => ({ error: 'HTTP ' + r.status }));
+  if (data.error) throw new Error(data.error);
+  return data;
+}
+
+// ---------- LOOP-A2223: the save-and-retry bar ------------------------------
+// Shown only when a live upload failed after its automatic retry. The exact
+// prepared FormData stays in memory; Retry re-sends it unchanged, Discard
+// drops it honestly ("nothing was analysed" remains true either way).
+function hidePending() { $('pendingBar').classList.add('hidden'); }
+
+function renderPending() {
+  const p = state.pending;
+  if (!p) return;
+  $('pendingText').textContent =
+    `${t('netFailTitle')}: ${t(p.kind)} · ${t('pendingSaved')(fmtKB(p.sentKB))}`;
+}
+
+$('pendingRetry').onclick = async () => {
+  const p = state.pending;
+  if (!p) return;
+  hidePending();
+  busy(true, t('analysing'));
+  try {
+    const data = await postAnalyze(p.fd);
+    state.pending = null;
+    acceptLook(data);
+  } catch (e) {
+    busy(false);
+    p.kind = netKey(e);
+    renderPending();
+    $('pendingBar').classList.remove('hidden');
+  }
+};
+
+$('pendingDiscard').onclick = () => {
+  state.pending = null;
+  hidePending();
+  banner(t('pendingDiscarded'), 'warn');
 };
 
 const show = id => {
@@ -537,7 +681,7 @@ function tally() {
 // r.ok + d.error checked BEFORE trusting the body: a 500 that carries the
 // server's guaranteed {"error": …} JSON would otherwise parse fine, skip the
 // catch, and silently downgrade to "Unassigned" without telling the operator.
-fetch('/api/centres').then(r => {
+saFetch('/api/centres').then(r => {
   if (!r.ok) throw new Error('HTTP ' + r.status);
   return r.json();
 }).then(d => {
@@ -699,7 +843,7 @@ function renderDataLine() {
 // server's 404 wording ("No cached replay N").
 async function fetchReplay(n) {
   try {
-    const r = await fetch('/api/replay/' + n);
+    const r = await saFetch('/api/replay/' + n, {}, NET_TIMEOUT_MS);
     const data = await r.json().catch(() => ({ error: 'HTTP ' + r.status }));
     return {
       ok: !data.error,
@@ -712,6 +856,61 @@ async function fetchReplay(n) {
     return { ok: false, status: 0, exhausted: false,
              data: { error: e.message } };
   }
+}
+
+// Shared success tail for a look, used by BOTH the first capture and the
+// pending-resend button: record it, surface which rung of the scale ladder
+// this photo landed on, then advance the flow. A degraded measurement that
+// looks identical to a clean one is how a wrong number ends up signed by
+// both parties, so the banner logic is deliberately unchanged.
+function acceptLook(data) {
+  state.looks.push(data.bulbs || []);
+  state.shots.push(data);
+
+  const sc = data.scale || {};
+  state.scaleSource = sc.source;
+  state.scaleConfidence = sc.confidence;
+  if (sc.confidence !== undefined) {
+    state.worstConfidence = Math.min(state.worstConfidence ?? 1, sc.confidence);
+  }
+
+  if (!sc.calibrated) {
+    state.calibrated = false;
+    banner(sc.warning || 'No calibration reference — sizes unavailable.', 'bad');
+  } else if (sc.confidence < 0.75) {
+    banner(`${sc.markers_found}/${sc.markers_expected} markers visible — `
+           + (sc.warning || 'sizes are approximate.'), 'bad');
+  } else if (sc.perspective_skew) {
+    banner('Hold the phone flatter — the mat looks tilted.', 'warn');
+  } else if (sc.markers_found < sc.markers_expected) {
+    banner(`${sc.markers_found}/${sc.markers_expected} markers visible — still accurate.`, 'warn');
+  } else {
+    banner('');
+  }
+
+  // Capture-quality advisories (godown lighting, hand-shake blur). The
+  // server already refused truly unusable frames with an actionable error;
+  // these are the "usable but imperfect" cases. Never overrides a
+  // calibration banner -- those matter more -- so only shown when the
+  // scale ladder reported nothing worse than a minor note.
+  const q = data.quality;
+  if (q && q.checked && q.warnings && q.warnings.length &&
+      sc.calibrated && (sc.confidence ?? 1) >= 0.6 &&
+      !sc.perspective_skew) {
+    banner(q.warnings.includes('dim') ? t('dimWarn') : t('blurWarn'), 'warn');
+  }
+
+  busy(false);
+  if (state.lookIndex === 0) {
+    state.lookIndex = 1;
+    $('shakePanel').classList.add('active');
+  } else {
+    state.lookIndex = 0;
+    state.trayCount++;
+    $('lookLabel').textContent = t('lookNext');
+  }
+  tally();
+  saveSession();   // LOOP-I2222: checkpoint AFTER the look is truly in
 }
 
 async function submit(blob) {
@@ -729,6 +928,7 @@ async function submit(blob) {
     }
   }
   busy(true, `${t('analysing')} (${state.lookIndex + 1})`);
+  let prep = null, fd = null;
   try {
     let data;
     if (REPLAY) {
@@ -749,7 +949,7 @@ async function submit(blob) {
       // Shrink before upload: this is the step that makes a 3G lot viable.
       // Runs under the busy overlay so the operator sees progress, and its
       // honest KB numbers render while the (much smaller) upload crawls.
-      const prep = await downscaleForUpload(blob);
+      prep = await downscaleForUpload(blob);
       blob = prep.blob;
       state.lastUpload = prep;
       state.uploadLog.push(prep);
@@ -757,71 +957,33 @@ async function submit(blob) {
         state.savedKB += prep.origKB - prep.sentKB;
       }
       renderDataLine();
-      const fd = new FormData();
+      fd = new FormData();
       fd.append('file', blob, 'tray.jpg');
       fd.append('lot_ref', $('lotRef').value);
       fd.append('look_index', state.lookIndex);
       fd.append('tray_id', 'T' + (state.trayCount + 1));
-      const r = await fetch('/analyze', { method: 'POST', body: fd });
-      data = await r.json();
-      if (data.error) throw new Error(data.error);
+      data = await postAnalyze(fd);
     }
 
-    state.looks.push(data.bulbs || []);
-    state.shots.push(data);
-
-    // Surface exactly which rung of the scale ladder this photo landed on.
-    // A degraded measurement that looks identical to a clean one is how a
-    // wrong number ends up signed by both parties.
-    const sc = data.scale || {};
-    state.scaleSource = sc.source;
-    state.scaleConfidence = sc.confidence;
-    if (sc.confidence !== undefined) {
-      state.worstConfidence = Math.min(state.worstConfidence ?? 1, sc.confidence);
-    }
-
-    if (!sc.calibrated) {
-      state.calibrated = false;
-      banner(sc.warning || 'No calibration reference — sizes unavailable.', 'bad');
-    } else if (sc.confidence < 0.75) {
-      banner(`${sc.markers_found}/${sc.markers_expected} markers visible — `
-             + (sc.warning || 'sizes are approximate.'), 'bad');
-    } else if (sc.perspective_skew) {
-      banner('Hold the phone flatter — the mat looks tilted.', 'warn');
-    } else if (sc.markers_found < sc.markers_expected) {
-      banner(`${sc.markers_found}/${sc.markers_expected} markers visible — still accurate.`, 'warn');
-    } else {
-      banner('');
-    }
-
-    // Capture-quality advisories (godown lighting, hand-shake blur). The
-    // server already refused truly unusable frames with an actionable error;
-    // these are the "usable but imperfect" cases. Never overrides a
-    // calibration banner -- those matter more -- so only shown when the
-    // scale ladder reported nothing worse than a minor note.
-    const q = data.quality;
-    if (q && q.checked && q.warnings && q.warnings.length &&
-        sc.calibrated && (sc.confidence ?? 1) >= 0.6 &&
-        !sc.perspective_skew) {
-      banner(q.warnings.includes('dim') ? t('dimWarn') : t('blurWarn'), 'warn');
-    }
-
-    busy(false);
-    if (state.lookIndex === 0) {
-      state.lookIndex = 1;
-      $('shakePanel').classList.add('active');
-    } else {
-      state.lookIndex = 0;
-      state.trayCount++;
-      $('lookLabel').textContent = t('lookNext');
-    }
-    tally();
-    saveSession();   // LOOP-I2222: checkpoint AFTER the look is truly in
+    acceptLook(data);
+    // LOOP-A2223: this capture succeeded, so any earlier unsent photo is
+    // superseded -- one pending slot per device, latest shot wins.
+    state.pending = null;
+    hidePending();
   } catch (e) {
     busy(false);
-    // Fault + way forward. The operator's session is untouched: the failed
-    // look was never added, so re-capturing is always safe.
-    banner(`${t('captureFailed')}: ${e.message} · ${t('captureFailHint')}`, 'bad');
+    if (prep && fd) {
+      // The look was NEVER added, so accepting it later is always safe.
+      // Keep the exact prepared request and offer one-tap resend instead of
+      // making the officer re-photograph a perfectly good tray.
+      state.pending = { fd, origKB: prep.origKB, sentKB: prep.sentKB,
+                        kind: netKey(e) };
+      renderPending();
+      $('pendingBar').classList.remove('hidden');
+    } else {
+      // Fault + way forward (replay cache problems, decode-gate stragglers).
+      banner(`${t('captureFailed')}: ${e.message} · ${t('captureFailHint')}`, 'bad');
+    }
   }
 }
 
@@ -835,7 +997,7 @@ $('finishBtn').onclick = async () => {
   if (!state.looks.length) { alert('Capture at least one tray first.'); return; }
   busy(true, t('computing'));
   try {
-    const r = await fetch('/finalize', {
+    const r = await saFetch('/finalize', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         looks: state.looks,
@@ -855,7 +1017,9 @@ $('finishBtn').onclick = async () => {
         scale_source: state.scaleSource,
         scale_confidence: state.worstConfidence,
       })
-    });
+    // The payload carries per-look base64 thumbnails -- an upload-sized body,
+    // so it gets the upload deadline, not the 15 s JSON one.
+    }, ANALYZE_TIMEOUT_MS);
     const d = await r.json();
     if (d.error) throw new Error(d.error);
     state.result = d.result; state.lotId = d.lot_id;
@@ -884,11 +1048,11 @@ $('finishBtn').onclick = async () => {
 // sees the money implication BEFORE signing, not after a dispute.
 async function loadInsights(lotId) {
   try {
-    const s = await fetch(`/api/sufficiency/${lotId}`).then(r => r.json());
+    const s = await saFetch(`/api/sufficiency/${lotId}`).then(r => r.json());
     if (!s.error) renderSufficiency(s);
   } catch (e) { /* insight cards must never block the flow */ }
   try {
-    const p = await fetch(`/api/price-band/${lotId}`).then(r => r.json());
+    const p = await saFetch(`/api/price-band/${lotId}`).then(r => r.json());
     if (!p.error) renderPrice(p);
   } catch (e) { /* ditto */ }
 }
@@ -1073,7 +1237,7 @@ $('disputeBtn').onclick = async () => {
     return;
   }
   try {
-    const r = await fetch('/dispute/' + bulbId, { method: 'POST' });
+    const r = await saFetch('/dispute/' + bulbId, { method: 'POST' });
     const d = await r.json().catch(() => ({}));
     if (!r.ok || d.error) throw new Error(d.error || ('HTTP ' + r.status));
     state.disputed.add(bulbId);

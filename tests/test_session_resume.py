@@ -79,10 +79,18 @@ def test_session_key_is_versioned():
 
 
 def test_save_happens_after_capture_success():
-    body = _submit_body()
-    # tally() marks the success path; the checkpoint must come after it --
-    # saving before would resurrect looks that were never analysed.
-    assert body.index("tally();") < body.index("saveSession();")
+    # LOOP-A2223 moved the success tail into acceptLook(), shared by the
+    # first capture AND the pending-resend button. The invariant is the
+    # same and now stronger: the checkpoint runs only after a look is fully
+    # recorded (tally marks it), and NO other path can call saveSession()
+    # directly -- so an unsent or failed upload can never be resurrected
+    # as if it had been analysed.
+    accept = _block(INDEX_HTML, r"function acceptLook\(data\) \{")
+    assert accept.index("tally();") < accept.index("saveSession();")
+    submit_body = _submit_body()
+    retry = _block(INDEX_HTML, r"\$\('pendingRetry'\)\.onclick = async \(\) => \{")
+    assert "saveSession();" not in submit_body
+    assert "saveSession();" not in retry
 
 
 def test_replay_never_checkpoints():
