@@ -490,16 +490,49 @@ def fair_price_band(
 # --------------------------------------------------------------------------
 
 
+def _clean_looks(n_looks, n_obs: int) -> int:
+    """Sanitise a look count into [1, max(1, n_obs)].
+
+    A look has at least one observation, so more looks than observations is
+    impossible and clamping there also bounds deff by n_obs. Garbage (None,
+    non-numeric) falls back to ONE look: inventing a multi-look design that
+    was not recorded would silently widen intervals nobody signed for.
+    """
+    try:
+        m = int(n_looks)
+    except (TypeError, ValueError):
+        return 1
+    return max(1, min(m, max(1, int(n_obs))))
+
+
 def sample_sufficiency(
     n_obs: int,
     p_hat_pct: float | None = None,
     target_half_width_pct: float = TARGET_HALF_WIDTH_PCT,
+    n_looks: int = 1,
 ) -> dict:
     """Is this many bulb-observations enough for the promised precision?
 
     Planning uses the worst case p=0.5 (maximising p(1-p)); once data exists
     the observed proportion sharpens the requirement. Returns how many more
     observations reach the target half-width, or an explicit SUFFICIENT.
+
+    LOOP-D2262 / RT-001 S-2b: under a repeated-look design the observations
+    are clustered (two looks re-observe the same bulbs), so precision is
+    evaluated at n_eff = n_obs / deff with the SAME worst-case Kish design
+    effect the certificate uses (grade_a_ci_fields, rho=1). Requirements are
+    reported in BOTH units:
+
+      n_required_distinct_bulbs  design-invariant effective samples needed
+                                 (z^2 p(1-p) / w^2 -- what "each bulb once"
+                                 would demand)
+      n_required_observations    what THIS design must photograph to deliver
+                                 them (= distinct x deff; at rho=1 more
+                                 shakes of one tray buy nothing -- only new
+                                 trays do)
+
+    `n_required` keeps its historical meaning (observations at the current
+    design) so existing progress-bar consumers stay meaningful.
     """
     if n_obs < 0:
         raise ValueError("n_obs cannot be negative")
@@ -507,23 +540,44 @@ def sample_sufficiency(
     if target_half_width_pct <= 0:
         raise ValueError("target half-width must be positive")
 
+    m = _clean_looks(n_looks, n_obs)
+    deff = design_effect(m, TWO_LOOK_RHO_ASSUMED)
+    n_eff_current = max(1, int(math.floor((n_obs or 0) / deff))) if n_obs else 0
+
     p_hat = 0.5 if p_hat_pct is None else _clamp_pct(p_hat_pct) / 100.0
 
-    current_lo, current_hi = wilson_pct(int(round(p_hat * n_obs)), n_obs) \
+    # Current precision at EFFECTIVE sample size -- identical arithmetic to
+    # grade_a_ci_fields, so this card can never promise less uncertainty
+    # than the certificate it annotates.
+    current_lo, current_hi = wilson_pct_effective(
+        round(p_hat * n_obs), n_obs, deff) \
         if n_obs > 0 else (0.0, 100.0)
     current_hw = (current_hi - current_lo) / 2.0
 
-    # Normal-approximation planning size; fine for choosing a sample plan.
+    # Design-invariant requirement in DISTINCT bulbs (normal-approximation
+    # planning size; fine for choosing a sample plan).
     w = target_half_width_pct / 100.0
-    n_required = math.ceil(Z95 * Z95 * p_hat * (1.0 - p_hat) / (w * w)) \
+    n_req_distinct = math.ceil(Z95 * Z95 * p_hat * (1.0 - p_hat) / (w * w)) \
         if w > 0 else 0
-    extra_needed = max(0, n_required - n_obs)
+    # ...and what the CURRENT design must photograph to deliver them.
+    n_required_obs = math.ceil(n_req_distinct * deff)
+    extra_needed = max(0, n_required_obs - n_obs)
 
     if extra_needed == 0:
         verdict = "SUFFICIENT"
         advice = (f"{n_obs} observations hold the Grade-A estimate to about "
                   f"+/-{current_hw:.1f} points -- inside the "
                   f"+/-{target_half_width_pct:g}-point promise.")
+    elif deff > 1.0:
+        verdict = "MORE_DATA"
+        advice = (f"At {n_obs} observations ({m} look(s)) the interval spans "
+                  f"+/-{current_hw:.1f} points. Reaching the "
+                  f"+/-{target_half_width_pct:g}-point promise needs about "
+                  f"{n_req_distinct} DISTINCT onions -- roughly "
+                  f"{extra_needed} more bulb-observations at your current "
+                  f"design. More shakes of one tray add little; add trays. "
+                  f"(Repeated looks re-observe the same onions: effective "
+                  f"sample ≈ {n_eff_current} distinct bulbs.)")
     else:
         verdict = "MORE_DATA"
         advice = (f"At {n_obs} observations the interval spans "
@@ -536,7 +590,12 @@ def sample_sufficiency(
         "observed_p_pct": round(p_hat * 100.0, 2) if n_obs else None,
         "current_half_width_pct": round(current_hw, 2) if n_obs else None,
         "target_half_width_pct": target_half_width_pct,
-        "n_required": n_required,
+        "n_required": n_required_obs,
+        "n_required_distinct_bulbs": n_req_distinct,
+        "n_required_observations": n_required_obs,
+        "n_looks": m,
+        "design_effect": round(deff, 4),
+        "n_effective_current": n_eff_current,
         "extra_needed": extra_needed,
         "verdict": verdict,
         "advice": advice,

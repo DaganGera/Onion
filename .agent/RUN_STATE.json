@@ -31,7 +31,7 @@
     "cycle11:cv-engineer:246 passed, 1 warning in 5.96s",
     "cycle12:backend-engineer:T-7 evidence thumbnails persisted+rendered; 264 passed",
     "cycle12:backend-engineer:264 passed, 1 warning in 5.89s",
-    "I2222:innovator:T-6 verify verdict scoped per-record + RECORD INTACT wording; session-resume checkpoint (tab-discard); IMPACT_EVIDENCE \u00a73b/3c rupee stakes + resolvable gap; certificate headline strip",
+    "I2222:innovator:T-6 verify verdict scoped per-record + RECORD INTACT wording; session-resume checkpoint (tab-discard); IMPACT_EVIDENCE §3b/3c rupee stakes + resolvable gap; certificate headline strip",
     "cycle13:innovator:292 passed, 1 warning in 6.16s",
     "cycle14:india-access:332 passed, 1 warning in 6.25s",
     "cycle15:demo-wow:344 passed, 1 warning in 6.18s",
@@ -70,10 +70,12 @@
     "cycle48:demo-wow:344 passed, 1 warning in 6.18s",
     "cycle49:frontier-tech:375 passed, 1 warning in 6.13s",
     "cycle50:jury-simulator:375 passed, 1 warning in 6.16s",
-    "cycle51:qa-engineer:412 passed, 1 warning in 9.40s"
+    "cycle51:qa-engineer:412 passed, 1 warning in 9.40s",
+    "cycle52:frontend-engineer:412 passed, 1 warning in 9.12s",
+    "D2262:data-scientist:S-2a+S-2b closed without unfreezing grading.py: twin._saleable_block cluster-aware interval (n_effective/design_effect/ci_method per block, n_looks threaded from result_json) + sample_sufficiency effective-n planning (n_required_distinct_bulbs vs n_required_observations, advice names the add-trays rule at rho=1); /api/sufficiency passes stored n_looks; index.html bilingual distinct-bulbs chip; 22 new contracts, full suite 434 passed"
   ],
   "failed_tasks": [],
-  "last_successful_action": "LOOP-I2222 innovator cycle: RT-001 T-6 closed frontend-only (verify.html verdict = lot.this_record_ok alone, amber 'another record altered' context card, integrity\u2260accuracy disclaimer, cascade overclaim copy fixed on report.html + db.py docstring); edge-case hunt = tab-discard/reload mid-lot on low-RAM Android -> localStorage checkpoint sama_session_v1 with quota-degrade + safe-DOM restore; IMPACT_EVIDENCE.md regenerated with \u00a73b (rupees-per-point at demo rates x ASSUMED 20-50q trolley) and \u00a73c (min resolvable Grade-A gap via shipped overlap rule); report.html gained a plain-language headline strip. grading.py untouched; no API/db behaviour change.",
+  "last_successful_action": "LOOP-D2262 data-scientist cycle: closed S-2a/S-2b (the two follow-ups D11 flagged) with tests written first (18 red confirmed before implementation). Twin saleable Grade-A band now uses arbitration.wilson_pct_effective at the recorded look design so the twin card can never promise less uncertainty than the signed certificate beside it; sample_sufficiency evaluates current precision at n_eff = n_obs/deff and quotes requirements in distinct bulbs AND observations-at-design, advice states that at rho=1 more shakes of one tray add little. Single-look inputs reproduce legacy numbers bit-for-bit; corrupt look counts clamp to [1, n_obs], garbage -> one look. Scenario blocks carry the same deff by design: simulated duplicates correlate LESS than real repeats (independent uniforms per row), so deff there is conservative. grading.py untouched; no db schema change; node --check on extracted inline JS OK.",
   "last_rejected_change": null,
   "top_risks": [
     "synthetic-only model evidence",
@@ -83,10 +85,10 @@
     "JURY_LOG/JURY_ANSWERS prose still references old verify banner wording post-T-6 fix"
   ],
   "blockers": [],
-  "last_audit": "2026-08-25T04:31:22+05:30",
+  "last_audit": "2026-08-25T06:05:00+05:30",
   "next_planned_actions": [
     "data-scientist: decide S-1 unfreeze (per-tray pooled estimator) with new tests, or document visible compensation on the certificate",
-    "master triage: T-1 canonical-hash envelope for result_json (architecture change \u2014 propose first)",
+    "master triage: T-1 canonical-hash envelope for result_json (architecture change — propose first)",
     "rehearse tamper-demo script with new RECORD INTACT / amber context flow",
     "physical gates T8 + printed-mat caliper remain the pitch's number-gating items"
   ]

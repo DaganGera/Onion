@@ -1059,10 +1059,14 @@ def api_sufficiency(lot_id: int, target: float = arbitration.TARGET_HALF_WIDTH_P
         if lot is None:
             return _error("No such certificate.", 404)
         result = lot.get("result") or {}
+        # LOOP-D2262 / RT-001 S-2b: plan at the certificate's own effective
+        # sample size -- a two-look lot must not have its card promise the
+        # pooled width the signed interval no longer claims.
         out = arbitration.sample_sufficiency(
             int(result.get("n_bulb_observations") or lot.get("n_bulbs") or 0),
             p_hat_pct=float(lot["grade_a_pct"] or 50.0),
             target_half_width_pct=target,
+            n_looks=int(result.get("n_looks") or lot.get("n_looks") or 1),
         )
         out["lot_ref"] = lot["lot_ref"]
         return out

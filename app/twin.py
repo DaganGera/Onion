@@ -71,6 +71,9 @@ ASSUMPTIONS = [
     "Per-quintal price of what REMAINS can rise if drift removes low "
     "grades first; value_index (price x saleable fraction, i.e. per "
     "delivered quintal) is the payout figure that can only fall.",
+    "Saleable Grade-A intervals use the certificate's cluster-aware width: "
+    "repeated looks re-observe the same bulbs (effective sample = "
+    "observations / looks at worst case).",
 ]
 
 _LABELS = {
@@ -117,16 +120,39 @@ def _sound_mix_pct(sound_by_grade: dict[str, float]) -> dict[str, float] | None:
             for g, v in sound_by_grade.items() if max(0.0, v) > 0}
 
 
+def _clamp_looks(n_looks, n: int) -> int:
+    """Same rule as arbitration._clean_looks: a look has >=1 observation,
+    so counts above n_obs are impossible and garbage means ONE look.
+    Kept local so arbitration's private helper stays private."""
+    try:
+        m = int(n_looks)
+    except (TypeError, ValueError):
+        return 1
+    return max(1, min(m, max(1, int(n))))
+
+
 def _saleable_block(n: int, saleable_a_count: float,
                     sound_by_grade: dict[str, float],
-                    defect_count: float) -> dict | None:
-    """One baseline/scenario block: Grade-A stats + cull-model price."""
-    lo, hi = grading.wilson_interval(int(round(saleable_a_count)), n)
+                    defect_count: float, n_looks=None) -> dict:
+    """One baseline/scenario block: Grade-A stats + cull-model price.
+
+    LOOP-D2262 / RT-001 S-2a: the interval uses the SAME cluster-aware
+    arithmetic as the certificate (arbitration.grade_a_ci_fields): repeated
+    looks re-observe the same bulbs, so both Wilson counts scale by the
+    worst-case Kish design effect and p_hat is preserved exactly. A twin
+    card must never promise less uncertainty than the signed record it
+    annotates -- before this fix a two-look lot showed +/-12 pts here while
+    its certificate carried +/-16.5. Single-look lots reproduce the legacy
+    width bit-for-bit and are labelled wilson-independent.
+    """
+    looks = _clamp_looks(n_looks, n)
+    deff = arbitration.design_effect(looks)
+    lo_pct, hi_pct = arbitration.wilson_pct_effective(saleable_a_count, n, deff)
     mix = _sound_mix_pct(sound_by_grade)
     price = None
     if mix is not None:
         band = arbitration.fair_price_band(
-            mix, round(100.0 * lo, 2), round(100.0 * hi, 2))
+            mix, round(lo_pct, 2), round(hi_pct, 2))
         central = band["central_price"]
         # Realisation per ORIGINAL quintal: what a quintal of the as-delivered
         # lot is worth once defective bulbs are culled. Per-quintal price of
@@ -139,6 +165,10 @@ def _saleable_block(n: int, saleable_a_count: float,
                  "rates_used": band["rates_used"]}
     return {
         "n_observations": n,
+        "n_effective": int(math.floor(n / deff)) if n > 0 else 0,
+        "design_effect": round(deff, 4),
+        "ci_method": ("wilson-independent" if deff == 1.0
+                      else "wilson-clustered-two-look"),
         "n_sound": round(n - defect_count, 2),
         "defect_rate_pct": _pct(defect_count, n),
         # Certificate convention counts the size band regardless of class,
@@ -146,8 +176,8 @@ def _saleable_block(n: int, saleable_a_count: float,
         # ledger so the constancy is visible rather than smuggled.
         "grade_a_pct_size_band": None,
         "saleable_grade_a_pct": _pct(saleable_a_count, n),
-        "saleable_grade_a_ci_low_pct": round(100.0 * lo, 2),
-        "saleable_grade_a_ci_high_pct": round(100.0 * hi, 2),
+        "saleable_grade_a_ci_low_pct": round(lo_pct, 2),
+        "saleable_grade_a_ci_high_pct": round(hi_pct, 2),
         "sound_size_mix_pct": mix,
         "price": price,
     }
@@ -206,8 +236,13 @@ def _bulb_class(row: dict) -> str:
 
 
 def simulate_from_bulbs(rows: list[dict], severity: float,
-                        rng: random.Random) -> tuple[dict, dict]:
-    """Degrade individual bulb rows. Returns (baseline, scenario) blocks."""
+                        rng: random.Random, n_looks=None) -> tuple[dict, dict]:
+    """Degrade individual bulb rows. Returns (baseline, scenario) blocks.
+
+    `n_looks` is the recorded look design of the source lot; it only affects
+    the confidence-interval width (cluster-aware, see _saleable_block), never
+    the simulation itself.
+    """
     n = len(rows)
     classes = [_bulb_class(r) for r in rows]
     grades = [(r.get("size_grade") or "UNKNOWN") for r in rows]
@@ -258,9 +293,9 @@ def simulate_from_bulbs(rows: list[dict], severity: float,
     size_band_pct = _pct(band_a_base, n)
 
     base = _saleable_block(n, base_saleable_a, base_sound_by_grade,
-                           total_defects)
+                           total_defects, n_looks)
     scen = _saleable_block(n, scen_saleable_a, scen_sound_by_grade,
-                           scen_defects)
+                           scen_defects, n_looks)
     for block in (base, scen):
         block["grade_a_pct_size_band"] = size_band_pct
 
@@ -303,9 +338,9 @@ def simulate_from_aggregates(result: dict, severity: float) -> tuple[dict, dict]
     scen_pool = _pool((n_sound_f - k) / n if n else 0.0)
 
     base = _saleable_block(n, base_pool.get("A", 0.0), base_pool,
-                           total_defects_f)
+                           total_defects_f, result.get("n_looks"))
     scen = _saleable_block(n, scen_pool.get("A", 0.0), scen_pool,
-                           total_defects_f + k)
+                           total_defects_f + k, result.get("n_looks"))
     size_band_pct = _pct(n * sound_share.get("A", 0.0), n)
     for block in (base, scen):
         block["grade_a_pct_size_band"] = size_band_pct
@@ -344,7 +379,10 @@ def simulate_lot(lot: dict, severity: float = DEFAULT_SEVERITY,
             used_seed = int(seed)
             seed_source = "explicit"
         rng = random.Random(used_seed)
-        base, scen, degraded = simulate_from_bulbs(rows, severity, rng)
+        # LOOP-D2262: the recorded look design rides along so the twin's
+        # intervals match the certificate's cluster-aware width.
+        base, scen, degraded = simulate_from_bulbs(
+            rows, severity, rng, (result or {}).get("n_looks"))
     else:
         data_source = "aggregate"
         used_seed = seed

@@ -139,3 +139,91 @@ one plane). Pair (Yᵢ₁, Yᵢ₂) over many lots → ρ̂ = P(agree) correctio
 ANOVA estimator; feed back as `rho=` and record the fitted value in
 constants.json next to the occlusion factors. Until then ρ=1 is the only
 number the certificate is allowed to assume.
+
+---
+
+## LOOP-D2262 — S-2 executed everywhere it lived (S-2a + S-2b)
+
+Date: 2026-08-25. Owner: data-scientist. grading.py STILL untouched; both
+fixes reuse the D11 machinery (`arbitration.design_effect`,
+`wilson_pct_effective`) so there is exactly ONE implementation of the
+cluster-aware arithmetic in the codebase.
+
+### 8a. Where the same bug still lived, and what changed
+
+* **S-2a (`app/twin.py::_saleable_block`)** — the digital twin computed its
+  saleable Grade-A band with plain `grading.wilson_interval` on pooled n.
+  After D11 this was not just overconfident (√2 too narrow on two-look lots)
+  but INTERNALLY INCONSISTENT: report page ±16.5 pts vs twin card ±12 pts for
+  the same lot. Fix: `_saleable_block` takes `n_looks`, computes the band at
+  deff = design_effect(m), and publishes `n_effective`, `design_effect`,
+  `ci_method` alongside the existing keys. Threaded from result_json's
+  recorded look design through BOTH simulators (per-bulb and aggregate), so
+  baseline and scenario share one design basis and stay comparable.
+  Single-look lots reproduce legacy numbers bit-for-bit.
+* **S-2b (`arbitration.sample_sufficiency`)** — evaluated current precision
+  with pooled Wilson and quoted `n_required` in independent units: the
+  officer's card could print SUFFICIENT while the signed certificate carried
+  a wider interval. Fix: optional `n_looks` (default 1 = exact legacy
+  behaviour); current half-width now comes from `wilson_pct_effective`, i.e.
+  the SAME numbers as `grade_a_ci_fields`. Requirements are reported in both
+  units:
+    - `n_required_distinct_bulbs` = ⌈z²·p̂(1−p̂)/w²⌉ — design-invariant;
+      this is "how many onions examined once".
+    - `n_required_observations`   = distinct × deff — what THIS design must
+      photograph. At ρ=1 more shakes of one tray buy nothing; only new trays
+      do. The advice copy says exactly that.
+  `/api/sufficiency/{lot_id}` passes stored n_looks; index.html appends a
+  bilingual "≈N distinct bulbs" chip when deff > 1.
+
+### 8b. Correlation structure of the SIMULATED blocks (why deff on the scenario is honest)
+
+Baseline blocks describe the measured lot → identical clustering argument as
+§2, deff applies directly.
+
+Scenario blocks are subtler. On the per-bulb path each ROW draws an
+INDEPENDENT degradation uniform, so two rows of the same physical bulb can
+simulate apart (one rots, one survives). Real repeats would degrade TOGETHER
+(one bulb, one fate): simulated duplicates therefore correlate LESS than real
+ones, which means the scenario interval WITHOUT deff would understate
+variance less than the raw duplication suggests but still sit on duplicated
+evidence. Applying deff = m to the scenario is thus CONSERVATIVE (never
+anti-conservative), keeps both blocks on one comparable basis, and matches
+the house rule: broken/unknown correlation widens, never shrinks. The
+aggregate path has no RNG at all — its scenario uncertainty is purely the
+sampling error of the measured mix propagated through the cull model — so
+deff applies there for the same reason it applies to the baseline.
+
+Monte-Carlo noise of the simulation itself remains uncovered by either
+interval (as before D2262); it is seeded, deterministic, and small next to
+sampling error. Stated here so nobody rediscovers it in front of a jury.
+
+### 8c. Input hygiene (shared rule)
+
+`n_looks` is clamped into [1, max(1, n_obs)] — more looks than observations
+is impossible by construction (each look contributes ≥1 row) and clamping
+there bounds deff ≤ n_obs. Garbage (None / non-numeric / ≤0) means ONE look:
+inventing a multi-look design that was never recorded would silently widen
+intervals nobody signed for. NaN raises inside int() and lands in the same
+fallback. Implemented twice, deliberately small (`_clean_looks` private to
+arbitration, `_clamp_looks` private to twin) rather than exporting a new
+public helper mid-loop.
+
+### 8d. Verification
+
+    python -m pytest tests/test_two_look_followups.py -q   # 22 contracts
+    python -m pytest tests/test_twin.py tests/test_two_look_ci.py -q
+    python -m pytest -q                                    # 434 passed
+
+Anchors reused from §6 (all hand-verified at z=1.96): pooled Wilson(36,60) =
+[47.37, 71.43] ↔ clustered Wilson(18,30) = [42.32, 75.41]; Wilson(21,35) =
+[43.57, 74.45]. New pins: Wilson(40,60) = [54.06, 77.27] ↔ Wilson(20,30) =
+[48.78, 80.77]; planning sizes 267 distinct bulbs @ p=50%, 257 @ p=60%
+(→ 534 / 514 observations at two looks).
+
+### 8e. Still open
+
+* §7 pre-registration: fit real ρ via cross-look IoU matching; pass through
+  `rho=` / constants.json.
+* S-1 (max-per-look defect estimator) remains a frozen-file decision —
+  unchanged by this loop.

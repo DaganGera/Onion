@@ -1166,6 +1166,14 @@ function renderSufficiency(s) {
   $('suffBar').className = 'h-full transition-all duration-700 ' +
     (ok ? 'bg-emerald-600' : 'bg-amber-500');
   $('suffLabel').textContent = `${s.n_obs} / ${s.n_required} observations`;
+  // LOOP-D2262: under a repeated-look design the requirement is quoted in
+  // observations at that design; show the distinct-bulb equivalent so the
+  // officer is never told a shake adds bulbs it does not.
+  if (s.design_effect != null && s.design_effect > 1 && s.n_effective_current != null) {
+    $('suffLabel').textContent += LANG === 'hi'
+      ? ` · ≈${s.n_effective_current} अलग प्याज़`
+      : ` · ≈${s.n_effective_current} distinct bulbs`;
+  }
   // LOOP-F2261: badge tints darkened one step -- 12px bold on a tinted
   // chip measured 6.78 (emerald-800/emerald-100) and 6.37 (amber-800/
   // amber-100); emerald-900 / amber-900 measure 8.57 and 8.15.
