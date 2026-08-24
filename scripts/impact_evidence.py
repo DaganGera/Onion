@@ -158,6 +158,72 @@ def build_markdown(gt: dict, metrics: dict) -> str:
         f"re-grade, it is reproducible, timestamped, hash-chained and free.")
     add("")
 
+    # --- LOOP-I2222: rupee stakes + smallest resolvable dispute --------------
+    # Everything here is arithmetic over numbers already in the repo or
+    # flagged assumptions; nothing is measured in the field.
+    r_a = arb.DEFAULT_RATES["A"]
+    r_b = arb.DEFAULT_RATES["B"]
+    r_c = arb.DEFAULT_RATES["C"]
+    per_pt_to_b = (r_a - r_b) / 100.0     # rupees per quintal per Grade-A pt
+    per_pt_to_c = (r_a - r_c) / 100.0
+    trolley_q = (20.0, 50.0)              # ASSUMED 2-5 t tractor-trolley
+
+    add("## 3b. What one percentage point of Grade A is worth (the money frame)")
+    add("")
+    add("The certificate's ±points convert directly into rupees at the same")
+    add("price band the app already renders. Rates below are the app's DEMO")
+    add(f"defaults shipped in `app/arbitration.py` (A ₹{r_a:.0f} / B ₹{r_b:.0f} "
+        f"/ C ₹{r_c:.0f} per quintal) anchored to Lasalgaon's Aug-2026 average")
+    add("band (§5) but with INVENTED differentials; trolley mass is an")
+    add("ASSUMED 20–50 q (a 2–5 t tractor-trolley, consistent with §4's")
+    add("literature lot size). The conversion itself is arithmetic.")
+    add("— MEASURED-IN-REPO (rates-as-shipped + arithmetic) + ASSUMED (mass)")
+    add("")
+    add(f"- Each Grade-A point misgraded down to B moves ₹{per_pt_to_b:.0f}/q; "
+        f"down to C, ₹{per_pt_to_c:.0f}/q.")
+    add(f"- Over a {trolley_q[0]:.0f}–{trolley_q[1]:.0f} q trolley, a 10-point "
+        f"Grade-A dispute is therefore "
+        f"₹{10 * per_pt_to_b * trolley_q[0]:,.0f}–"
+        f"₹{10 * per_pt_to_b * trolley_q[1]:,.0f} of exposure if the argument "
+        f"is A-vs-B, and "
+        f"₹{10 * per_pt_to_c * trolley_q[0]:,.0f}–"
+        f"₹{10 * per_pt_to_c * trolley_q[1]:,.0f} if A-vs-C — the size of "
+        "fight this product exists to arbitrate.")
+    add(f"- SAMA's own sampling band at the ±{arb.TARGET_HALF_WIDTH_PCT:g}-pt "
+        f"promise brackets that exposure to roughly ±₹"
+        f"{arb.TARGET_HALF_WIDTH_PCT * per_pt_to_b * trolley_q[0]:,.0f}–±₹"
+        f"{arb.TARGET_HALF_WIDTH_PCT * per_pt_to_c * trolley_q[1]:,.0f} per "
+        "lot: the interval a phone app prints for free carries real money.")
+    add("- Defect errors price differently: a rotten bulb should be rejected, "
+        "not re-banded, so each undetected rotten point costs its FULL grade "
+        f"rate — 5 rot points missed on a {trolley_q[0]:.0f} q Grade-A lot "
+        f"is ≈₹{5 / 100 * r_a * trolley_q[0]:,.0f} of overpayment.")
+    add("")
+
+    # Smallest gap two SAMA certificates can separate, using the SAME rule
+    # the shipped arbitration engine uses (95% Wilson intervals -> overlap).
+    w_obs = ci_half_width(round(p_a * n_req_obs), n_req_obs)
+    w_worst = ci_half_width(n_req_obs // 2, n_req_obs)
+    add("## 3c. The smallest Grade-A gap two SAMA certificates can separate")
+    add("")
+    add("`arbitration.py` calls AGREE when two lots' 95% Wilson intervals")
+    add("overlap, so the minimum resolvable gap between two certificates is")
+    add("the SUM of their half-widths. At the sufficiency target "
+        f"({n_req_obs}")
+    add("observations each): — MEASURED-IN-REPO (arithmetic)")
+    add("")
+    add(f"- At the hand-sorted mix (Grade-A ≈ {p_a * 100:.1f}%): ±{w_obs:.1f} "
+        f"pts each → disputes wider than ≈{2 * w_obs:.1f} pts are resolved "
+        "statistically.")
+    add(f"- At worst-case p=50%: ±{w_worst:.1f} pts each → ≈"
+        f"{2 * w_worst:.1f} pts.")
+    add("- Read honestly against §3's ASSUMED human band (±5–10 pts): at the")
+    add("  target sample SAMA separates differences around or above the TOP")
+    add("  of that band — the gross end of disputes — while staying")
+    add("  reproducible, timestamped and free. It does not out-resolve a")
+    add("  trained human on subtle calls, and nothing here claims otherwise.")
+    add("")
+
     add("## 4. Time-per-lot estimate")
     add("")
     if cpu_p95 and gpu_p95:
@@ -223,6 +289,9 @@ def build_markdown(gt: dict, metrics: dict) -> str:
     add("- Real-phone tray photos re-run through eval_lot/calibrate_size "
         "converting §1–§2 inputs from synthetic to field data (gates T8, "
         "printed-mat caliper check).")
+    add("- The ₹ figures in §3b–§3c ride on DEMO rate differentials and an "
+        "ASSUMED trolley mass; replace either with a mandi-rate feed or a "
+        "weighed-lot study before quoting them as field losses.")
     add("- Any §5 literature link rot or a superseding national loss study: "
         "re-verify the citations in EVIDENCE_AUDIT.md §6 before quoting.")
     add("")

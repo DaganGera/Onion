@@ -19,6 +19,22 @@
 <main id="content" class="max-w-xl mx-auto p-4 space-y-4 pb-16">
   <div id="verdict" class="rounded-xl border-4 p-6 text-center font-black text-2xl">Checking…</div>
 
+  <!-- EVIDENCE_AUDIT V1: "verified" used to read as "the grading was
+       checked for accuracy". It was not, and is not: this page proves the
+       RECORD is intact, so the banner says exactly that and nothing more. -->
+  <p class="text-[11px] text-slate-500 text-center">This check proves the record is unaltered.
+     It does not re-measure the onions — accuracy limits are stated on the certificate itself.</p>
+
+  <!-- RT-001 T-6: context card for the case THIS record is fine but another
+       record at the centre was edited. Used to be invisible: the whole page
+       went red because chain.intact is centre-wide. -->
+  <div id="otherBreak" class="hidden rounded-xl border-2 border-amber-400 bg-amber-50 p-4 text-sm text-amber-900">
+    <span class="font-bold">⚠ Another record at this centre was altered.</span>
+    This certificate's own record verifies intact — see the highlighted break in the
+    chain below. The tamper is localized to that one record, which is precisely what
+    a hash chain is for.
+  </div>
+
   <!-- headline numbers, same visual weight as the capture app -->
   <div class="bg-white rounded-xl p-5 border-2 border-slate-200 text-center">
     <div class="text-sm font-semibold text-slate-500 uppercase tracking-wide">Grade A proportion</div>
@@ -49,9 +65,11 @@
     <div id="chain" class="space-y-1"></div>
     <p class="text-[11px] text-slate-500 mt-3">
       Every record's SHA-256 covers its own contents plus the previous record at this centre.
-      Editing a stored value without recomputing its hash is detected here.
+      Editing a stored value without recomputing its hash is detected here, and the break is
+      pinned to that one record — later records keep verifying against their own stored hashes.
       Tamper-evident, not tamper-proof: someone with full database access could recompute the
-      whole chain — which is why certificates are signed on-device by both parties too.
+      whole chain. Sign-off records both parties' on-device confirmation taps; it is not a
+      cryptographic signature.
     </p>
   </div>
 
@@ -70,10 +88,13 @@ const $ = id => document.getElementById(id);
   const lot = DATA.lot || {};
   const chain = DATA.chain || {};
 
-  const okRecord = chain.intact && lot.this_record_ok;
+  // RT-001 T-6: the verdict belongs to THIS record alone. chain.intact is
+  // centre-wide -- gating the banner on it used to paint every intact
+  // certificate red because somebody else's row was edited.
+  const okRecord = !!lot.this_record_ok;
   const v = $('verdict');
   if (okRecord) {
-    v.textContent = '✔ CERTIFICATE VERIFIED';
+    v.textContent = '✔ RECORD INTACT';
     v.className = 'rounded-xl border-4 p-6 text-center font-black text-2xl ' +
       'bg-emerald-50 border-emerald-600 text-emerald-800';
   } else {
@@ -81,6 +102,7 @@ const $ = id => document.getElementById(id);
     v.className = 'rounded-xl border-4 p-6 text-center font-black text-2xl ' +
       'bg-red-50 border-red-600 text-red-800';
   }
+  $('otherBreak').classList.toggle('hidden', !(okRecord && !chain.intact));
 
   $('gradeA').textContent = (lot.grade_a_pct ?? 0).toFixed(1) + '%';
   const half = (((lot.ci_high ?? 0) - (lot.ci_low ?? 0)) / 2).toFixed(1);

@@ -4,9 +4,11 @@ WHY A HASH CHAIN
 ----------------
 The product's claim is that a grading certificate is contestable. That only
 means something if a record cannot be quietly edited after a dispute is
-raised. Each lot's hash covers its own canonical JSON plus the previous
-lot's hash for that centre, so altering any historical row breaks every hash
-after it and verify_chain() reports the break.
+raised. Each lot's hash covers its own canonical JSON plus the previous lot's
+hash for that centre, so an altered row no longer matches its stored hash and
+audit_chain() pins the break to that record (later rows are checked against
+their own stored hashes rather than cascading, so one bad record cannot
+falsely redden its neighbours).
 
 This is tamper-EVIDENCE, not tamper-proofing. Anyone with write access to
 the file could recompute the whole chain. Say that plainly if a judge asks;

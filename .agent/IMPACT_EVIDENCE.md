@@ -51,6 +51,36 @@ spread below is an ASSUMED band, not a measurement:
   - At small samples our CI is WIDER than assumed human disagreement — which is why the app refuses to bless small samples and shows the sufficiency card (80-observation target).
   - Once the sample reaches that target, SAMA's interval (±6 pts by construction) is comparable to or tighter than ASSUMED human-to-human spread — and unlike a human re-grade, it is reproducible, timestamped, hash-chained and free.
 
+## 3b. What one percentage point of Grade A is worth (the money frame)
+
+The certificate's ±points convert directly into rupees at the same
+price band the app already renders. Rates below are the app's DEMO
+defaults shipped in `app/arbitration.py` (A ₹2400 / B ₹1800 / C ₹1200 per quintal) anchored to Lasalgaon's Aug-2026 average
+band (§5) but with INVENTED differentials; trolley mass is an
+ASSUMED 20–50 q (a 2–5 t tractor-trolley, consistent with §4's
+literature lot size). The conversion itself is arithmetic.
+— MEASURED-IN-REPO (rates-as-shipped + arithmetic) + ASSUMED (mass)
+
+- Each Grade-A point misgraded down to B moves ₹6/q; down to C, ₹12/q.
+- Over a 20–50 q trolley, a 10-point Grade-A dispute is therefore ₹1,200–₹3,000 of exposure if the argument is A-vs-B, and ₹2,400–₹6,000 if A-vs-C — the size of fight this product exists to arbitrate.
+- SAMA's own sampling band at the ±6-pt promise brackets that exposure to roughly ±₹720–±₹3,600 per lot: the interval a phone app prints for free carries real money.
+- Defect errors price differently: a rotten bulb should be rejected, not re-banded, so each undetected rotten point costs its FULL grade rate — 5 rot points missed on a 20 q Grade-A lot is ≈₹2,400 of overpayment.
+
+## 3c. The smallest Grade-A gap two SAMA certificates can separate
+
+`arbitration.py` calls AGREE when two lots' 95% Wilson intervals
+overlap, so the minimum resolvable gap between two certificates is
+the SUM of their half-widths. At the sufficiency target (80
+observations each): — MEASURED-IN-REPO (arithmetic)
+
+- At the hand-sorted mix (Grade-A ≈ 8.1%): ±6.0 pts each → disputes wider than ≈11.9 pts are resolved statistically.
+- At worst-case p=50%: ±10.7 pts each → ≈21.4 pts.
+- Read honestly against §3's ASSUMED human band (±5–10 pts): at the
+  target sample SAMA separates differences around or above the TOP
+  of that band — the gross end of disputes — while staying
+  reproducible, timestamped and free. It does not out-resolve a
+  trained human on subtle calls, and nothing here claims otherwise.
+
 ## 4. Time-per-lot estimate
 
 - Analysis cost per look: p95 139 ms CPU / 97 ms GPU on the dev machine. — SYNTHETIC (real hardware, generated imagery; measures pipeline cost only)
@@ -86,5 +116,6 @@ figures from published sources — never present them as SAMA data.
 
 - A dual-grading study (two inspectors, same lots) replacing §3's assumed band with data.
 - Real-phone tray photos re-run through eval_lot/calibrate_size converting §1–§2 inputs from synthetic to field data (gates T8, printed-mat caliper check).
+- The ₹ figures in §3b–§3c ride on DEMO rate differentials and an ASSUMED trolley mass; replace either with a mandi-rate feed or a weighed-lot study before quoting them as field losses.
 - Any §5 literature link rot or a superseding national loss study: re-verify the citations in EVIDENCE_AUDIT.md §6 before quoting.
 

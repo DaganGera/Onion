@@ -44,6 +44,16 @@
     </div>
   </div>
 
+  <!-- LOOP-I2222 judge touchpoint: one plain-language sentence anyone --
+       farmer, trader, inspector, jury -- can read aloud in five seconds.
+       Rendered via textContent from the SAME result_json as every figure
+       below: no new claims, just the existing numbers in words. -->
+  <div id="headlineStrip"
+       class="mt-5 mb-5 border-l-4 border-emerald-800 bg-emerald-50 px-4 py-3 rounded-r">
+    <div class="text-[10px] font-bold uppercase tracking-widest text-emerald-800">In one sentence</div>
+    <div id="headlineText" class="text-sm font-semibold text-slate-800 mt-0.5"></div>
+  </div>
+
   <!-- headline -->
   <div class="grid grid-cols-3 gap-4 my-6">
     <div class="col-span-2 border-2 border-emerald-900 rounded-lg p-5 text-center">
@@ -134,8 +144,9 @@
       <div class="text-[10px] uppercase tracking-widest text-slate-500">Record hash (SHA-256)</div>
       <div id="hash" class="font-mono text-[10px] break-all text-slate-700"></div>
       <div class="text-[10px] text-slate-500 mt-1">
-        Chained to the previous record at this centre. Altering any earlier record breaks every
-        hash after it. Tamper-evident, not tamper-proof.
+        Chained to the previous record at this centre. Any altered record is individually
+        detectable on the verification page — the break is pinned to that record.
+        Tamper-evident, not tamper-proof.
       </div>
       <a id="verifyLink" href="__VERIFY_URL__" target="_blank"
          class="text-[11px] font-semibold text-emerald-800 underline break-all">Anyone can verify this certificate: <span id="verifyUrlText"></span></a>
@@ -167,6 +178,18 @@ const $ = id => document.getElementById(id);
   $('gradeA').textContent = (res.grade_a_pct ?? 0).toFixed(1) + '%';
   const half = (((res.grade_a_ci_high ?? 0) - (res.grade_a_ci_low ?? 0)) / 2).toFixed(1);
   $('gradeCI').textContent = '± ' + half;
+
+  // LOOP-I2222: the five-second read. Same numbers, in sentence order:
+  // what the lot graded, how sure we are, how much is defective, and on
+  // what evidence -- so the first thing the eye lands on is honest.
+  $('headlineText').textContent =
+    `Lot ${LOT.lot_ref || '—'} graded ${(res.grade_a_pct ?? 0).toFixed(1)}% Grade A ` +
+    `(95% CI ${(res.grade_a_ci_low ?? 0).toFixed(1)}–${(res.grade_a_ci_high ?? 0).toFixed(1)}%), ` +
+    `with ${(res.defect_rate_corrected ?? 0).toFixed(1)}% visible surface defects, ` +
+    `estimated from ${res.n_bulb_observations ?? 0} bulb-observations in ` +
+    `${res.n_looks ?? 0} look${(res.n_looks ?? 0) === 1 ? '' : 's'} on ` +
+    `${LOT.created_at ? new Date(LOT.created_at).toLocaleDateString() : '—'}.`;
+
   let sample = `${res.n_bulb_observations ?? 0} bulb-observations · ${res.n_looks ?? 0} looks · ` +
     `${res.n_trays ?? 0} tray(s) · 95% CI ${(res.grade_a_ci_low ?? 0).toFixed(1)}–${(res.grade_a_ci_high ?? 0).toFixed(1)}%`;
   // LOOP-D2218: effective n shown only when the overlay produced it, so

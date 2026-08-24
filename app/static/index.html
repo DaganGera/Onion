@@ -41,6 +41,18 @@
 <section id="s1" class="screen active p-4 space-y-4">
   <h1 class="text-xl font-bold" data-i18n="newLot">New Lot</h1>
 
+  <!-- LOOP-I2222: a low-RAM Android phone discards background tabs without
+       asking. An officer who walked between sheds mid-lot used to come back
+       to an empty form and re-photograph every tray. If a checkpoint exists
+       from a previous visit, offer it here before anything else. -->
+  <div id="resumeCard" class="hidden rounded-xl border-2 border-amber-400 bg-amber-50 p-4 space-y-3">
+    <div id="resumeTitle" class="font-bold text-amber-900"></div>
+    <div id="resumeBody" class="text-sm text-amber-900"></div>
+    <div id="resumeWarn" class="hidden text-xs font-semibold text-red-700"></div>
+    <button id="resumeBtn" class="w-full bg-amber-500 text-amber-950 font-bold py-3 rounded-lg active:bg-amber-600"></button>
+    <button id="freshStart" class="w-full border-2 border-slate-300 text-slate-600 text-sm font-semibold py-2 rounded-lg active:bg-slate-200"></button>
+  </div>
+
   <label class="block">
     <span class="text-sm font-semibold text-slate-700" data-i18n="centre">Procurement centre</span>
     <select id="centre" class="mt-1 w-full rounded-lg border-2 border-slate-300 p-3 text-base bg-white"></select>
@@ -313,6 +325,18 @@ const I18N = {
     photoOptimised: (o, s, p) => `Photo compressed: ${o} → ${s} (${p}% less data)`,
     photoAsIs: s => `Photo sent as-is — ${s}`,
     sessionSaved: kb => ` · session saved ${kb}`,
+    // LOOP-I2222: the phone closed this page mid-lot (tab discarded, reload,
+    // accidental back). Offer the saved session instead of a wiped form.
+    resumeTitle: 'Unfinished lot found',
+    resumeBody: (n, when) => `${n} captured look${n > 1 ? 's' : ''} from `
+                            + when + ' are still saved on this device.',
+    resumeBtn: 'Resume that lot',
+    freshStart: 'Discard and start a new lot',
+    resumeImagesLost: 'The photos could not be kept — analysis data survived, '
+                    + 'but finalising will issue the certificate without '
+                    + 'photographic evidence. Reshooting any look replaces it.',
+    resumeRestored: n => `Restored ${n} captured look${n > 1 ? 's' : ''}. `
+                       + 'Capture more or press Finish.',
   },
   hi: {
     headerSub: 'प्याज़ लॉट ग्रेडिंग · DoCA',
@@ -365,6 +389,14 @@ const I18N = {
     photoOptimised: (o, s, p) => `फ़ोटो छोटी की गई: ${o} → ${s} (${p}% कम डेटा)`,
     photoAsIs: s => `फ़ोटो जैसी है वैसी भेजी — ${s}`,
     sessionSaved: kb => ` · कुल बचत ${kb}`,
+    resumeTitle: 'अधूरा लॉट मिला',
+    resumeBody: (n, when) => `${when} की ${n} तस्वीरें इसी डिवाइस पर सुरक्षित हैं।`,
+    resumeBtn: 'उसी लॉट पर जारी रखें',
+    freshStart: 'छोड़ें और नया लॉट शुरू करें',
+    resumeImagesLost: 'तस्वीरें सुरक्षित नहीं रह सकीं — विश्लेषण का डेटा बचा है, '
+                    + 'पर समाप्त करने पर प्रमाणपत्र में फ़ोटो सबूत नहीं होंगे। '
+                    + 'कोई भी तस्वीर दोबारा लेने पर वह बदल जाएगी।',
+    resumeRestored: n => `${n} तस्वीरें वापस लाई गईं। और लें या “समाप्त करें” दबाएँ।`,
   },
 };
 
@@ -409,6 +441,66 @@ const show = id => {
   $(id).classList.add('active');
   window.scrollTo(0, 0);
 };
+
+// ---------- LOOP-I2222: survive the phone closing this page mid-lot --------
+// Real field condition nobody tested: a ₹8k Android phone running Chrome
+// discards background tabs under memory pressure without asking. An officer
+// who captured three trays, walked to the next shed, and came back used to
+// find an empty form -- every look re-photographed. After each successful
+// capture we checkpoint the ANALYSIS data to localStorage, so a reload can
+// offer the lot back. Best-effort by design: private mode or a full quota
+// must never block the capture flow itself. Replay mode never checkpoints,
+// keeping the offline demo deterministic.
+const SESSION_KEY = 'sama_session_v1';
+
+function sessionCheckpoint(includeImages) {
+  // Plain-data only: blobs and Sets do not survive JSON round-trips, and
+  // bulbs arrays are already inside looks (halves the payload size).
+  return {
+    v: 1,
+    ts: new Date().toISOString(),
+    lotRef: $('lotRef').value,
+    centreId: $('centre').value || null,
+    farmerName: $('farmer').value,
+    officerName: $('officer').value,
+    looks: state.looks,
+    lookIndex: state.lookIndex,
+    trayCount: state.trayCount,
+    calibrated: state.calibrated,
+    scaleSource: state.scaleSource,
+    worstConfidence: state.worstConfidence,
+    savedKB: state.savedKB,
+    uploadLog: state.uploadLog.map(u => ({
+      origKB: u.origKB, sentKB: u.sentKB, resized: !!u.resized })),
+    shots: includeImages
+      ? state.shots.map((s, i) => ({
+          annotated: (s && typeof s.annotated === 'string') ? s.annotated : '',
+          tray_id: (s && s.tray_id) || '',
+          annotated_scale: (s && s.annotated_scale) || 1,
+          n_bulbs: (state.looks[i] || []).length }))
+      : null,
+  };
+}
+
+function saveSession() {
+  if (REPLAY || state.lotId) return;
+  try {
+    try {
+      localStorage.setItem(SESSION_KEY, JSON.stringify(sessionCheckpoint(true)));
+    } catch (quotaErr) {
+      // The annotated JPEGs blew the ~5 MB storage quota. Keep the numbers:
+      // a certificate without photos beats re-photographing every tray.
+      const slim = sessionCheckpoint(false);
+      slim.images_dropped = true;
+      localStorage.setItem(SESSION_KEY, JSON.stringify(slim));
+    }
+  } catch (e) { /* storage unavailable (private mode): grading continues */ }
+}
+
+function clearSession() {
+  try { localStorage.removeItem(SESSION_KEY); } catch (e) {}
+}
+
 const busy = (on, text) => {
   $('busyText').textContent = text || 'Analysing…';
   $('busy').classList.toggle('hidden', !on);
@@ -724,6 +816,7 @@ async function submit(blob) {
       $('lookLabel').textContent = t('lookNext');
     }
     tally();
+    saveSession();   // LOOP-I2222: checkpoint AFTER the look is truly in
   } catch (e) {
     busy(false);
     // Fault + way forward. The operator's session is untouched: the failed
@@ -766,6 +859,9 @@ $('finishBtn').onclick = async () => {
     const d = await r.json();
     if (d.error) throw new Error(d.error);
     state.result = d.result; state.lotId = d.lot_id;
+    // LOOP-I2222: the lot is now a server-side record with its own id --
+    // the device checkpoint has served its purpose.
+    clearSession();
     // Bulb rows were just written by /finalize and their ids mirror
     // state.looks exactly, so every bulb on screen now has a real row the
     // dispute endpoint can point at.
@@ -1013,6 +1109,78 @@ $('genCert').onclick = () => {
   if (state.lotId) location.href = '/report/' + state.lotId;
   else banner('No lot saved — cannot issue a certificate.', 'bad');
 };
+
+// ---------- LOOP-I2222: offer a checkpointed lot back after a reload -------
+// Runs last so every helper it touches already exists. Restored strings go
+// into .value/.textContent only -- never innerHTML -- so a crafted
+// localStorage payload cannot inject markup.
+(function offerResume() {
+  if (REPLAY) return;
+  let saved = null;
+  try { saved = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null'); }
+  catch (e) { saved = null; }
+  if (!saved || saved.v !== 1 || !Array.isArray(saved.looks)
+      || !saved.looks.length) return;
+
+  const when = saved.ts ? new Date(saved.ts).toLocaleString()
+                        : t('resumeTitle');
+  $('resumeTitle').textContent = t('resumeTitle');
+  $('resumeBody').textContent = t('resumeBody')(saved.looks.length, when);
+  $('resumeBtn').textContent = t('resumeBtn');
+  $('freshStart').textContent = t('freshStart');
+  $('resumeWarn').classList.toggle('hidden', !saved.images_dropped);
+  if (saved.images_dropped) $('resumeWarn').textContent = t('resumeImagesLost');
+
+  $('freshStart').onclick = () => {
+    clearSession();
+    $('resumeCard').classList.add('hidden');
+  };
+
+  $('resumeBtn').onclick = () => {
+    try {
+      $('lotRef').value = saved.lotRef || '';
+      if (saved.farmerName) $('farmer').value = saved.farmerName;
+      if (saved.officerName) $('officer').value = saved.officerName;
+      // Only select a centre the freshly-loaded list actually has; the
+      // centre table may have changed while we were away.
+      const want = saved.centreId == null ? '' : String(saved.centreId);
+      if (want && Array.from($('centre').options)
+            .some(o => o.value === want)) {
+        $('centre').value = want;
+      }
+      state.looks = saved.looks;
+      state.lookIndex = saved.lookIndex || 0;
+      state.trayCount = saved.trayCount || 0;
+      state.calibrated = saved.calibrated !== false;
+      state.scaleSource = saved.scaleSource || null;
+      state.worstConfidence = saved.worstConfidence ?? null;
+      state.savedKB = saved.savedKB || 0;
+      state.uploadLog = Array.isArray(saved.uploadLog) ? saved.uploadLog : [];
+      // Bulb geometry comes from the restored looks, so tap-to-inspect and
+      // finalize both work exactly as if the captures had just happened.
+      state.shots = (saved.shots || []).map((s, i) => ({
+        annotated: (s && typeof s.annotated === 'string') ? s.annotated : '',
+        tray_id: (s && s.tray_id) || '',
+        annotated_scale: (s && s.annotated_scale) || 1,
+        n_bulbs: (state.looks[i] || []).length,
+        bulbs: state.looks[i] || [],
+      }));
+    } catch (e) {
+      // A half-corrupt checkpoint must never brick the normal flow.
+      clearSession();
+      $('resumeCard').classList.add('hidden');
+      return;
+    }
+    show('s2');
+    startCamera();
+    tally();
+    renderDataLine();
+    banner(t('resumeRestored')(state.looks.length)
+           + (saved.images_dropped ? ' ' + t('resumeImagesLost') : ''), 'warn');
+  };
+
+  $('resumeCard').classList.remove('hidden');
+})();
 
 if (REPLAY) banner('Replay mode — cached results, no camera or network.', 'warn');
 applyLang();
