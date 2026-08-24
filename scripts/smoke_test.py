@@ -188,6 +188,22 @@ def main() -> int:
         check("out-of-range severity returns JSON error",
               exc.code == 400 and "error" in body, body.get("error", "")[:50])
 
+    # --- detector calibration -------------------------------------------------
+    # Serves the offline measurement (or an honest "not generated yet").
+    # Either answer is healthy; a stack trace would not be.
+    calib = json.loads(get(f"{base}/api/calibration"))
+    check("/api/calibration answers", "available" in calib,
+          f"available={calib.get('available')}")
+    if calib.get("available"):
+        rel = calib.get("reliability", {})
+        check("  carries measured ECE and reliability bins",
+              isinstance(rel.get("ece"), (int, float))
+              and isinstance(rel.get("bins"), list) and rel["bins"],
+              f"ECE {rel.get('ece')} on {rel.get('n')} detections")
+    else:
+        check("  unmeasured state degrades with a hint",
+              bool(calib.get("hint")), calib.get("reason", ""))
+
     # --- graceful failure ---------------------------------------------------
     try:
         urllib.request.urlopen(f"{base}/api/replay/999", timeout=20)

@@ -40,6 +40,9 @@ ROOT = Path(__file__).resolve().parents[1]
 STATIC = Path(__file__).parent / "static"
 CACHE = Path(__file__).parent / "cache"
 WEIGHTS = ROOT / "weights" / "best.pt"
+# Detector-calibration measurement written by scripts/eval_calibration.py.
+# Read-only here: the app reports calibration, it never runs inference for it.
+CALIBRATION_REPORT = ROOT / "runs" / "report" / "calibration.json"
 
 app = FastAPI(title="SAMA")
 
@@ -698,6 +701,37 @@ def api_twin(lot_id: int, severity: float = twin.DEFAULT_SEVERITY,
         return _error(str(exc), 400)
     except Exception as exc:  # noqa: BLE001
         print(f"WARNING: twin simulate failed on lot {lot_id} -- "
+              f"{type(exc).__name__}: {exc}")
+        return _error(f"{type(exc).__name__}", 500)
+
+
+@app.get("/api/calibration")
+def api_calibration():
+    """Detector-confidence calibration: does the ACCEPT threshold mean what
+    it promises?
+
+    Serves the measured report from scripts/eval_calibration.py (ECE,
+    reliability bins, recommended accept cut, temperature fit). No model, no
+    camera, no network -- if the measurement has not been run, or its file
+    is unreadable, the panel degrades to available:false instead of a dead
+    screen. A missing calibration is a fact about the deployment, not an
+    error the client needs a 404 dance for.
+    """
+    try:
+        if not CALIBRATION_REPORT.exists():
+            return {"available": False, "reason": "not_generated",
+                    "hint": "python scripts/eval_calibration.py"}
+        try:
+            data = json.loads(CALIBRATION_REPORT.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            return {"available": False, "reason": "corrupt",
+                    "hint": "re-run python scripts/eval_calibration.py"}
+        except OSError:
+            return {"available": False, "reason": "unreadable",
+                    "hint": "check permissions on runs/report/calibration.json"}
+        return {"available": True, **data}
+    except Exception as exc:  # noqa: BLE001
+        print(f"WARNING: /api/calibration failed -- "
               f"{type(exc).__name__}: {exc}")
         return _error(f"{type(exc).__name__}", 500)
 

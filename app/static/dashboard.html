@@ -92,6 +92,24 @@
     </div>
   </div>
 
+  <!-- Detector calibration: measured on labelled trays by
+       scripts/eval_calibration.py and served read-only by /api/calibration.
+       Nothing here runs inference live -- a missing measurement degrades to
+       a hint, never a dead panel. -->
+  <div class="bg-white rounded-xl border-2 border-slate-200 p-5">
+    <div class="flex items-center gap-2">
+      <h2 class="text-lg font-bold">Detector calibration</h2>
+      <span class="bg-emerald-100 text-emerald-900 text-[10px] font-black px-2 py-1 rounded uppercase tracking-wider"
+            title="Measured offline on hand-labelled trays. Not a simulation and not live inference.">Measured</span>
+    </div>
+    <p class="text-xs text-slate-500 mt-1">
+      Does a stated confidence mean that chance of being right? If not, the
+      ACCEPT&nbsp;/&nbsp;REFER line at 0.75 is decoration. The reliability
+      curve should hug the diagonal.
+    </p>
+    <div id="calibOut" class="mt-4 text-sm text-slate-500">Loading…</div>
+  </div>
+
   <p class="text-xs text-slate-500">
     A reference score is the app re-grading a sealed reference tray of known composition.
     Drift is measured against that centre's own settled baseline, so a worn mat, a changed
@@ -327,6 +345,99 @@ async function runTwin() {
     $('twinBtn').disabled = false;
   }
 }
+
+// ------------------------- detector calibration panel ----------------------
+// Serves the offline measurement; never runs inference. Any failure leaves
+// the panel with a quiet explanation and the page otherwise working.
+
+function calibrationUnavailable(msg, hint) {
+  $('calibOut').innerHTML = `
+    <div class="text-sm text-slate-500">${msg}</div>
+    ${hint ? `<div class="text-xs text-slate-400 mt-1 font-mono">${hint}</div>` : ''}`;
+}
+
+function reliabilitySvg(bins, currentT, recT) {
+  const W = 240, H = 200, PAD = 24;
+  const px = v => PAD + v * (W - 2 * PAD);
+  const py = v => H - PAD - v * (H - 2 * PAD);
+  let s = `<svg viewBox="0 0 ${W} ${H}" class="w-full max-w-[260px]">`;
+  // perfect-calibration diagonal
+  s += `<line x1="${px(0)}" y1="${py(0)}" x2="${px(1)}" y2="${py(1)}"
+          stroke="#94a3b8" stroke-width="1" stroke-dasharray="4 3"/>`;
+  // observed accuracy per populated band
+  const pts = bins.filter(b => b.mean_conf !== null && b.count > 0);
+  if (pts.length > 1) {
+    s += `<polyline fill="none" stroke="#166534" stroke-width="2"
+            points="${pts.map(b => `${px(b.mean_conf).toFixed(1)},${py(b.accuracy).toFixed(1)}`).join(' ')}"/>`;
+  }
+  for (const b of pts) {
+    s += `<circle cx="${px(b.mean_conf).toFixed(1)}" cy="${py(b.accuracy).toFixed(1)}"
+            r="${Math.min(6, 2 + Math.sqrt(b.count) * 0.5).toFixed(1)}"
+            fill="#166534" fill-opacity="0.75"><title>conf ${b.mean_conf} → right ${Math.round(b.accuracy * 100)}% of ${b.count}</title></circle>`;
+  }
+  // current ACCEPT line and (if different) recommended cut
+  s += `<line x1="${px(currentT)}" y1="${PAD - 8}" x2="${px(currentT)}" y2="${H - PAD + 4}"
+          stroke="#b45309" stroke-width="1.5" stroke-dasharray="2 3"/>`;
+  if (recT !== null && recT !== undefined && Math.abs(recT - currentT) > 0.005) {
+    s += `<line x1="${px(recT)}" y1="${PAD - 8}" x2="${px(recT)}" y2="${H - PAD + 4}"
+            stroke="#1d4ed8" stroke-width="1.5" stroke-dasharray="6 3"/>`;
+  }
+  return s + '</svg>';
+}
+
+function loadCalibration() {
+  fetch('/api/calibration').then(r => r.json()).then(d => {
+    if (!d.available) {
+      calibrationUnavailable(
+        d.reason === 'corrupt'
+          ? 'The calibration report is corrupt — re-run the measurement.'
+          : 'No calibration measurement found yet.',
+        d.hint || 'python scripts/eval_calibration.py');
+      return;
+    }
+    const rel = d.reliability || {};
+    const rec = d.recommendation;
+    const temp = d.temperature_fit || {};
+    const dm = ((d.detection_metrics || {}).at_current_threshold) || null;
+
+    let recLine;
+    if (!rec) {
+      recLine = '<span class="text-red-700 font-semibold">no trustworthy cut found at this target — threshold unchanged</span>';
+    } else if (Math.abs(rec.threshold - d.current_threshold) < 0.005) {
+      recLine = `measured cut agrees with the current <b>${d.current_threshold}</b>`;
+    } else {
+      recLine = `measured cut <b>${rec.threshold.toFixed(2)}</b>` +
+        ` vs current <b>${d.current_threshold}</b>` +
+        ` <span class="text-xs text-slate-500">(adopting it is a human decision: scripts/eval_calibration.py --write-threshold)</span>`;
+    }
+
+    $('calibOut').innerHTML = `
+      <div class="flex flex-wrap gap-x-8 gap-y-4">
+        <div class="min-w-[220px] flex-1 max-w-[300px]">
+          ${reliabilitySvg(rel.bins || [], d.current_threshold, rec ? rec.threshold : null)}
+          <div class="text-[10px] text-slate-400 mt-1">stated confidence → observed accuracy.
+            Orange dotted: ACCEPT ${Number(d.current_threshold).toFixed(2)}${rec && Math.abs(rec.threshold - d.current_threshold) > 0.005 ? '; blue dash-dot: recommended cut' : ''}.</div>
+        </div>
+        <div class="flex-1 min-w-[240px] text-sm space-y-2">
+          <div><span class="text-xs uppercase text-slate-400 block">ECE (mean calibration gap)</span>
+            <b class="font-mono text-lg">${Number(rel.ece).toFixed(4)}</b>
+            <span class="text-xs text-slate-500">· worst bin MCE ${Number(rel.mce).toFixed(3)}</span></div>
+          <div><span class="text-xs uppercase text-slate-400 block">Evidence</span>
+            ${rel.n ?? d.n_detections} detections · ${d.n_images} labelled trays ·
+            split “${d.split}” · IoU ≥ ${d.iou_match}</div>
+          ${dm ? `<div><span class="text-xs uppercase text-slate-400 block">At the ACCEPT line</span>
+            precision ${dm.precision.toFixed(3)} · recall ${dm.recall.toFixed(3)}
+            · ${dm.called} calls</div>` : ''}
+          <div><span class="text-xs uppercase text-slate-400 block">Temperature fix (if applied)</span>
+            T=${temp.temperature}${temp.note ? ` (${temp.note})` : ''} →
+            ECE ${Number(temp.ece_before).toFixed(4)} → <b>${Number(temp.ece_after).toFixed(4)}</b></div>
+          <div><span class="text-xs uppercase text-slate-400 block">Threshold verdict</span>${recLine}</div>
+        </div>
+      </div>`;
+  }).catch(() => calibrationUnavailable(
+    'Could not reach /api/calibration.', null));
+}
+loadCalibration();
 </script>
 </body>
 </html>
