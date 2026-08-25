@@ -215,3 +215,6 @@
 {"ts": "2026-08-25T05:54:48+05:30", "agent": "master", "event": "cycle_committed", "detail": "434 passed, 1 warning in 8.59s"}
 {"ts": "2026-08-25T05:54:59+05:30", "agent": "master", "event": "cycle_start", "detail": "{'cycle': 55, 'agent': 'backend-engineer', 'phase': 'F-stabilization'}"}
 {"ts": "2026-08-25T05:56:31+05:30", "agent": "backend-engineer", "event": "cycle_result", "detail": "{'agent': 'backend-engineer', 'rc': 1, 'tail': ''}"}
+{"ts": "2026-08-25T05:56:41+05:30", "agent": "master", "event": "cycle_committed", "detail": "434 passed, 1 warning in 9.55s"}
+{"ts": "2026-08-25T05:56:51+05:30", "agent": "master", "event": "cycle_start", "detail": "{'cycle': 56, 'agent': 'qa-engineer', 'phase': 'F-stabilization'}"}
+{"ts": "2026-08-25T07:01:49+05:30", "agent": "master", "event": "cycle_timeout", "detail": "qa-engineer"}

@@ -12,10 +12,12 @@ import base64
 import html as html_mod
 import io
 import json
+import math
 import sqlite3
 import threading
 import time
 import traceback
+import unicodedata
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -150,6 +152,60 @@ async def validation_error_handler(request: Request, exc: RequestValidationError
     except Exception:  # noqa: BLE001 -- never let the error path itself fail
         message = "Invalid request."
     return _error(message, 422)
+
+
+# QA LOOP-Q2265: whole-request caps for the two endpoints that accept bodies.
+#
+# /analyze bounds only the FILE FIELD's bytes (bounded read loop); every
+# OTHER multipart field -- and Starlette's temp spool of them -- was
+# unbounded, and /finalize had NO cap at all: a 40 MB junk JSON body used to
+# parse fine and mint a certificate, and a wedged retry loop could park
+# gigabytes in RAM or temp files on the venue laptop exactly while phones
+# wait on the model. The limits are generous against real traffic:
+#   * /finalize: 12 evidence shots x ~700 KB base64 + looks data << 32 MB;
+#   * /analyze: the 25 MB photo wire cap plus 2 MB of multipart framing,
+#     so the endpoint's own per-file cap and message stay authoritative
+#     for honest phones (a photo AT the cap still processes; see
+#     tests/test_adversarial_q2260.py boundary pins).
+# Enforced off Content-Length, which every real client (browser, curl,
+# httpx) sends; a body arriving without one falls through to the existing
+# per-endpoint guards.
+MAX_FINALIZE_BODY_BYTES = 32 * 1024 * 1024      # JSON finalize payload
+ANALYZE_BODY_SLACK_BYTES = 2 * 1024 * 1024      # multipart framing overhead
+
+
+def _body_cap_for(method: str, path: str) -> int | None:
+    if method != "POST":
+        return None
+    if path == "/finalize":
+        return MAX_FINALIZE_BODY_BYTES
+    if path == "/analyze":
+        return MAX_UPLOAD_BYTES + ANALYZE_BODY_SLACK_BYTES
+    return None
+
+
+@app.middleware("http")
+async def cap_request_body_size(request: Request, call_next):
+    """Refuse oversized request BODIES with a readable 413 before parsing."""
+    limit = _body_cap_for(request.method, request.url.path)
+    if limit is not None:
+        raw_len = request.headers.get("content-length")
+        if raw_len is not None:
+            try:
+                declared = int(raw_len)
+            except ValueError:
+                declared = None
+            if declared is not None and declared > limit:
+                mb = limit // (1024 * 1024)
+                if request.url.path == "/finalize":
+                    hint = ("Re-send with fewer photographs -- the SAMA "
+                            "capture button compresses them automatically.")
+                else:
+                    hint = ("Retake at a lower resolution -- the SAMA "
+                            "capture button compresses automatically.")
+                return _error(
+                    f"Upload too large ({mb} MB request limit). {hint}", 413)
+    return await call_next(request)
 
 
 def _error_page(message: str, status: int = 500) -> HTMLResponse:
@@ -471,6 +527,19 @@ async def analyze(
 # because every C-string consumer of the database truncates at it.
 _CONTROL_CODEPOINTS = frozenset(range(0x20)) - {0x09, 0x0A, 0x0D} | {0x7F}
 
+# QA LOOP-Q2265: explicit bidi formatting controls (LRE/RLE/PDF/LRO/RLO and
+# the newer isolates). They carry no name content -- their only effect is to
+# REORDER neighbouring text at render time, so a farmer_name of
+# "Rames\u202EKumar" displays as something else entirely on the public
+# verify/report pages. Names are stripped of them like any other control
+# byte; legitimate RTL names (Urdu, Arabic, ...) render fine without
+# embedding controls because Unicode bidi resolution is automatic for whole
+# text runs of one direction.
+_BIDI_CODEPOINTS = frozenset(
+    list(range(0x202A, 0x202E + 1))     # LRE RLE PDF LRO RLO
+    + list(range(0x2066, 0x2069 + 1))   # LRI RLI FSI PDI
+)
+
 
 def _clean_text(value, field: str, max_len: int) -> str:
     """Sanitise one free-text field destined for a signed record.
@@ -481,6 +550,19 @@ def _clean_text(value, field: str, max_len: int) -> str:
         json.loads) raises 400 naming the field;
       * over-limit input raises 400 naming field and limit -- silently
         truncating would ALTER a signed record without trace.
+
+    QA LOOP-Q2265 additions:
+      * bidi controls are stripped (see _BIDI_CODEPOINTS);
+      * text is NFC-normalised BEFORE the length check. Canonical-equivalent
+        spellings (precomposed U+0958 vs U+0915+U+093C, e+f vs e+combining)
+        used to be stored byte-different, so a retried finalize typed on a
+        different keyboard MISSED the dedupe probe and minted a second
+        signed certificate for the same physical lot. Normalising both sides
+        makes dedupe compare what the characters MEAN, not how they were
+        entered. NFC is chosen (not NFD) because it is the web/JSON
+        default and never lengthens these strings except for the handful of
+        composition-excluded singletons; either way the limit check runs on
+        the post-normalisation string so nothing oversized slips through.
     """
     if value is None:
         return ""
@@ -488,7 +570,10 @@ def _clean_text(value, field: str, max_len: int) -> str:
         value = str(value)
     if not isinstance(value, str):
         raise ValueError(f"{field}: expected text.")
-    cleaned = "".join(ch for ch in value if ord(ch) not in _CONTROL_CODEPOINTS)
+    cleaned = "".join(ch for ch in value
+                      if ord(ch) not in _CONTROL_CODEPOINTS
+                      and ord(ch) not in _BIDI_CODEPOINTS)
+    cleaned = unicodedata.normalize("NFC", cleaned)
     try:
         cleaned.encode("utf-8")
     except UnicodeEncodeError:
@@ -576,6 +661,45 @@ def _trusted_created_at(raw) -> tuple[str | None, str | None]:
     return raw.strip(), None
 
 
+def _finite_or_none(value, field: str) -> tuple[float | None, str | None]:
+    """Vet a client-supplied coordinate/measurement number.
+
+    QA LOOP-Q2265: lat/lon/scale_confidence used to be bound straight into
+    REAL columns. Python's json.loads ACCEPTS the non-strict literals NaN /
+    Infinity (and overflows like 1e999 -> inf), so one crafted or glitched
+    finalize stored a non-finite float. Starlette serialises responses with
+    allow_nan=False -- so from then on GET /api/lots raised ValueError while
+    RENDERING, outside every endpoint try/except: the dashboard listing came
+    back 500 for EVERY lot until someone deleted rows by hand. A dead
+    listing is exactly the blank-screen failure this app forbids.
+
+    Accepted shapes follow real callers: numbers, numeric strings ('' means
+    absent, as geolocation-denied browsers send null but older UIs sent
+    ''), and ints. Bools and non-finite values are refused with the field
+    named; nothing is written.
+    """
+    if value is None:
+        return None, None
+    if isinstance(value, bool):        # bool is an int subclass; not a position
+        return None, f"{field} must be a number (got true/false)."
+    if isinstance(value, str):
+        value = value.strip()
+        if not value:
+            return None, None
+        try:
+            value = float(value)
+        except ValueError:
+            return None, f"{field} {value!r} is not a number."
+    if isinstance(value, int):
+        value = float(value)
+    if not isinstance(value, float):
+        return None, f"{field} must be a number."
+    if not math.isfinite(value):
+        return None, (f"{field} must be a finite number -- Infinity/NaN "
+                      "cannot be stored on a certificate.")
+    return value, None
+
+
 @app.post("/finalize")
 async def finalize(payload: dict):
     try:
@@ -659,6 +783,18 @@ async def finalize(payload: dict):
         else:
             centre_id = db.upsert_centre(centre_name or "Unassigned")
 
+        # QA LOOP-Q2265: coordinates and scale confidence reach REAL columns
+        # and then every listing response; a non-finite value stored there
+        # made GET /api/lots unrenderable (allow_nan=False) for ALL lots.
+        # Reject at the door, naming the field -- see _finite_or_none.
+        lat, lat_err = _finite_or_none(payload.get("lat"), "lat")
+        lon, lon_err = _finite_or_none(payload.get("lon"), "lon")
+        scale_confidence, conf_err = _finite_or_none(
+            payload.get("scale_confidence"), "scale_confidence")
+        for err in (lat_err, lon_err, conf_err):
+            if err:
+                return _error(err, 400)
+
         written = db.insert_lot(
             centre_id=centre_id,
             lot_ref=lot_ref or "UNLABELLED",
@@ -666,11 +802,11 @@ async def finalize(payload: dict):
             meta={
                 "farmer_name": farmer_name,
                 "officer_name": officer_name,
-                "lat": payload.get("lat"),
-                "lon": payload.get("lon"),
+                "lat": lat,
+                "lon": lon,
                 "calibrated": payload.get("calibrated", False),
                 "scale_source": payload.get("scale_source"),
-                "scale_confidence": payload.get("scale_confidence"),
+                "scale_confidence": scale_confidence,
                 "looks": looks,
                 "created_at": created_at,
             },
@@ -759,6 +895,19 @@ def dispute(bulb_id: int):
         if not db.mark_disputed(bulb_id):
             return _error(f"No saved bulb record {bulb_id} to dispute.", 404)
         return {"ok": True, "bulb_id": bulb_id}
+    except sqlite3.OperationalError as exc:
+        # QA LOOP-Q2265: a full disk used to surface as the generic 500
+        # 'Could not log dispute: OperationalError' -- technically JSON,
+        # practically useless on the bench. A dispute is an annotation, so
+        # nothing is half-written; say storage is full and that retrying
+        # after freeing space records it.
+        traceback.print_exc()
+        lowered = str(exc).lower()
+        if "disk" in lowered or "full" in lowered or "space" in lowered:
+            return _error("Storage is full -- the dispute was NOT recorded. "
+                          "Free disk space on the server (or archive old "
+                          "lots), then contest this bulb again.", 503)
+        return _error(f"Could not log dispute: {type(exc).__name__}", 500)
     except Exception as exc:  # noqa: BLE001
         traceback.print_exc()
         return _error(f"Could not log dispute: {type(exc).__name__}", 500)
