@@ -35,6 +35,10 @@ Software complete per STATUS.md; gates T0,T2-T7,T10-T12 passing on synthetic dat
 4. Missing cv2.aruco killed the entire app including replay mode at import time.
 5. Replay demo hard-exhausted at capture #7.
 6. Orchestrator itself: Windows needs `opencode.cmd` for subprocess (found+fixed in run 1).
+7. LOOP-I858: `/tamper/restore-all` fallback sweep corrupted legacy v1 records by
+   trusting their never-signed result_json as restore truth (live incident on lot 51;
+   signed value recovered via row_hash brute-force; sweep now requires a matching
+   pinned digest and names what it refused to touch — DECISIONS D17).
 
 ## 5. Verification status at close
 - **127 pytest tests green** (68 baseline → 127), smoke_test ALL PASS.

@@ -98,3 +98,15 @@ def test_verify_story_reads_injected_payload_only():
     js = m.group(1)
     assert "lot." in js
     assert "document.cookie" not in js and "localStorage" not in js
+
+
+# --------------------------------------------------------------------------
+# tamper-demo.html -- restore-all names what it refused to touch (I858 fix)
+# --------------------------------------------------------------------------
+
+TAMPER_HTML = (STATIC / "tamper-demo.html").read_text(encoding="utf-8")
+
+
+def test_tamper_demo_mentions_skipped_legacy_records():
+    assert "skipped_unverifiable" in TAMPER_HTML
+    assert "never signed" in TAMPER_HTML

@@ -327,6 +327,12 @@ async function restoreAll() {
       if (d.intact_after === false) {
         status(`Restored ${n} record(s), but some records still do not verify. ` +
                'Press RESTORE on each red row — the server will tell you what is wrong.', 'warn');
+      } else if ((d.skipped_unverifiable || []).length) {
+        // LOOP-I858: legacy rows whose result_json was never hash-covered are
+        // named by the server and deliberately NOT auto-restored from it.
+        status(`${n} restored. ${(d.skipped_unverifiable).length} legacy record(s) left as-is — ` +
+               'their stored blob was never signed, so the server refuses to treat it as truth. ' +
+               '· पुराने रिकॉर्ड अपरिवर्तित', n ? 'warn' : 'warn');
       } else {
         status(n ? `All ${n} original value(s) restored — every certificate verifies green again. · सब हरे`
                  : 'Nothing to restore — every certificate already verifies green.', 'good');

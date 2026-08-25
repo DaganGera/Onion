@@ -1400,6 +1400,7 @@ def tamper_restore_all():
     """
     try:
         restored: list[dict] = []
+        skipped_unverifiable: list[int] = []
         centres: set[int] = set()
 
         for lot_id, state in list(_TAMPER_STATE.items()):
@@ -1417,11 +1418,23 @@ def tamper_restore_all():
         conn = db.connect()
         try:
             rows = conn.execute(
-                "SELECT id, centre_id, grade_a_pct, result_json FROM lots"
+                "SELECT id, centre_id, grade_a_pct, result_json,"
+                "       result_sha256 FROM lots"
             ).fetchall()
         finally:
             conn.close()
         for row in rows:
+            # LOOP-I858 incident fix: result_json is restore-truth ONLY when
+            # the row itself vouches for those bytes (v2 envelope present AND
+            # digest matches). A legacy row's blob was never signed -- and a
+            # v2 row whose digest mismatches was edited by the attacker -- so
+            # "restoring" from either writes ATTACKER BYTES into a signed
+            # column. This exact path corrupted legacy lot 51 live today.
+            # Such rows stay flagged for a human instead.
+            sha = row["result_sha256"]
+            if not sha or db.result_digest(row["result_json"]) != sha:
+                skipped_unverifiable.append(int(row["id"]))
+                continue
             try:
                 truth = float(json.loads(row["result_json"] or "{}")
                               .get("grade_a_pct") or 0.0)
@@ -1443,7 +1456,8 @@ def tamper_restore_all():
             intact, _, _ = db.audit_chain(centre_id)
             intact_after = intact_after and intact
         return {"ok": True, "restored": restored,
-                "n_restored": len(restored), "intact_after": intact_after}
+                "n_restored": len(restored), "intact_after": intact_after,
+                "skipped_unverifiable": skipped_unverifiable}
     except Exception as exc:  # noqa: BLE001
         traceback.print_exc()
         return _error(f"Restore-all failed: {type(exc).__name__}", 500)
