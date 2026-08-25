@@ -60,17 +60,17 @@
 
   <label class="block">
     <span class="text-sm font-semibold text-slate-700" data-i18n="lotRef">Lot reference</span>
-    <input id="lotRef" class="mt-1 w-full rounded-lg border-2 border-slate-300 p-3 text-base" placeholder="e.g. LOT-2026-0413">
+    <input id="lotRef" class="mt-1 w-full rounded-lg border-2 border-slate-300 p-3 text-base" placeholder="e.g. LOT-2026-0413" data-i18n-ph="phLotRef">
   </label>
 
   <label class="block">
     <span class="text-sm font-semibold text-slate-700" data-i18n="farmerName">Farmer name</span>
-    <input id="farmer" class="mt-1 w-full rounded-lg border-2 border-slate-300 p-3 text-base" placeholder="Full name">
+    <input id="farmer" class="mt-1 w-full rounded-lg border-2 border-slate-300 p-3 text-base" placeholder="Full name" data-i18n-ph="phName">
   </label>
 
   <label class="block">
     <span class="text-sm font-semibold text-slate-700" data-i18n="officerName">Procurement officer</span>
-    <input id="officer" class="mt-1 w-full rounded-lg border-2 border-slate-300 p-3 text-base" placeholder="Full name">
+    <input id="officer" class="mt-1 w-full rounded-lg border-2 border-slate-300 p-3 text-base" placeholder="Full name" data-i18n-ph="phName">
   </label>
 
   <button id="startBtn" class="w-full bg-emerald-800 text-white text-lg font-bold py-4 rounded-lg active:bg-emerald-900" data-i18n="startGrading">
@@ -459,6 +459,51 @@ const I18N = {
                     + 'photographic evidence. Reshooting any look replaces it.',
     resumeRestored: n => `Restored ${n} captured look${n > 1 ? 's' : ''}. `
                        + 'Capture more or press Finish.',
+    // LOOP-F2263 bilingual completeness audit. Every key below had an
+    // English-only rendering reachable while the header said हिंदी — the
+    // result screen, bulb sheet, dispute banners and all three alert()s.
+    // Hindi must be a language of this app, not a skin over half of it.
+    unassigned: 'Unassigned',
+    phLotRef: 'e.g. LOT-2026-0413',
+    phName: 'Full name',
+    tallyLine: (trays, bulbs) => `${trays} tray${trays > 1 ? 's' : ''}<br>${bulbs} bulbs`,
+    noCalibration: 'No calibration reference — sizes unavailable.',
+    markersApprox: (f, e, w) => `${f}/${e} markers visible — ${w || 'sizes are approximate.'}`,
+    markersStillAccurate: (f, e) => `${f}/${e} markers visible — still accurate.`,
+    holdFlatter: 'Hold the phone flatter — the mat looks tilted.',
+    enterLotRef: 'Enter a lot reference.',
+    needOneLook: 'Capture at least one tray first.',
+    useFilePicker: 'Camera unavailable — use the file picker below.',
+    mqGood: 'Measurement quality: good',
+    mqReduced: 'Measurement quality: reduced — some markers were hidden',
+    mqLow: 'Measurement quality: LOW — sizes are approximate',
+    sampleLine: (o, l, tr) =>
+      `${o} bulb-observations · ${l} looks · ${tr} tray(s) · 95% confidence`,
+    distinctNote: n => ` · ≈${n} distinct bulbs (two looks re-observe the same onions)`,
+    soundLabel: 'Sound',
+    defectRateObserved: 'Defect rate (observed)',
+    correctedOcclusion: 'Corrected for occlusion',
+    replayMode: 'Replay mode — cached results, no camera or network.',
+    defectInterval: (lo, hi, dh) =>
+      `Defect interval: ${lo}–${hi}% (±${dh} pts, 95% Wilson on the least-occluded view)`,
+    shotCaption: (i, n, kb) => `Look ${i} — ${n} bulbs${kb}`,
+    sizeUnavailable: 'size unavailable',
+    mmGrade: (mm, g) => `${mm} mm · Grade ${g}`,
+    confDecision: (p, d) => `confidence ${p}% · ${d}`,
+    disputedStamp: 'DISPUTED — recorded on the certificate',
+    disputeNotLogged: 'Dispute NOT recorded — no saved bulb record for this look.',
+    disputeLogged: (lot, bulb) =>
+      `Dispute logged on certificate #${lot} (bulb record ${bulb}). `
+      + 'It shows on the certificate page.',
+    disputeFail: m => `Could not log dispute: ${m} — nothing was recorded.`,
+    noLotSaved: 'No lot saved — cannot issue a certificate.',
+    suffOk: 'SUFFICIENT', suffMore: 'MORE DATA',
+    suffDistinct: n => ` · ≈${n} distinct bulbs`,
+    priceCentral: 'central estimate', priceDemoRates: 'demo rates',
+    // LOOP-F2263: display names of the six fixed defect classes
+    // (app/grading.py vocabulary — the wire values never change).
+    sound: 'Sound', rotten: 'Rotten', sprouted: 'Sprouted',
+    black_smut: 'Black smut', damaged_skin: 'Damaged skin', doubles: 'Doubles',
   },
   hi: {
     headerSub: 'प्याज़ लॉट ग्रेडिंग · DoCA',
@@ -528,6 +573,46 @@ const I18N = {
                     + 'पर समाप्त करने पर प्रमाणपत्र में फ़ोटो सबूत नहीं होंगे। '
                     + 'कोई भी तस्वीर दोबारा लेने पर वह बदल जाएगी।',
     resumeRestored: n => `${n} तस्वीरें वापस लाई गईं। और लें या “समाप्त करें” दबाएँ।`,
+    // LOOP-F2263: हिंदी counterparts of every key added to the en block.
+    unassigned: 'बिना केंद्र',
+    phLotRef: 'जैसे LOT-2026-0413',
+    phName: 'पूरा नाम',
+    tallyLine: (trays, bulbs) => `${trays} ट्रे<br>${bulbs} प्याज़`,
+    noCalibration: 'कोई कैलिब्रेशन संदर्भ नहीं — साइज़ उपलब्ध नहीं।',
+    markersApprox: (f, e, w) => `${f}/${e} मार्कर दिखे — ${w || 'साइज़ अनुमानित हैं।'}`,
+    markersStillAccurate: (f, e) => `${f}/${e} मार्कर दिखे — फिर भी सटीक।`,
+    holdFlatter: 'फ़ोन को और सीधा रखें — मैट झुका हुआ दिख रहा है।',
+    enterLotRef: 'लॉट संदर्भ भरें।',
+    needOneLook: 'पहले कम से कम एक ट्रे की तस्वीर लें।',
+    useFilePicker: 'कैमरा उपलब्ध नहीं — नीचे फ़ाइल चयनकर्ता से तस्वीर चुनें।',
+    mqGood: 'मापन गुणवत्ता: अच्छी',
+    mqReduced: 'मापन गुणवत्ता: घटी हुई — कुछ मार्कर छिपे थे',
+    mqLow: 'मापन गुणवत्ता: बहुत कम — साइज़ अनुमानित हैं',
+    sampleLine: (o, l, tr) =>
+      `${o} प्याज़-अवलोकन · ${l} नज़रें · ${tr} ट्रे · 95% विश्वास स्तर`,
+    distinctNote: n => ` · ≈${n} अलग प्याज़ (दो नज़रें उन्हीं प्याज़ों को फिर देखती हैं)`,
+    soundLabel: 'स्वस्थ',
+    defectRateObserved: 'दोष दर (देखी गई)',
+    correctedOcclusion: 'छिपाव के लिए संशोधित',
+    replayMode: 'रीप्ले मोड — कैश किए गए परिणाम, कोई कैमरा या नेटवर्क नहीं।',
+    defectInterval: (lo, hi, dh) =>
+      `दोष अंतराल: ${lo}–${hi}% (±${dh} अंक, सबसे कम छिपी नज़र पर 95% विल्सन)`,
+    shotCaption: (i, n, kb) => `नज़र ${i} — ${n} प्याज़${kb}`,
+    sizeUnavailable: 'साइज़ उपलब्ध नहीं',
+    mmGrade: (mm, g) => `${mm} मिमी · श्रेणी ${g}`,
+    confDecision: (p, d) => `विश्वास ${p}% · ${d}`,
+    disputedStamp: 'विवादित — प्रमाणपत्र पर दर्ज',
+    disputeNotLogged: 'आपत्ति दर्ज नहीं हुई — इस नज़र का कोई सहेजा प्याज़ रिकॉर्ड नहीं मिला।',
+    disputeLogged: (lot, bulb) =>
+      `प्रमाणपत्र #${lot} पर आपत्ति दर्ज हुई (प्याज़ रिकॉर्ड ${bulb})। `
+      + 'यह प्रमाणपत्र पृष्ठ पर दिखेगी।',
+    disputeFail: m => `आपत्ति दर्ज नहीं हो सकी: ${m} — कुछ भी दर्ज नहीं हुआ।`,
+    noLotSaved: 'कोई लॉट सहेजा नहीं गया — प्रमाणपत्र नहीं बन सकता।',
+    suffOk: 'पर्याप्त', suffMore: 'और देखें',
+    suffDistinct: n => ` · ≈${n} अलग प्याज़`,
+    priceCentral: 'केंद्रीय अनुमान', priceDemoRates: 'डेमो दरें',
+    sound: 'स्वस्थ', rotten: 'सड़ा हुआ', sprouted: 'अंकुरित',
+    black_smut: 'काला स्मट', damaged_skin: 'क्षतिग्रस्त छिलका', doubles: 'जुड़वाँ',
   },
 };
 
@@ -539,6 +624,11 @@ function applyLang() {
     const v = t(el.dataset.i18n);
     if (typeof v === 'string') el.textContent = v;
   });
+  // LOOP-F2263: input hints are strings a farmer reads too.
+  document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+    const v = t(el.dataset.i18nPh);
+    if (typeof v === 'string') el.placeholder = v;
+  });
   $('langBtn').textContent = LANG === 'en' ? 'हिंदी' : 'English';
   // dynamic labels that were already rendered
   $('lookLabel').textContent =
@@ -546,6 +636,16 @@ function applyLang() {
   if (!$('busy').classList.contains('hidden')) $('busyText').textContent = t('analysing');
   renderDataLine();   // India-access line re-renders in the new language
   renderPending();    // LOOP-A2223: so does the save-and-retry bar
+  // LOOP-F2263: the toggle now reaches every screen it can be pressed on.
+  // The data-i18n sweep above resets a confirmed sign-off button back to
+  // "Tap to confirm" while state.*Ok stays true — restore the truth. The
+  // result and insight cards are rebuilt from the same stored payloads, so
+  // mid-review language switches no longer leave half-English screens.
+  $('okFarmer').textContent = state.farmerOk ? t('confirmed') : t('tapConfirm');
+  $('okOfficer').textContent = state.officerOk ? t('confirmed') : t('tapConfirm');
+  if (state.result) renderResults(state.result);
+  if (state.lastSuff) renderSufficiency(state.lastSuff);
+  if (state.lastPrice) renderPrice(state.lastPrice);
 }
 $('langBtn').onclick = () => {
   LANG = LANG === 'en' ? 'hi' : 'en';
@@ -566,6 +666,9 @@ const state = {
   // lastUpload drives the live capture line; savedKB is the honest session
   // total actually deducted (0 when nothing was resized).
   lastUpload: null, savedKB: 0, uploadLog: [],
+  // LOOP-F2263: the last sufficiency / price payloads are kept so a language
+  // toggle after finalise can rebuild those cards in the new language.
+  lastSuff: null, lastPrice: null,
   // LOOP-A2223: an upload that failed even after the automatic retry waits
   // here ({ fd, origKB, sentKB, kind }) with a one-tap resend bar. In-memory
   // by design -- blobs cannot survive JSON checkpointing -- so the offer is
@@ -744,7 +847,7 @@ function clearSession() {
 }
 
 const busy = (on, text) => {
-  $('busyText').textContent = text || 'Analysing…';
+  $('busyText').textContent = text || t('analysing');
   $('busy').classList.toggle('hidden', !on);
 };
 
@@ -773,8 +876,9 @@ function toast(titleKey, bodyKey) {
 $('toast').onclick = () => $('toast').classList.add('hidden');
 
 function tally() {
+  // LOOP-F2263: the header counter follows the toggle too.
   $('tally').innerHTML = state.trayCount
-    ? `${state.trayCount} tray${state.trayCount > 1 ? 's' : ''}<br>${state.looks.flat().length} bulbs`
+    ? t('tallyLine')(state.trayCount, state.looks.flat().length)
     : '';
 }
 
@@ -789,7 +893,7 @@ saFetch('/api/centres').then(r => {
   if (d.error) throw new Error(d.error);
   const sel = $('centre');
   const names = (d.centres || []).map(c => `<option value="${c.id}">${c.name}</option>`);
-  sel.innerHTML = names.length ? names.join('') : '<option value="">Unassigned</option>';
+  sel.innerHTML = names.length ? names.join('') : `<option value="">${t('unassigned')}</option>`;
 }).catch(() => {
   // Say the downgrade out loud instead of silently grading to "Unassigned" —
   // an operator who never notices cannot fix it at sign-off either.
@@ -820,7 +924,10 @@ async function startCamera() {
 }
 
 $('startBtn').onclick = () => {
-  if (!$('lotRef').value.trim()) { alert('Enter a lot reference.'); return; }
+  // LOOP-F2263: alert() cannot be translated and looks nothing like the rest
+  // of this app's failure surfaces. banner() is the house style — on-page,
+  // dismissible, bilingual.
+  if (!$('lotRef').value.trim()) { banner(t('enterLotRef'), 'warn'); return; }
   show('s2'); startCamera();
 };
 
@@ -835,7 +942,7 @@ function grabFrame() {
 $('fileInput').onchange = e => { if (e.target.files[0]) submit(e.target.files[0]); };
 $('shutter').onclick = async () => {
   if (REPLAY) return submit(null);
-  if (!stream) { alert('Use the file picker below.'); return; }
+  if (!stream) { banner(t('useFilePicker'), 'warn'); return; }
   submit(await grabFrame());
 };
 
@@ -975,16 +1082,18 @@ function acceptLook(data) {
     state.worstConfidence = Math.min(state.worstConfidence ?? 1, sc.confidence);
   }
 
+  // LOOP-F2263: these banners were English-only while the rest of the flow
+  // spoke Hindi. Server-supplied sc.warning text passes through unchanged
+  // (it is data, not chrome) but every fallback wording is now bilingual.
   if (!sc.calibrated) {
     state.calibrated = false;
-    banner(sc.warning || 'No calibration reference — sizes unavailable.', 'bad');
+    banner(sc.warning || t('noCalibration'), 'bad');
   } else if (sc.confidence < 0.75) {
-    banner(`${sc.markers_found}/${sc.markers_expected} markers visible — `
-           + (sc.warning || 'sizes are approximate.'), 'bad');
+    banner(t('markersApprox')(sc.markers_found, sc.markers_expected, sc.warning || ''), 'bad');
   } else if (sc.perspective_skew) {
-    banner('Hold the phone flatter — the mat looks tilted.', 'warn');
+    banner(t('holdFlatter'), 'warn');
   } else if (sc.markers_found < sc.markers_expected) {
-    banner(`${sc.markers_found}/${sc.markers_expected} markers visible — still accurate.`, 'warn');
+    banner(t('markersStillAccurate')(sc.markers_found, sc.markers_expected), 'warn');
   } else {
     banner('');
   }
@@ -1095,7 +1204,7 @@ $('shakeDone').onclick = () => {
 
 // ---------- results ----------
 $('finishBtn').onclick = async () => {
-  if (!state.looks.length) { alert('Capture at least one tray first.'); return; }
+  if (!state.looks.length) { banner(t('needOneLook'), 'warn'); return; }
   busy(true, t('computing'));
   try {
     const r = await saFetch('/finalize', {
@@ -1150,11 +1259,12 @@ $('finishBtn').onclick = async () => {
 async function loadInsights(lotId) {
   try {
     const s = await saFetch(`/api/sufficiency/${lotId}`).then(r => r.json());
-    if (!s.error) renderSufficiency(s);
+    // LOOP-F2263: payload kept so applyLang() can rebuild this card.
+    if (!s.error) { state.lastSuff = s; renderSufficiency(s); }
   } catch (e) { /* insight cards must never block the flow */ }
   try {
     const p = await saFetch(`/api/price-band/${lotId}`).then(r => r.json());
-    if (!p.error) renderPrice(p);
+    if (!p.error) { state.lastPrice = p; renderPrice(p); }
   } catch (e) { /* ditto */ }
 }
 
@@ -1170,15 +1280,13 @@ function renderSufficiency(s) {
   // observations at that design; show the distinct-bulb equivalent so the
   // officer is never told a shake adds bulbs it does not.
   if (s.design_effect != null && s.design_effect > 1 && s.n_effective_current != null) {
-    $('suffLabel').textContent += LANG === 'hi'
-      ? ` · ≈${s.n_effective_current} अलग प्याज़`
-      : ` · ≈${s.n_effective_current} distinct bulbs`;
+    // LOOP-F2263: suffix text moved into I18N so it follows the toggle.
+    $('suffLabel').textContent += t('suffDistinct')(s.n_effective_current);
   }
   // LOOP-F2261: badge tints darkened one step -- 12px bold on a tinted
   // chip measured 6.78 (emerald-800/emerald-100) and 6.37 (amber-800/
   // amber-100); emerald-900 / amber-900 measure 8.57 and 8.15.
-  $('suffBadge').textContent = ok ? (LANG === 'hi' ? 'पर्याप्त' : 'SUFFICIENT')
-                                  : (LANG === 'hi' ? 'और देखें' : 'MORE DATA');
+  $('suffBadge').textContent = ok ? t('suffOk') : t('suffMore');
   $('suffBadge').className = 'px-2 py-0.5 rounded font-bold text-xs ' +
     (ok ? 'bg-emerald-100 text-emerald-900' : 'bg-amber-100 text-amber-900');
   $('suffAdvice').textContent = s.advice;
@@ -1190,11 +1298,17 @@ function renderPrice(p) {
   $('priceMain').textContent =
     `${fmt(p.band_low)} – ${fmt(p.band_high)}`;
   $('priceSub').textContent =
-    `${LANG === 'hi' ? 'केंद्रीय अनुमान' : 'central estimate'} ${fmt(p.central_price)} · ` +
-    `${LANG === 'hi' ? 'डेमो दरें' : 'demo rates'} A ₹${Math.round(p.rates_used.A)} · B ₹${Math.round(p.rates_used.B)} · C ₹${Math.round(p.rates_used.C)}`;
+    `${t('priceCentral')} ${fmt(p.central_price)} · ` +
+    `${t('priceDemoRates')} A ₹${Math.round(p.rates_used.A)} · B ₹${Math.round(p.rates_used.B)} · C ₹${Math.round(p.rates_used.C)}`;
 }
 
 const GRADE_COLOURS = { A: '#166534', B: '#65a30d', C: '#d97706', UNDERSIZED: '#b91c1c', UNKNOWN: '#94a3b8' };
+
+// LOOP-F2263: defect-class display names live in I18N keyed by the wire
+// value itself, so t('black_smut') etc. resolve in both languages and the
+// en/hi parity audit covers the domain vocabulary. t() falls back to the
+// raw token for any class name not in the dictionary.
+const clsLabel = n => t(n);
 
 function renderResults(res) {
   $('gradeA').textContent = fmtIN(res.grade_a_pct) + '%';
@@ -1203,31 +1317,29 @@ function renderResults(res) {
   // LOOP-W2224: glanceable Wilson-CI gauge -- same drawing rules as the
   // certificate. Hides itself rather than drawing an interval it wasn't given.
   samaGauge('ggSvg', res.grade_a_pct, res.grade_a_ci_low, res.grade_a_ci_high);
-  let sampleText =
-    `${fmtIN(res.n_bulb_observations, 0)} bulb-observations · ${res.n_looks} looks · ` +
-    `${res.n_trays} tray(s) · 95% confidence`;
+  let sampleText = t('sampleLine')(
+    fmtIN(res.n_bulb_observations, 0), res.n_looks, res.n_trays);
   // LOOP-D2218: two looks re-observe the same onions, so the certificate's
   // interval credits each physical bulb once. Show that effective n.
   if (res.grade_a_n_effective != null && res.n_looks > 1) {
-    sampleText += LANG === 'hi'
-      ? ` · ≈${res.grade_a_n_effective} अलग प्याज़ (दो नज़रें उन्हीं प्याज़ों को फिर देखती हैं)`
-      : ` · ≈${res.grade_a_n_effective} distinct bulbs (two looks re-observe the same onions)`;
+    sampleText += t('distinctNote')(res.grade_a_n_effective);
   }
   $('sampleLine').textContent = sampleText;
 
   const conf = state.worstConfidence;
   const el = $('scaleLine');
   // LOOP-F2261: all three verdicts >= 7:1 on white (was 5.48 / 5.02 / 6.47).
+  // LOOP-F2263: verdict wording now follows the language toggle.
   if (conf === null || conf === undefined) {
     el.textContent = '';
   } else if (conf >= 0.85) {
-    el.textContent = 'Measurement quality: good';
+    el.textContent = t('mqGood');
     el.className = 'text-xs mt-1 font-semibold text-emerald-800';
   } else if (conf >= 0.6) {
-    el.textContent = 'Measurement quality: reduced — some markers were hidden';
+    el.textContent = t('mqReduced');
     el.className = 'text-xs mt-1 font-semibold text-amber-900';
   } else {
-    el.textContent = 'Measurement quality: LOW — sizes are approximate';
+    el.textContent = t('mqLow');
     el.className = 'text-xs mt-1 font-semibold text-red-800';
   }
 
@@ -1250,24 +1362,27 @@ function renderResults(res) {
   const rows = Object.entries(res.class_counts)
     .filter(([n]) => n !== 'sound')
     .map(([n, c]) => `<tr class="border-t border-slate-200">
-        <td class="py-1.5 capitalize">${n.replace('_', ' ')}</td>
+        <td class="py-1.5 capitalize">${clsLabel(n)}</td>
         <td class="py-1.5 text-right font-semibold">${c}</td>
         <td class="py-1.5 text-right text-slate-700">${(res.class_pcts[n] || 0).toFixed(1)}%</td></tr>`);
-  rows.unshift(`<tr><td class="py-1.5 font-semibold">Sound</td>
+  rows.unshift(`<tr><td class="py-1.5 font-semibold">${t('soundLabel')}</td>
       <td class="py-1.5 text-right font-semibold">${res.class_counts.sound}</td>
       <td class="py-1.5 text-right text-slate-700">${res.class_pcts.sound.toFixed(1)}%</td></tr>`);
   rows.push(`<tr class="border-t-2 border-slate-300">
-      <td class="py-1.5 font-bold">Defect rate (observed)</td>
+      <td class="py-1.5 font-bold">${t('defectRateObserved')}</td>
       <td colspan="2" class="py-1.5 text-right font-bold">${res.defect_rate_raw.toFixed(1)}%</td></tr>`);
-  rows.push(`<tr><td class="py-1.5 text-slate-700">Corrected for occlusion</td>
+  rows.push(`<tr><td class="py-1.5 text-slate-700">${t('correctedOcclusion')}</td>
       <td colspan="2" class="py-1.5 text-right text-slate-700">${res.defect_rate_corrected.toFixed(1)}%</td></tr>`);
   // RT-001 S-3: the corrected defect rate used to ship with no uncertainty.
   // Same statistic, now with its interval -- basis named so nobody reads it
-  // as whole-lot variance.
+  // as whole-lot variance. LOOP-F2263: bilingual.
   let defectCILine = '';
   if (res.defect_ci_n > 0) {
     const dhalf = ((res.defect_ci_high - res.defect_ci_low) / 2).toFixed(1);
-    defectCILine = `<div class="text-xs text-slate-700 mt-2">Defect interval: ${res.defect_ci_low.toFixed(1)}–${res.defect_ci_high.toFixed(1)}% (±${dhalf} pts, 95% Wilson on the least-occluded view)</div>`;
+    defectCILine = '<div class="text-xs text-slate-700 mt-2">' +
+      t('defectInterval')(res.defect_ci_low.toFixed(1),
+                          res.defect_ci_high.toFixed(1), dhalf) +
+      '</div>';
   }
   $('defectTable').innerHTML = rows.join('') + defectCILine;
 
@@ -1289,7 +1404,7 @@ function renderResults(res) {
           : fmtKB(u.sentKB))
       : '';
     const wrap = document.createElement('div');
-    wrap.innerHTML = `<div class="text-xs text-slate-700 mb-1">Look ${i + 1} — ${shot.n_bulbs} bulbs${kbNote}</div>`;
+    wrap.innerHTML = `<div class="text-xs text-slate-700 mb-1">${t('shotCaption')(i + 1, shot.n_bulbs, kbNote)}</div>`;
     const img = document.createElement('img');
     img.src = shot.annotated;
     img.className = 'w-full rounded-lg border-2 border-slate-200';
@@ -1332,13 +1447,13 @@ function openSheet(shot, lookIdx, img, ev) {
 
   const disputedLine =
     (state.currentBulbId && state.disputed.has(state.currentBulbId))
-      ? '<div class="mt-1 text-sm font-bold text-red-800">DISPUTED — recorded on the certificate</div>'
+      ? `<div class="mt-1 text-sm font-bold text-red-800">${t('disputedStamp')}</div>`
       : '';
   $('sheetInfo').innerHTML =
-    `<div class="text-xl font-bold capitalize">${hit.cls_name.replace('_', ' ')}</div>
-     <div class="text-slate-700">${hit.diameter_mm ? hit.diameter_mm.toFixed(0) + ' mm · Grade ' + hit.size_grade : 'size unavailable'}</div>
+    `<div class="text-xl font-bold capitalize">${clsLabel(hit.cls_name)}</div>
+     <div class="text-slate-700">${hit.diameter_mm ? t('mmGrade')(hit.diameter_mm.toFixed(0), hit.size_grade) : t('sizeUnavailable')}</div>
      <div class="mt-1 text-sm ${hit.decision === 'REFER' ? 'text-amber-900 font-bold' : 'text-slate-700'}">
-       confidence ${(hit.confidence * 100).toFixed(0)}% · ${hit.decision}</div>${disputedLine}`;
+       ${t('confDecision')((hit.confidence * 100).toFixed(0), hit.decision)}</div>${disputedLine}`;
   $('sheetWrap').classList.remove('hidden');
 }
 $('closeSheet').onclick = $('sheetBg').onclick = () => $('sheetWrap').classList.add('hidden');
@@ -1349,7 +1464,7 @@ $('disputeBtn').onclick = async () => {
   const bulbId = state.currentBulbId;
   $('sheetWrap').classList.add('hidden');
   if (!bulbId) {
-    banner('Dispute NOT recorded — no saved bulb record for this look.', 'bad');
+    banner(t('disputeNotLogged'), 'bad');
     return;
   }
   try {
@@ -1357,10 +1472,10 @@ $('disputeBtn').onclick = async () => {
     const d = await r.json().catch(() => ({}));
     if (!r.ok || d.error) throw new Error(d.error || ('HTTP ' + r.status));
     state.disputed.add(bulbId);
-    banner('Dispute logged on certificate #' + state.lotId +
-           ' (bulb record ' + bulbId + '). It shows on the certificate page.', 'warn');
+    // LOOP-F2263: outcome wording bilingual; ids are numbers, not prose.
+    banner(t('disputeLogged')(state.lotId, bulbId), 'warn');
   } catch (e) {
-    banner('Could not log dispute: ' + e.message + ' — nothing was recorded.', 'bad');
+    banner(t('disputeFail')(e.message), 'bad');
   }
 };
 
@@ -1387,7 +1502,7 @@ confirmBtn('okOfficer', 'officerOk');
 
 $('genCert').onclick = () => {
   if (state.lotId) location.href = '/report/' + state.lotId;
-  else banner('No lot saved — cannot issue a certificate.', 'bad');
+  else banner(t('noLotSaved'), 'bad');
 };
 
 // ---------- LOOP-I2222: offer a checkpointed lot back after a reload -------
@@ -1462,7 +1577,7 @@ $('genCert').onclick = () => {
   $('resumeCard').classList.remove('hidden');
 })();
 
-if (REPLAY) banner('Replay mode — cached results, no camera or network.', 'warn');
+if (REPLAY) banner(t('replayMode'), 'warn');
 applyLang();
 </script>
 </body>
