@@ -343,6 +343,52 @@ MAX_IMAGE_PIXELS = 40_000_000            # ~40 MP decoded-frame ceiling
 ANALYZE_MAX_LOT_REF = 120
 ANALYZE_MAX_TRAY_ID = 64
 
+# LOOP-I858 edge-case hunt: iPhones default to HEIC ("High Efficiency")
+# stills and some Androids ship HEIF/AVIF. OpenCV has no decoder for these,
+# so imdecode() returns None and the old message -- "Could not read that
+# image. Try again." -- advised a retry that can NEVER succeed: every retake
+# saves the same format. An officer hits a dead end mid-dispute with a
+# perfectly good photo. Sniffing the ISO-BMFF 'ftyp' box costs ~50 byte
+# comparisons and lets us name the format AND the fix instead.
+_HEIF_BRAND_LABELS = {
+    b"heic": "HEIC", b"heix": "HEIC", b"hevc": "HEIC", b"hevx": "HEIC",
+    b"heim": "HEIC", b"heis": "HEIC",
+    b"mif1": "HEIF", b"msf1": "HEIF",
+    b"avif": "AVIF", b"avis": "AVIF",
+}
+
+
+def rejected_container_brand(data: bytes) -> str | None:
+    """Brand name of an undecodable HEIC/HEIF/AVIF upload, else None.
+
+    ISO-BMFF layout: bytes 4:8 are literally 'ftyp', 8:12 the major brand,
+    then minor version and compatible brands every 4 bytes. Both lists are
+    checked because iPhones frequently declare mif1 as major with heic in
+    the compatible list. Anything shorter, non-ftyp, or carrying an ordinary
+    brand (isom/mp42 ...) passes through untouched.
+    """
+    try:
+        if len(data) < 16 or data[4:8] != b"ftyp":
+            return None
+        candidates = [data[8:12]]
+        candidates.extend(data[i:i + 4] for i in range(16, min(len(data), 48), 4))
+        for chunk in candidates:
+            label = _HEIF_BRAND_LABELS.get(chunk.lower())
+            if label:
+                return label
+        return None
+    except Exception:  # noqa: BLE001 -- a sniff must never break capture
+        return None
+
+
+def _unreadable_format_message(label: str) -> str:
+    return (
+        f"This photo is in {label} format, which this server cannot decode. "
+        "On iPhone: Settings > Camera > Formats > Most Compatible, then "
+        "retake. Otherwise share/export the photo as JPEG from your gallery "
+        "and upload that file. Retrying this same file will fail again."
+    )
+
 
 def _annotate(image: np.ndarray, bulbs: list[dict]) -> str:
     """Draw boxes and return a base64 JPEG the phone can display directly.
@@ -443,6 +489,13 @@ async def analyze(
         raw = bytes(raw)
         if not raw:
             return _error("Empty upload. Try taking the photo again.")
+
+        # LOOP-I858: name the undecodable format BEFORE the generic decode
+        # shrug. A HEIC retake can never succeed, so "try again" alone would
+        # dead-end the officer; this refusal says exactly what to change.
+        label = rejected_container_brand(raw)
+        if label:
+            return _error(_unreadable_format_message(label), 400)
 
         image = cv2.imdecode(np.frombuffer(raw, np.uint8), cv2.IMREAD_COLOR)
         if image is None:
@@ -774,6 +827,14 @@ async def finalize(payload: dict):
         # frozen pooled bounds survive as grade_a_ci_pooled_*; grading.py
         # itself is untouched. Empty captures add no fields.
         result.update(arbitration.grade_a_ci_fields(result))
+
+        # LOOP-I858 / RT-001 S-1: the certified defect rate (worst per-look
+        # view, occlusion-corrected) can only grow as more looks/trays are
+        # photographed. Publish the plain pooled incidence BESIDE it -- same
+        # published-fields-only discipline as the two overlays above -- so
+        # the certificate shows its own conservatism instead of hiding it.
+        # Empty captures add no fields.
+        result.update(arbitration.tray_pooled_defect_fields(result, looks))
 
         # QA LOOP-Q2260: validate BEFORE any write. A truthy check keeps
         # the legacy fallback the UI relies on -- it posts

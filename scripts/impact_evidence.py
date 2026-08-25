@@ -15,6 +15,8 @@ import argparse
 import csv
 import json
 import math
+import random
+import statistics
 import sys
 from datetime import date
 from pathlib import Path
@@ -31,6 +33,7 @@ def groundtruth_stats() -> dict:
     trays = bulbs = grade_a = 0
     defects = 0
     per_class = {}
+    tray_defect_rates: list[float] = []
     with open(path, newline="", encoding="utf-8") as fh:
         for row in csv.DictReader(fh):
             n = int(row["n_total"])
@@ -41,6 +44,8 @@ def groundtruth_stats() -> dict:
                               ("n_rotten", "n_sprouted", "n_smut",
                                "n_damaged", "n_doubles"))
             defects += row_defects
+            if n > 0:
+                tray_defect_rates.append(row_defects / n)
             for k in ("rotten", "sprouted", "smut", "damaged", "doubles"):
                 per_class[k] = per_class.get(k, 0) + int(row[f"n_{k}"])
     return {
@@ -50,6 +55,7 @@ def groundtruth_stats() -> dict:
         "grade_a_pct": 100.0 * grade_a / max(1, bulbs),
         "defect_pct": 100.0 * defects / max(1, bulbs),
         "per_class": per_class,
+        "tray_defect_rates": tray_defect_rates,
     }
 
 
@@ -224,6 +230,70 @@ def build_markdown(gt: dict, metrics: dict) -> str:
     add("  trained human on subtle calls, and nothing here claims otherwise.")
     add("")
 
+    # --- LOOP-I858 / RT-001 S-1: how fast the worst-view estimator inflates --
+    # The certified defect rate is max(per-look rates)/factor (grading.py D4,
+    # frozen). max() over T sampled trays converges to the supremum of tray
+    # rates, not to the lot truth. We measure that selection effect directly
+    # on the 130 hand-sorted tray rates: draw T trays, take the worst, average.
+    # ASSUMPTION (stated in the output): look rate = tray rate, i.e. perfect
+    # view-independent detection. Real views add noise, which raises E[max]
+    # further -- so every figure below is a LOWER bound on the live inflation.
+    occl = float(json.loads(
+        (ROOT / "app" / "constants.json").read_text(encoding="utf-8")
+    ).get("occlusion_correction_2look") or 1.0)
+    rates = gt["tray_defect_rates"]
+    p_bar = statistics.fmean(rates)
+    rng = random.Random(20260825)          # fixed seed: reruns reproduce bytes
+    inflation_rows = []
+    for t_trays in (1, 2, 3, 5, 10):
+        draws = 20000
+        emax = statistics.fmean(
+            max(rng.sample(rates, min(t_trays, len(rates))))
+            for _ in range(draws))
+        infl_obs = 100.0 * (emax - p_bar)
+        # certified = selected rate / occlusion factor; the factor was fitted
+        # to cancel AVERAGE occlusion, not this selection -- applying it to
+        # the gap scales it by exactly this division.
+        infl_cert = infl_obs / occl
+        inflation_rows.append((t_trays, 100.0 * emax, infl_obs, infl_cert))
+
+    add("## 3d. How fast does the worst-view defect estimator inflate with "
+        "sample size? (RT-001 S-1)")
+    add("")
+    add("The certified defect rate is `max(per-look rates) / occlusion_factor`")
+    add("(grading.py D4 — frozen). A maximum over more looks or trays can only")
+    add("grow, so photographing MORE of a lot mechanically raises the certified")
+    add(f"figure. Measured on the {gt['trays']} hand-sorted tray defect rates")
+    add(f"(lot truth {p_bar * 100:.1f}% defective): draw T trays at random, take")
+    add("the worst, average over 20,000 seeded draws. — MEASURED-IN-REPO inputs +")
+    add("MONTE-CARLO arithmetic (seed 20260825)")
+    add("")
+    add("| trays photographed | E[worst-tray rate] | structural bias (pts) | after ÷"
+        f"{occl:.3f} correction (pts) | vs ±{arb.TARGET_HALF_WIDTH_PCT:g}-pt sampling promise |")
+    add("|---|---|---|---|---|")
+    for t_trays, emax, infl_obs, infl_cert in inflation_rows:
+        add(f"| {t_trays} | {emax:.1f}% | +{infl_obs:.1f} | +{infl_cert:.1f} | "
+            f"{infl_cert / arb.TARGET_HALF_WIDTH_PCT:.1f}× the whole promise |")
+    add("")
+    add("**ASSUMPTION (lower bound):** each look is treated as seeing its tray's")
+    add("true rate perfectly and identically. Real views differ — blur, glare and")
+    add("occlusion make some looks worse — and noise RAISES the expected maximum.")
+    add("The fitted ÷0.877 factor cancels average occlusion on single-tray pairs;")
+    add("applied to a cross-tray maximum, it scales the bias up, not down. So the")
+    add("live inflation is AT LEAST these figures.")
+    add("")
+    add(f"- At the fitted two-look design the bias alone is roughly "
+        f"+{inflation_rows[1][3]:.0f} pts on the certified number; by five trays it is")
+    add(f" ~{inflation_rows[3][3] / arb.TARGET_HALF_WIDTH_PCT:.0f}× SAMA's entire ±6-point sampling promise. The error is not in")
+    add("  the optics — it is the order statistic, and it lands against the party")
+    add("  being paid less.")
+    add("- **Mitigation shipped (loop I858):** every new certificate also carries")
+    add("  the plain pooled incidence (`defect_pooled_*`, per-tray clustered Wilson)")
+    add("  printed beside the ceiling, so both readings and their gap are visible")
+    add("  on the document itself. Replacing the estimator inside frozen grading.py")
+    add("  remains a data-scientist unfreeze decision.")
+    add("")
+
     add("## 4. Time-per-lot estimate")
     add("")
     if cpu_p95 and gpu_p95:
@@ -292,6 +362,9 @@ def build_markdown(gt: dict, metrics: dict) -> str:
     add("- The ₹ figures in §3b–§3c ride on DEMO rate differentials and an "
         "ASSUMED trolley mass; replace either with a mandi-rate feed or a "
         "weighed-lot study before quoting them as field losses.")
+    add("- §3d assumes perfect, view-independent detection to isolate the "
+        "max()-selection bias; a real two-view tray dataset (or the S-1 "
+        "unfreeze) would replace it with measured inflation.")
     add("- Any §5 literature link rot or a superseding national loss study: "
         "re-verify the citations in EVIDENCE_AUDIT.md §6 before quoting.")
     add("")

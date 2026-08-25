@@ -396,6 +396,103 @@ def grade_a_ci_fields(result: dict, rho: float = TWO_LOOK_RHO_ASSUMED) -> dict:
 
 
 # --------------------------------------------------------------------------
+# Per-tray pooled defect cross-check -- LOOP-I858 / RT-001 S-1
+#
+# The certified defect rate is max(per_look_rates)/factor (grading.py D4,
+# frozen). max() over more looks or trays can only stay equal or grow, so
+# photographing MORE of a lot mechanically RAISES the certified figure --
+# the selection bias of an order statistic, landing on the party paid less.
+# Unfreezing merge_looks is a data-scientist decision; until then the
+# certificate shows its own compensation: the plain pooled incidence beside
+# the worst-view ceiling, so anyone can see both numbers and how far apart
+# they sit. Same reconstruction discipline as defect_ci_fields/grade_a_ci_fields:
+# counts come ONLY from what merge_looks already published, never from a
+# second implementation of the class-counting rule.
+#
+# Derivation and scope limits: .agent/STATISTICS_NOTES.md §9.
+# --------------------------------------------------------------------------
+
+
+def tray_pooled_defect_fields(result: dict, looks: list | None = None) -> dict:
+    """Pooled defect incidence + clustered interval, from published fields.
+
+    Point estimate: 100 * (n_obs - sound) / n_obs -- every defect sighting
+    over every observation, no worst-view selection.
+
+    Interval: within one tray, repeated looks re-observe the same physical
+    bulbs (worst-case rho = 1 as everywhere else since D11); across trays,
+    samples are physically distinct and earn full credit. Each tray's
+    observations are therefore divided by how many looks touched it:
+
+        n_eff = sum_t(n_t / m_t)      deff = n_obs / n_eff  (>= 1)
+
+    which reduces exactly to the Kish design effect m when every tray got
+    the same number of looks, and to deff=1 for a single-look lot (interval
+    then equals the plain Wilson interval bit-for-bit).
+
+    Returns {} on any input that cannot support the statistic -- callers
+    render nothing rather than an invented cross-check.
+    """
+    res = result or {}
+    n_obs = int(res.get("n_bulb_observations") or 0)
+    if n_obs <= 0:
+        return {}
+    counts = res.get("class_counts") or {}
+    n_sound = counts.get("sound")
+    # bool is an int subclass; a True sitting in a count slot is garbage.
+    if not isinstance(n_sound, (int, float)) or isinstance(n_sound, bool):
+        return {}
+    k_total = n_obs - int(n_sound)
+    if k_total < 0:
+        return {}   # impossible counts must widen nothing anywhere
+
+    # Looks-per-tray straight out of the raw capture structure.
+    per_tray_looks: dict[str, set] = {}
+    per_tray_obs: dict[str, int] = {}
+    for idx, look in enumerate(looks or []):
+        for bulb in (look or []):
+            if not isinstance(bulb, dict):
+                continue
+            key = bulb.get("tray_id")
+            key = str(key) if key not in (None, "") else "_"
+            per_tray_looks.setdefault(key, set()).add(idx)
+            per_tray_obs[key] = per_tray_obs.get(key, 0) + 1
+
+    if not per_tray_looks:
+        # No tray labels survived: treat every look as re-photographing one
+        # tray -- the same worst-case assumption grade_a_ci_fields makes.
+        m = _clean_looks(res.get("n_looks"), n_obs)
+        per_tray_looks = {"_": set(range(m))}
+        per_tray_obs = {"_": n_obs}
+
+    n_eff = 0.0
+    for key, look_set in per_tray_looks.items():
+        m_t = max(1, len(look_set))
+        n_eff += per_tray_obs.get(key, 0) / m_t
+    if n_eff <= 0.0:
+        return {}
+
+    deff = n_obs / n_eff          # >= 1 by construction: each m_t >= 1
+    lo, hi = wilson_pct_effective(float(k_total), float(n_obs), deff)
+
+    fields = {
+        "defect_pooled_pct": round(100.0 * k_total / n_obs, 2),
+        "defect_pooled_ci_low": round(lo, 2),
+        "defect_pooled_ci_high": round(hi, 2),
+        "defect_pooled_method": "wilson-pooled-per-tray",
+        "defect_pooled_n_observations": n_obs,
+        "defect_pooled_n_effective": int(math.floor(n_eff)),
+        "defect_pooled_design_effect": round(deff, 4),
+        "defect_pooled_trays": len(per_tray_looks),
+    }
+    certified = res.get("defect_rate_corrected")
+    if isinstance(certified, (int, float)) and not isinstance(certified, bool):
+        fields["defect_pooled_gap_pts"] = round(
+            float(certified) - fields["defect_pooled_pct"], 2)
+    return fields
+
+
+# --------------------------------------------------------------------------
 # Money: what should this lot be PAID?
 # --------------------------------------------------------------------------
 

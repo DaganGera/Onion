@@ -102,6 +102,9 @@
       <div id="defectRate" class="text-3xl font-black text-slate-800 mt-1"></div>
       <div id="defectCI" class="text-xs font-semibold text-slate-600"></div>
       <div id="defectRaw" class="text-xs text-slate-500"></div>
+      <!-- LOOP-I858 / RT-001 S-1: pooled incidence cross-check, filled only
+           when result_json carries it; hidden for legacy certificates. -->
+      <div id="defectPooled" class="text-[11px] text-slate-600 mt-1 border-t border-slate-200 pt-1"></div>
       <div class="text-xs font-bold uppercase tracking-widest text-slate-500 mt-3">Referred</div>
       <div id="referred" class="text-2xl font-bold text-amber-700"></div>
     </div>
@@ -140,6 +143,12 @@
     photographs and is not counted in the defect figures below its visible forms.
     The defect rate is estimated from the least-occluded view of each tray; its interval
     describes sampling error on that view.
+    <!-- LOOP-I858 / RT-001 S-1: the worst-view rule can only grow with more
+         looks or trays, so the certificate also prints the plain pooled
+         incidence beside it -- its own conservatism, visible. -->
+    Because a hidden defect can appear in a later photograph, the certified figure
+    takes the most conservative view rather than the average; the pooled cross-check
+    printed beside it shows how far apart those two readings sit.
     <span id="calibNote"></span>
   </div>
 
@@ -303,6 +312,25 @@ const $ = id => document.getElementById(id);
     dci.textContent = '';
   }
   $('defectRaw').textContent = 'observed ' + (res.defect_rate_raw ?? 0).toFixed(1) + '%, corrected for occlusion';
+  // LOOP-I858 / RT-001 S-1: worst-view ceiling vs pooled incidence, both
+  // from result_json via injected data only. Absent on legacy records ->
+  // stay silent rather than render an empty claim.
+  const pooled = $('defectPooled');
+  if (res.defect_pooled_pct != null) {
+    const trays = res.defect_pooled_trays ?? '?';
+    let line = 'Pooled cross-check: ' + fmtIN(res.defect_pooled_pct) +
+      '% average incidence across ' + trays +
+      (trays === 1 ? ' tray' : ' trays') +
+      ' · ≈' + fmtIN(res.defect_pooled_n_effective ?? 0, 0) + ' distinct bulbs';
+    if (res.defect_pooled_gap_pts > 0) {
+      line += '. The certified figure above sits ' +
+        fmtIN(res.defect_pooled_gap_pts) +
+        ' points higher because it takes the least-occluded view — it errs high on purpose.';
+    }
+    pooled.textContent = line;
+  } else {
+    pooled.style.display = 'none';
+  }
   $('referred').textContent = (res.n_referred ?? 0) + ' bulbs';
 
   const gp = res.grade_pcts || {}, gc = res.grade_counts || {};

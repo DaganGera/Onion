@@ -81,6 +81,41 @@ observations each): — MEASURED-IN-REPO (arithmetic)
   reproducible, timestamped and free. It does not out-resolve a
   trained human on subtle calls, and nothing here claims otherwise.
 
+## 3d. How fast does the worst-view defect estimator inflate with sample size? (RT-001 S-1)
+
+The certified defect rate is `max(per-look rates) / occlusion_factor`
+(grading.py D4 — frozen). A maximum over more looks or trays can only
+grow, so photographing MORE of a lot mechanically raises the certified
+figure. Measured on the 130 hand-sorted tray defect rates
+(lot truth 44.4% defective): draw T trays at random, take
+the worst, average over 20,000 seeded draws. — MEASURED-IN-REPO inputs +
+MONTE-CARLO arithmetic (seed 20260825)
+
+| trays photographed | E[worst-tray rate] | structural bias (pts) | after ÷0.877 correction (pts) | vs ±6-pt sampling promise |
+|---|---|---|---|---|
+| 1 | 44.4% | +0.1 | +0.1 | 0.0× the whole promise |
+| 2 | 59.1% | +14.7 | +16.7 | 2.8× the whole promise |
+| 3 | 69.3% | +24.9 | +28.4 | 4.7× the whole promise |
+| 5 | 81.8% | +37.4 | +42.7 | 7.1× the whole promise |
+| 10 | 95.4% | +51.0 | +58.2 | 9.7× the whole promise |
+
+**ASSUMPTION (lower bound):** each look is treated as seeing its tray's
+true rate perfectly and identically. Real views differ — blur, glare and
+occlusion make some looks worse — and noise RAISES the expected maximum.
+The fitted ÷0.877 factor cancels average occlusion on single-tray pairs;
+applied to a cross-tray maximum, it scales the bias up, not down. So the
+live inflation is AT LEAST these figures.
+
+- At the fitted two-look design the bias alone is roughly +17 pts on the certified number; by five trays it is
+ ~7× SAMA's entire ±6-point sampling promise. The error is not in
+  the optics — it is the order statistic, and it lands against the party
+  being paid less.
+- **Mitigation shipped (loop I858):** every new certificate also carries
+  the plain pooled incidence (`defect_pooled_*`, per-tray clustered Wilson)
+  printed beside the ceiling, so both readings and their gap are visible
+  on the document itself. Replacing the estimator inside frozen grading.py
+  remains a data-scientist unfreeze decision.
+
 ## 4. Time-per-lot estimate
 
 - Analysis cost per look: p95 139 ms CPU / 97 ms GPU on the dev machine. — SYNTHETIC (real hardware, generated imagery; measures pipeline cost only)
@@ -117,5 +152,6 @@ figures from published sources — never present them as SAMA data.
 - A dual-grading study (two inspectors, same lots) replacing §3's assumed band with data.
 - Real-phone tray photos re-run through eval_lot/calibrate_size converting §1–§2 inputs from synthetic to field data (gates T8, printed-mat caliper check).
 - The ₹ figures in §3b–§3c ride on DEMO rate differentials and an ASSUMED trolley mass; replace either with a mandi-rate feed or a weighed-lot study before quoting them as field losses.
+- §3d assumes perfect, view-independent detection to isolate the max()-selection bias; a real two-view tray dataset (or the S-1 unfreeze) would replace it with measured inflation.
 - Any §5 literature link rot or a superseding national loss study: re-verify the citations in EVIDENCE_AUDIT.md §6 before quoting.
 

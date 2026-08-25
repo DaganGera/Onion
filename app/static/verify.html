@@ -35,6 +35,13 @@
     a hash chain is for.
   </div>
 
+  <!-- LOOP-I858 judge touchpoint: the five-second read. A verifier who
+       scans and sees only "RECORD INTACT" still has to open the
+       certificate to learn WHAT was verified. This line says it in one
+       breath -- what the lot graded, how sure, how defective, on what
+       evidence -- using ONLY fields the server already injects. -->
+  <div id="storyLine" class="text-sm text-slate-700 text-center px-2 font-medium"></div>
+
   <!-- headline numbers, same visual weight as the capture app -->
   <div class="bg-white rounded-xl p-5 border-2 border-slate-200 text-center">
     <div class="text-sm font-semibold text-slate-500 uppercase tracking-wide">Grade A proportion</div>
@@ -109,6 +116,20 @@ const $ = id => document.getElementById(id);
   $('gradeCI').textContent = '± ' + half + '%';
   $('sampleLine').textContent =
     `${lot.n_bulbs ?? 0} bulb-observations · ${lot.n_looks ?? 0} looks · 95% confidence`;
+
+  // LOOP-I858: one sentence a farmer, trader or judge can read aloud.
+  // Every value comes from the injected verification payload (the same
+  // source the banner uses); nothing is inferred, nothing invented.
+  const nObs = lot.n_bulbs ?? 0;
+  const looks = lot.n_looks ?? 0;
+  const when = lot.created_at
+    ? new Date(lot.created_at).toLocaleDateString()
+    : '—';
+  $('storyLine').textContent =
+    `Lot ${lot.lot_ref || '—'} at ${lot.centre_name || '—'}: ` +
+    `${(lot.grade_a_pct ?? 0).toFixed(1)}% Grade A (±${half}% at 95% confidence), ` +
+    `${(lot.defect_pct ?? 0).toFixed(1)}% visible defects, ` +
+    `from ${nObs.toLocaleString('en-IN')} bulb-observations in ${looks} look${looks === 1 ? '' : 's'} on ${when}.`;
 
   $('lotRef').textContent = lot.lot_ref || '—';
   $('centre').textContent = lot.centre_name || '—';

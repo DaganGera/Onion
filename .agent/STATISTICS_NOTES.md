@@ -226,4 +226,70 @@ Anchors reused from §6 (all hand-verified at z=1.96): pooled Wilson(36,60) =
 * §7 pre-registration: fit real ρ via cross-look IoU matching; pass through
   `rho=` / constants.json.
 * S-1 (max-per-look defect estimator) remains a frozen-file decision —
-  unchanged by this loop.
+  unchanged by this loop. (Its VISIBLE COMPENSATION ships in §9 below.)
+
+## 9. LOOP-I858 — S-1 visible compensation: per-tray pooled defect cross-check
+
+RT-001 S-1 (CRITICAL): the certified defect rate is
+`max(per_look_rates)/factor` (grading.py D4, frozen). A maximum over more
+looks or trays can only stay equal or grow, so photographing MORE of the lot
+mechanically RAISES the certified figure — selection bias of an order
+statistic, landing on the party paid less. Unfreezing merge_looks stays a
+data-scientist decision; this loop ships the documented alternative: publish
+a second, well-behaved estimator beside the ceiling.
+
+### 9a. Point estimate
+
+    pooled_pct = 100 · k / n_obs,   k = n_obs − class_counts["sound"]
+
+Reconstructed ONLY from published result fields (D8 discipline): it can never
+drift from the printed class table. No worst-view selection → no growth with
+sample size; it is the plain incidence over every observation.
+
+### 9b. Interval: mixed-design effective n
+
+Within ONE tray, repeated looks re-observe the same physical bulbs — the §6
+worst-case ρ=1 clustering applies. ACROSS trays, samples are physically
+distinct and earn full credit. Per tray t with n_t observations touched by m_t
+looks:
+
+    n_eff = Σ_t n_t / m_t          deff = n_obs / n_eff   (≥ 1)
+
+* Uniform looks-per-tray ⇒ deff = m exactly (reduces to §6's Kish form).
+* Single look ⇒ deff = 1 and the interval equals plain Wilson bit-for-bit.
+* Partial re-photographs (a second look covering part of a tray) sit strictly
+  between no penalty and the global penalty — credit is proportional to what
+  was actually re-seen.
+* Missing tray labels ⇒ one implicit tray at m = n_looks: the same worst-case
+  assumption grade_a_ci_fields makes. Conservative direction, always.
+
+Interval drawn by `wilson_pct_effective(k, n_obs, deff)`; both counts scale by
+the same deff so p_hat is preserved exactly (§6b).
+
+### 9c. The gap field, read honestly
+
+`defect_pooled_gap_pts = certified − pooled` is NOT an error bar on the pooled
+figure. It is the distance between two different estimands: a worst-view
+ceiling (biased UP under occlusion, corrected by a factor fitted for that
+bias) and an average-view incidence (biased DOWN where occlusion hides
+defects). The certificate copy says which way each errs; neither number claims
+to be the truth the other misses.
+
+### 9d. Verification
+
+    python -m pytest tests/test_defect_crosscheck.py -q   # 17 contracts
+    python -m pytest tests/test_i858_ui_contracts.py -q   # 10 contracts
+
+Anchors: single look reproduces Wilson(k,n) exactly; uniform design T1 8 obs
+@m=2 + T2 8 obs @m=1 → n_eff = 4+8 = 12, deff = 16/12 ≈ 1.333; mixed design
+(T1 8 obs @m=2, T2 10 obs @m=2 → n_eff = 9, global-deff alternative would be 4).
+Degenerate inputs return {} — nothing renders rather than something invented.
+
+### 9e. Quantifying the thing being compensated
+
+IMPACT_EVIDENCE §3d measures the max()-selection bias directly on the 130
+hand-sorted tray rates: ≈ +17 pts at the fitted two-look design, ~7× the ±6-pt
+sampling promise by five trays — a LOWER bound (assumes perfect view-independent
+detection). That table is the pitch answer to "why does photographing more make
+your certified number worse?": it did; now both readings are on the document,
+and the unfreeze decision has a measured cost of delay attached.

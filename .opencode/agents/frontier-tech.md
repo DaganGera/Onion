@@ -10,18 +10,36 @@ A hostile judge will ask "is this just a slide word?" so every adoption must shi
 with working code or a working simulation and an honest one-line justification.
 
 Your technology menu (pick by value, document choice in .agent/FRONTIER_TECH.md):
-1. DIGITAL TWIN: already adopted (app/twin.py) — extend if you find real gaps.
-2. MAT-FREE SIZING (CURRENT TOP PRIORITY): replace the printed ArUco sheet with
-   (a) WebXR/ARCore depth when available, (b) reference-object sizing — any
-   known-size object in frame (₹10 coin 27mm, ATM card 85.6×54mm, A4 sheet),
+1. MAT-FREE SIZING (top priority): replace the printed ArUco sheet with
+   (a) reference-object sizing — any known-size object in frame (₹10 coin 27mm,
+   ATM card 85.6×54mm, A4 sheet), (b) WebXR/ARCore depth when available,
    (c) carried homography, (d) relative-size percentile grading marked
-   PROVISIONAL. Implement in app/scale.py as new ladder rungs ABOVE mat_edge:
-   reference_object > mat_edge. UI prompt in index.html tells the user to drop
-   a coin/card beside the tray. Tests for the math (pixel/mm from a known
-   rectangle under perspective).
-3. GENERATIVE AI (offline only): template-NLG certificate narrative; synthetic
-   data realism upgrades in make_synthetic.py.
-4. DL GOOD PRACTICE: extend ECE work; per-class calibration.
+   PROVISIONAL. Implement new ladder rungs in app/scale.py ABOVE mat_edge:
+   reference_object > mat_edge. UI prompt in index.html. Tests for the math.
+2. INTERNAL-DEFECT VIRTUAL LAB (user-mandated, build NOW as working simulation):
+   internal rot is invisible to RGB — so BUILD the 3D physics simulation that
+   proves it and quantifies it, instead of writing "future roadmap". Create
+   app/internal_sim.py + tests: a ray-optics Monte-Carlo through a layered
+   onion sphere model (outer skin / scales / core; rot modeled as
+   higher-absorption, higher-scatter inclusions at random depth/size). Simulate
+   what a phone camera sees (RGB reflectance) vs what a 728/805nm dual-wavelength
+   transmittance probe would see (literature: rot shifts the 728/805 ratio —
+   see Sun et al., SRS onion rot work). Deliverables:
+   - simulate(n_bulbs, rot_rate) -> per-bulb RGB features + NIR ratio features
+   - PROOF: show RGB feature distributions of internal-rot vs sound bulbs
+     OVERLAP (quantify AUC) — this is the honest, simulated evidence for why
+     the system refers uncertain bulbs instead of pretending
+   - PROOF: show the simulated 728/805 ratio SEPARATES them (AUC) — this is
+     the working virtual lab for the ₹200 clip-on NIR probe future upgrade
+   - wire the AUC numbers into .agent/IMPACT_EVIDENCE.md and the dashboard
+     "why we refer" explainer panel — judges see a physics simulation, not a
+     roadmap bullet
+3. ON-DEVICE EXECUTORCH (documented plan, not stub): YOLO26 has an official
+   ExecuTorch example; write scripts/export_executorch.py that exports
+   weights/best.pt to a .pte for fully-offline phone inference (no server).
+   If the export deps are unavailable, ship the script + measured plan and
+   mark NOT-EXECUTED honestly.
+4. GENERATIVE AI (offline only): template-NLG certificate narrative.
 
 Hard rules:
 - Offline-first: nothing in the demo path calls an external AI API.

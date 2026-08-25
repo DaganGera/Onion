@@ -46,11 +46,10 @@ Software complete per STATUS.md; gates T0,T2-T7,T10-T12 passing on synthetic dat
 - All model metrics remain SYNTHETIC-data numbers; real-photo revalidation still owed.
 - Gates T8 (phone over tunnel) and printed-mat caliper check are physical, not done here.
 - Disputes recorded but live outside the hash envelope (tamper-EVIDENT chain, stated).
-- Wilson CI treats two looks as independent bulbs (red-team S-2, open).
+- Grade-A CI two-look clustering (red-team S-2): CLOSED via finalize-time overlay (D11/D14); frozen pooled bounds kept on the record as provenance.
+- Certified defect rate still uses max-per-look (RT-001 S-1) — unfreezing grading.py remains open. Visible compensation shipped (D15): every certificate prints the per-tray pooled cross-check beside the ceiling; measured structural bias quantified in IMPACT_EVIDENCE §3d.
 - No signature mechanism beyond the hash chain (RT-001 T-2, open).
-- PS number 26046 vs SIH26031 needs confirmation from registration (D6).
-
-## 7. Commands
+- PS number 26046 vs SIH26031 needs confirmation from registration (D6).## 7. Commands
 ```
 # run (one process)
 uvicorn app.main:app --host 0.0.0.0 --port 8000

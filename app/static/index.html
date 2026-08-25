@@ -486,6 +486,10 @@ const I18N = {
     replayMode: 'Replay mode — cached results, no camera or network.',
     defectInterval: (lo, hi, dh) =>
       `Defect interval: ${lo}–${hi}% (±${dh} pts, 95% Wilson on the least-occluded view)`,
+    // LOOP-I858 / RT-001 S-1: worst-view ceiling needs its honest companion
+    pooledCrosscheck: (pct, trays, nEff) =>
+      `Pooled cross-check: ${pct}% average incidence across ${trays} tray(s) · ≈${nEff} distinct bulbs`
+      + ' — the certified figure errs high on purpose (least-occluded view).',
     shotCaption: (i, n, kb) => `Look ${i} — ${n} bulbs${kb}`,
     sizeUnavailable: 'size unavailable',
     mmGrade: (mm, g) => `${mm} mm · Grade ${g}`,
@@ -597,6 +601,9 @@ const I18N = {
     replayMode: 'रीप्ले मोड — कैश किए गए परिणाम, कोई कैमरा या नेटवर्क नहीं।',
     defectInterval: (lo, hi, dh) =>
       `दोष अंतराल: ${lo}–${hi}% (±${dh} अंक, सबसे कम छिपी नज़र पर 95% विल्सन)`,
+    pooledCrosscheck: (pct, trays, nEff) =>
+      `संयुक्त जाँच: ${trays} ट्रे(ओं) में औसत दोष दर ${pct}% · ≈${nEff} अलग प्याज़`
+      + ' — प्रमाणित आँकड़ा जानबूझकर ऊँचा रखा गया है (सबसे कम छिपी नज़र)।',
     shotCaption: (i, n, kb) => `नज़र ${i} — ${n} प्याज़${kb}`,
     sizeUnavailable: 'साइज़ उपलब्ध नहीं',
     mmGrade: (mm, g) => `${mm} मिमी · श्रेणी ${g}`,
@@ -1382,6 +1389,16 @@ function renderResults(res) {
     defectCILine = '<div class="text-xs text-slate-700 mt-2">' +
       t('defectInterval')(res.defect_ci_low.toFixed(1),
                           res.defect_ci_high.toFixed(1), dhalf) +
+      '</div>';
+  }
+  // LOOP-I858 / RT-001 S-1: the certified number is a worst-view ceiling.
+  // Show the plain pooled incidence beside it so the officer sees both --
+  // only when this server produced the fields (legacy lots stay unchanged).
+  if (res.defect_pooled_pct != null) {
+    defectCILine += '<div class="text-xs text-slate-600 mt-1">' +
+      t('pooledCrosscheck')(res.defect_pooled_pct.toFixed(1),
+                            res.defect_pooled_trays ?? '?',
+                            (res.defect_pooled_n_effective ?? 0).toLocaleString('en-IN')) +
       '</div>';
   }
   $('defectTable').innerHTML = rows.join('') + defectCILine;
