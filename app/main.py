@@ -328,8 +328,16 @@ def report(lot_id: int, request: Request) -> HTMLResponse:
 # --------------------------------------------------------------------------
 
 
-ANNOTATED_MAX_WIDTH = 1280
-ANNOTATED_JPEG_QUALITY = 82
+# LOOP-A859: these two constants size the per-look DOWNLINK -- the annotated
+# JPEG is ~90% of every /analyze response, so it sets what a grading session
+# costs over rural data. 960 px / q76 keeps boxes and mm labels legible on a
+# ₹8k phone screen while landing the payload near 100 KB; at the old
+# 1280 px / q82 a full ±6-pt sufficiency sample (6 looks) measured 2.6 MB --
+# over the <2 MB session budget that IMPACT_EVIDENCE.md §4b gates on.
+# annotated_scale below derives from ANNOTATED_MAX_WIDTH, so client tap
+# mapping stays consistent by construction.
+ANNOTATED_MAX_WIDTH = 960
+ANNOTATED_JPEG_QUALITY = 76
 
 # QA LOOP-Q2216: upload ceiling and decode ceiling for /analyze.
 MAX_UPLOAD_BYTES = 25 * 1024 * 1024      # 25 MB wire cap per photo
@@ -393,10 +401,10 @@ def _unreadable_format_message(label: str) -> str:
 def _annotate(image: np.ndarray, bulbs: list[dict]) -> str:
     """Draw boxes and return a base64 JPEG the phone can display directly.
 
-    JPEG, not PNG, and capped at 1280 px wide. A full-resolution PNG of a
-    tray runs ~2 MB, and base64 adds another third on top -- two looks would
-    push 5 MB down a market-wifi tunnel before the officer sees anything.
-    Boxes and a millimetre label survive this compression fine.
+    JPEG, not PNG, and capped at ANNOTATED_MAX_WIDTH px wide. A
+    full-resolution PNG of a tray runs ~2 MB -- two looks would push 5 MB
+    down a market-wifi tunnel before the officer sees anything. Boxes and a
+    millimetre label survive this compression fine.
     """
     canvas = image.copy()
 

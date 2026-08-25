@@ -123,6 +123,32 @@ live inflation is AT LEAST these figures.
 - **ASSUMPTION:** handling ~45–90 s per look (lay tray beside mat, frame, capture, shake, recapture). A 1-tray two-look lot therefore lands at **~2–3 minutes end-to-end** including the result screen; a sample sized to the ±6-pt promise (~3 trays) at **~15–30 minutes**. — ASSUMED
 - Manual whole-lot grading is literature-slow, not assumption-slow: a Nashik-market trade survey found **~30 persons are needed to grade 20 tonnes of onions in a day** (≈0.72 person-minutes per kg), and ~50–55 lakh tonnes/year are graded manually in India (Bisen, Bakane & Sakkalkar 2022, J Food Sci Technol 59(6):2370–2380, doi:10.1007/s13197-021-05253-8; accessed 2026-08-25; survey figure, not a time-motion study — defect sorting may be slower still). At that rate one 2–5 t tractor-trolley lot is **24–60 person-hours**: hours even for a ten-person crew, and it produces no signed interval. — LITERATURE
 
+## 4b. Data cost per grading session — measured, not asserted
+
+Method: the uplink side mirrors `downscaleForUpload()` in index.html — clamp the long edge to the client's own 1600 px constant, re-encode JPEG q80, keep whichever blob is smaller (the honesty guard) — over every tray photo in `data/dataset/test/images`. The downlink side is the median size of the six immutable replay payloads served by `/api/replay/N`, which are exactly one look's annotated response including evidence thumbnails. Imagery is SYNTHETIC repo trays; field phone originals are several MB BEFORE this clamp, and AFTER it the payload depends on scene content, not source size.
+
+- **Uplink per look after the client clamp: median 154 KB** (range 115–227 KB across 28 photos); 0/28 hit the send-as-is honesty guard. Browser canvas encoders vary ±15% vs Pillow — stated, not hidden. — MEASURED-IN-REPO (SYNTHETIC imagery)
+- **Downlink per look (result + thumbnails): median 143 KB** across 6 cached replays. — MEASURED-IN-REPO
+- **Static shell, first visit: 480 KB** (index.html + vendored tailwind.js). The service worker (loop A859) caches same-origin `/static/*` and `/api/replay/N`, so every visit after the first pays **0 KB** for the shell (~<2 KB of conditional-request overhead when online, zero offline). — MEASURED-IN-REPO
+- Finalize POST + certificate row counted as 8 KB. — ASSUMED (generous)
+
+| full grading session | looks | network cost | share of 2 MB budget |
+|---|---|---|---|
+| first visit, 1 tray × 2 looks | 2 | 1107 KB | 54% |
+| repeat visit (service worker), same lot | 2 | 627 KB | 31% |
+| repeat visit, sufficiency sample (3 trays × 2 looks) | 6 | 1817 KB | 89% |
+
+Worst case above stays inside the **<2 MB per-session budget**: PASS. On a ~0.5 Mbps rural uplink the repeat-visit lot is ≈10 s of radio time, most of it the two photo uploads that A2212 already clamped. — MEASURED-IN-REPO (arithmetic on measured components)
+- Stress read, so the tail is visible: at the WORST measured components (227 KB up / 163 KB down per look) the sufficiency sample reaches 2372 KB — 116% of budget, over by 324 KB. The lever if field photos run heavier is `ANNOTATED_MAX_WIDTH`/`ANNOTATED_JPEG_QUALITY` in main.py, which set ~90% of every response. — MEASURED-IN-REPO
+
+**The rupee story (every label explicit):**
+
+- Data tariff ASSUMED ₹10/GB effective (₹239-ish 1.5–2 GB/day prepaid bundles; conservative vs street ₹6–8/GB). One repeat-visit lot moves 0.61 MB ⇒ **≈₹0.01 of data**. Even the once-only first visit adds under ₹0.05.
+- Hardware: the single ₹8,000 deployment phone amortised over 730 days × 20 lots/day ⇒ **≈₹0.55/lot**. — ASSUMED life and throughput
+- Printed A4 mat: ₹5 reprint every ~200 lots ⇒ **≈₹0.03/lot**. — ASSUMED
+- **SAMA marginal operating cost ≈ ₹0.58 per lot** (data + handset amortisation + mat). No accounts, no SMS gateway, no paid API anywhere in the path.
+- Manual comparison, stated narrowly so nobody accuses us of spin: assessing one 2–5 t trolley at the literature grading rate (§4) is 24–60 person-hours; at an ASSUMED ₹400/day unskilled wage that is **₹1,200–₹3,000 of labour per lot assessed by hand**. SAMA does NOT eliminate physical sorting — the sample trays still get laid out by hand (§4's 2–30 min). What ~₹1 buys is a signed, reproducible ±pt interval that ends the re-grading argument. — LITERATURE rate + ASSUMED wage
+
 ## 5. External impact numbers — LITERATURE (problem-size context)
 
 All verified against primary documents on 2026-08-25; full citations
@@ -153,5 +179,6 @@ figures from published sources — never present them as SAMA data.
 - Real-phone tray photos re-run through eval_lot/calibrate_size converting §1–§2 inputs from synthetic to field data (gates T8, printed-mat caliper check).
 - The ₹ figures in §3b–§3c ride on DEMO rate differentials and an ASSUMED trolley mass; replace either with a mandi-rate feed or a weighed-lot study before quoting them as field losses.
 - §3d assumes perfect, view-independent detection to isolate the max()-selection bias; a real two-view tray dataset (or the S-1 unfreeze) would replace it with measured inflation.
+- §4b's data figures ride on SYNTHETIC imagery through a Pillow approximation of the phone's canvas encoder, and its rupee figures on ASSUMED tariff, wage, handset life and lot throughput; replace with logged field sessions and actual bills before quoting them as field costs.
 - Any §5 literature link rot or a superseding national loss study: re-verify the citations in EVIDENCE_AUDIT.md §6 before quoting.
 

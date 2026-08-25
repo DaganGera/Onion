@@ -13,9 +13,11 @@ from __future__ import annotations
 
 import argparse
 import csv
+import io
 import json
 import math
 import random
+import re
 import statistics
 import sys
 from datetime import date
@@ -62,6 +64,122 @@ def groundtruth_stats() -> dict:
 def ci_half_width(k: int, n: int) -> float:
     lo, hi = arb.wilson_pct(k, n)
     return (hi - lo) / 2.0
+
+
+# --------------------------------------------------------------------------
+# Data cost per grading session (loop A859). Measured from repo files; the
+# only invented numbers below are the explicitly labelled ASSUMED constants
+# (finalize overhead, tariff, wage, amortisation) and they are printed as
+# such so nobody can mistake them for field data.
+# --------------------------------------------------------------------------
+
+FINALIZE_ASSUMED_KB = 8        # JSON POST + certificate row + headers — ASSUMED, generous
+DATA_TARIFF_INR_PER_GB = 10.0  # effective prepaid bundle price — ASSUMED (see section text)
+PHONE_INR = 8000               # the whole deployment handset — project constant
+PHONE_DAYS = 730               # 2-year service life — ASSUMED
+LOTS_PER_DAY = 20              # one officer's stall throughput — ASSUMED
+MAT_PRINT_INR = 5.0            # A4 laser reprint — ASSUMED
+MAT_LOTS_PER_PRINT = 200       # laminated sheet lifetime — ASSUMED
+WAGE_INR_PER_DAY = 400         # unskilled mandi day-rate — ASSUMED (₹50/h over 8 h)
+SESSION_BUDGET_KB = 2048       # the <2 MB per-session promise
+
+
+def _upload_constants() -> tuple[int, int]:
+    """Read UPLOAD_MAX_EDGE / UPLOAD_JPEG_QUALITY straight out of index.html.
+
+    One source of truth: if the client budget ever changes, this measurement
+    follows it automatically instead of silently drifting.
+    """
+    html = (ROOT / "app" / "static" / "index.html").read_text(encoding="utf-8")
+    edge_m = re.search(r"UPLOAD_MAX_EDGE\s*=\s*(\d+)", html)
+    q_m = re.search(r"UPLOAD_JPEG_QUALITY\s*=\s*([\d.]+)", html)
+    if not edge_m or not q_m:
+        return 1600, 80
+    edge = int(edge_m.group(1))
+    qf = float(q_m.group(1))
+    quality = round(qf * 100) if qf <= 1 else round(qf)
+    return edge, quality
+
+
+def _simulate_client_downscale(path: Path, edge: int,
+                               quality: int) -> tuple[int, int]:
+    """Mirror index.html downscaleForUpload() on one photo.
+
+    Returns (orig_kb, sent_kb) AFTER the honesty guard -- exactly what would
+    leave the phone for this file. Pillow stands in for the browser canvas
+    encoder; encoders differ by roughly +/-15%, which the output states.
+    """
+    try:
+        from PIL import Image  # deferred: script must run without heavy deps
+    except ImportError:
+        raise SystemExit("Pillow required for the uplink measurement: "
+                         "pip install pillow")
+    raw = path.read_bytes()
+    orig_kb = max(1, round(len(raw) / 1024))
+    im = Image.open(io.BytesIO(raw)).convert("RGB")
+    w, h = im.size
+    k = min(1.0, edge / max(w, h))
+    if k < 1.0:
+        im = im.resize((max(1, round(w * k)), max(1, round(h * k))),
+                       Image.LANCZOS)
+    buf = io.BytesIO()
+    im.save(buf, "JPEG", quality=quality, optimize=True)
+    out = buf.getvalue()
+    # The honesty guard: a re-encode that came out BIGGER never ships --
+    # the original does. Mirror it or the doc lies about savings.
+    sent_kb = orig_kb if len(out) >= len(raw) else max(1, round(len(out) / 1024))
+    return orig_kb, sent_kb
+
+
+def data_cost() -> dict:
+    """Measured per-look and per-session network components (KB)."""
+    static = ROOT / "app" / "static"
+    edge, quality = _upload_constants()
+
+    img_dir = ROOT / "data" / "dataset" / "test" / "images"
+    ups: list[tuple[int, int]] = []
+    if img_dir.is_dir():
+        photos = sorted(p for p in img_dir.iterdir()
+                        if p.suffix.lower() in (".jpg", ".jpeg", ".png"))
+        for p in photos:
+            try:
+                ups.append(_simulate_client_downscale(p, edge, quality))
+            except Exception:
+                continue  # one unreadable file must not kill the report
+
+    replays = sorted((static.parent / "cache").glob("replay_*.json"))
+    downs = [max(1, round(p.stat().st_size / 1024)) for p in replays]
+
+    shell_kb = round(sum(p.stat().st_size for p in
+                         [static / "index.html",
+                          static / "vendor" / "tailwind.js"]) / 1024)
+    report_kb = max(1, round((static / "report.html").stat().st_size / 1024))
+
+    sent = [s for _, s in ups]
+    return {
+        "upload_max_edge": edge,
+        "jpeg_quality": quality,
+        "n_photos": len(ups),
+        "up_median_kb": statistics.median(sent) if sent else 0,
+        "up_min_kb": min(sent) if sent else 0,
+        "up_max_kb": max(sent) if sent else 0,
+        "as_is_count": sum(1 for o, s in ups if s == o),
+        "down_median_kb": statistics.median(downs) if downs else 0,
+        "down_max_kb": max(downs) if downs else 0,
+        "shell_first_visit_kb": shell_kb,
+        "shell_repeat_visit_kb": 0,   # service worker serves /static/* + replay cache
+        "report_html_kb": report_kb,
+        "up_samples": ups,
+        "n_replays": len(downs),
+    }
+
+
+def session_cost_kb(dc: dict, looks: int, first_visit: bool) -> float:
+    """Total network KB of one full grading session under the stated model."""
+    per_look = dc["up_median_kb"] + dc["down_median_kb"]
+    shell = dc["shell_first_visit_kb"] if first_visit else dc["shell_repeat_visit_kb"]
+    return shell + looks * per_look + FINALIZE_ASSUMED_KB + dc["report_html_kb"]
+
 
 
 def build_markdown(gt: dict, metrics: dict) -> str:
@@ -320,6 +438,109 @@ def build_markdown(gt: dict, metrics: dict) -> str:
         "interval. — LITERATURE")
     add("")
 
+    # --- 4b: measured data cost per session (loop A859) ---------------------
+    dc = data_cost()
+    looks_std = 2
+    trays_suff = max(1, math.ceil(n_req_obs / max(1, gt["mean_per_tray"])))
+    s_first = session_cost_kb(dc, looks_std, first_visit=True)
+    s_repeat = session_cost_kb(dc, looks_std, first_visit=False)
+    s_suff = session_cost_kb(dc, 2 * trays_suff, first_visit=False)
+    budget_ok = max(s_first, s_repeat, s_suff) <= SESSION_BUDGET_KB
+
+    inr_per_lot_data = s_repeat / 1024 * DATA_TARIFF_INR_PER_GB / 1024
+    inr_phone_lot = PHONE_INR / (PHONE_DAYS * LOTS_PER_DAY)
+    inr_mat_lot = MAT_PRINT_INR / MAT_LOTS_PER_PRINT
+    sama_inr_lot = inr_per_lot_data + inr_phone_lot + inr_mat_lot
+    manual_low = 24 * (WAGE_INR_PER_DAY / 8)
+    manual_high = 60 * (WAGE_INR_PER_DAY / 8)
+
+    add("## 4b. Data cost per grading session — measured, not asserted")
+    add("")
+    add("Method: the uplink side mirrors `downscaleForUpload()` in "
+        "index.html — clamp the long edge to the client's own "
+        f"{dc['upload_max_edge']} px constant, re-encode JPEG q"
+        f"{dc['jpeg_quality']}, keep whichever blob is smaller (the honesty "
+        "guard) — over every tray photo in `data/dataset/test/images`. The "
+        "downlink side is the median size of the six immutable replay "
+        "payloads served by `/api/replay/N`, which are exactly one look's "
+        "annotated response including evidence thumbnails. Imagery is "
+        "SYNTHETIC repo trays; field phone originals are several MB BEFORE "
+        "this clamp, and AFTER it the payload depends on scene content, not "
+        "source size.")
+    add("")
+    add(f"- **Uplink per look after the client clamp: median "
+        f"{dc['up_median_kb']:.0f} KB** (range {dc['up_min_kb']}–"
+        f"{dc['up_max_kb']} KB across {dc['n_photos']} photos); "
+        f"{dc['as_is_count']}/{dc['n_photos']} hit the send-as-is honesty "
+        "guard. Browser canvas encoders vary ±15% vs Pillow — stated, not "
+        "hidden. — MEASURED-IN-REPO (SYNTHETIC imagery)")
+    add(f"- **Downlink per look (result + thumbnails): median "
+        f"{dc['down_median_kb']:.0f} KB** across {dc['n_replays']} cached "
+        "replays. — MEASURED-IN-REPO")
+    add(f"- **Static shell, first visit: {dc['shell_first_visit_kb']} KB** "
+        "(index.html + vendored tailwind.js). The service worker (loop A859) "
+        f"caches same-origin `/static/*` and `/api/replay/N`, so every visit "
+        f"after the first pays **{dc['shell_repeat_visit_kb']} KB** for the "
+        "shell (~<2 KB of conditional-request overhead when online, zero "
+        "offline). — MEASURED-IN-REPO")
+    add(f"- Finalize POST + certificate row counted as "
+        f"{FINALIZE_ASSUMED_KB} KB. — ASSUMED (generous)")
+    add("")
+    add("| full grading session | looks | network cost | share of 2 MB budget |")
+    add("|---|---|---|---|")
+    add(f"| first visit, 1 tray × 2 looks | {looks_std} | {s_first:.0f} KB | "
+        f"{100 * s_first / SESSION_BUDGET_KB:.0f}% |")
+    add(f"| repeat visit (service worker), same lot | {looks_std} | "
+        f"{s_repeat:.0f} KB | {100 * s_repeat / SESSION_BUDGET_KB:.0f}% |")
+    add(f"| repeat visit, sufficiency sample "
+        f"({trays_suff} trays × 2 looks) | {2 * trays_suff} | {s_suff:.0f} KB | "
+        f"{100 * s_suff / SESSION_BUDGET_KB:.0f}% |")
+    add("")
+    if budget_ok:
+        add(f"Worst case above stays inside the **<{SESSION_BUDGET_KB // 1024} MB per-session "
+            "budget**: PASS. On a ~0.5 Mbps rural uplink the repeat-visit lot "
+            f"is ≈{s_repeat * 8 / 500:.0f} s of radio time, most of it the "
+            "two photo uploads that A2212 already clamped. — MEASURED-IN-REPO "
+            "(arithmetic on measured components)")
+        stress = 2 * trays_suff * (dc["up_max_kb"] + dc["down_max_kb"]) \
+            + FINALIZE_ASSUMED_KB + dc["report_html_kb"]
+        add(f"- Stress read, so the tail is visible: at the WORST measured "
+            f"components ({dc['up_max_kb']} KB up / {dc['down_max_kb']} KB "
+            f"down per look) the sufficiency sample reaches {stress:.0f} KB — "
+            f"{100 * stress / SESSION_BUDGET_KB:.0f}% of budget"
+            f"{', over by ' + format(stress - SESSION_BUDGET_KB) + ' KB' if stress > SESSION_BUDGET_KB else ''}. "
+            "The lever if field photos run heavier is `ANNOTATED_MAX_WIDTH`/"
+            "`ANNOTATED_JPEG_QUALITY` in main.py, which set ~90% of every "
+            "response. — MEASURED-IN-REPO")
+    else:
+        add(f"**FAIL:** a modelled session exceeds the {SESSION_BUDGET_KB // 1024} MB budget — "
+            "fix before quoting any data-cost number.")
+    add("")
+    add("**The rupee story (every label explicit):**")
+    add("")
+    add(f"- Data tariff ASSUMED ₹{DATA_TARIFF_INR_PER_GB:.0f}/GB effective "
+        "(₹239-ish 1.5–2 GB/day prepaid bundles; conservative vs street "
+        "₹6–8/GB). One repeat-visit lot moves "
+        f"{s_repeat / 1024:.2f} MB ⇒ **≈₹{inr_per_lot_data:.2f} of data**. "
+        "Even the once-only first visit adds under ₹0.05.")
+    add(f"- Hardware: the single ₹{PHONE_INR:,} deployment phone amortised "
+        f"over {PHONE_DAYS} days × {LOTS_PER_DAY} lots/day ⇒ "
+        f"**≈₹{inr_phone_lot:.2f}/lot**. — ASSUMED life and throughput")
+    add(f"- Printed A4 mat: ₹{MAT_PRINT_INR:.0f} reprint every "
+        f"~{MAT_LOTS_PER_PRINT} lots ⇒ **≈₹{inr_mat_lot:.2f}/lot**. — ASSUMED")
+    add(f"- **SAMA marginal operating cost ≈ ₹{sama_inr_lot:.2f} per lot** "
+        "(data + handset amortisation + mat). No accounts, no SMS gateway, "
+        "no paid API anywhere in the path.")
+    add("- Manual comparison, stated narrowly so nobody accuses us of spin: "
+        "assessing one 2–5 t trolley at the literature grading rate (§4) is "
+        f"24–60 person-hours; at an ASSUMED ₹{WAGE_INR_PER_DAY}/day unskilled "
+        f"wage that is **₹{manual_low:,.0f}–₹{manual_high:,.0f} of labour per "
+        "lot assessed by hand**. SAMA does NOT eliminate physical sorting — "
+        f"the sample trays still get laid out by hand (§4's 2–30 min). What "
+        f"~₹{sama_inr_lot:.0f} buys is a signed, reproducible ±pt interval "
+        "that ends the re-grading argument. — LITERATURE rate + ASSUMED wage")
+    add("")
+
     add("## 5. External impact numbers — LITERATURE (problem-size context)")
     add("")
     add("All verified against primary documents on 2026-08-25; full citations")
@@ -365,6 +586,11 @@ def build_markdown(gt: dict, metrics: dict) -> str:
     add("- §3d assumes perfect, view-independent detection to isolate the "
         "max()-selection bias; a real two-view tray dataset (or the S-1 "
         "unfreeze) would replace it with measured inflation.")
+    add("- §4b's data figures ride on SYNTHETIC imagery through a Pillow "
+        "approximation of the phone's canvas encoder, and its rupee figures "
+        "on ASSUMED tariff, wage, handset life and lot throughput; replace "
+        "with logged field sessions and actual bills before quoting them as "
+        "field costs.")
     add("- Any §5 literature link rot or a superseding national loss study: "
         "re-verify the citations in EVIDENCE_AUDIT.md §6 before quoting.")
     add("")

@@ -48,9 +48,10 @@ EVIDENCE_DIR = ROOT / "data" / "evidence"
 
 DATA_URI_PREFIX = "data:image/jpeg;base64,"
 
-# A tray look annotated at <=1280 px wide / q82 lands around 100-250 KB.
-# 512 KB decoded accepts any honest capture with head room and still caps
-# a hostile payload well below anything that could hurt the disk.
+# A tray look annotated at <=960 px wide / q76 (loop A859 downlink budget)
+# lands around 80-160 KB. 512 KB decoded accepts any honest capture with
+# head room and still caps a hostile payload well below anything that could
+# hurt the disk.
 MAX_SHOT_BYTES = 512 * 1024
 # Twelve looks covers every real session many times over; the cap exists so
 # a crafted finalize body cannot write unbounded files.

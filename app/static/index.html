@@ -1596,6 +1596,21 @@ $('genCert').onclick = () => {
 
 if (REPLAY) banner(t('replayMode'), 'warn');
 applyLang();
+
+// LOOP-A859: after the FIRST visit the service worker serves /static/* and
+// the /api/replay/N demo payloads from cache, so repeat visits on rural
+// prepaid data pay ~0 for the ~480 KB shell. Guarded three ways so it can
+// never break a session: unsupported engines skip it, plain-HTTP LAN
+// testing skips it (browsers only register SW on https or localhost), and
+// any registration error is swallowed — the app is fully functional with
+// no worker at all.
+if ('serviceWorker' in navigator
+    && (location.protocol === 'https:'
+        || location.hostname === 'localhost'
+        || location.hostname === '127.0.0.1')) {
+  navigator.serviceWorker.register('/static/sw.js').catch(() => {});
+}
+
 </script>
 </body>
 </html>
