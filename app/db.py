@@ -515,6 +515,43 @@ def recent_lots(centre_id: int | None = None, limit: int = 20) -> list[dict]:
         conn.close()
 
 
+def bulb_rows(lot_id: int) -> dict | None:
+    """Per-bulb rows for one lot -- powers the two-phone dispute theater.
+
+    The farmer contests a bulb from his own phone (the certificate page he
+    opens by scanning the paper QR); whoever keeps that certificate open --
+    the officer's projector, the trader's laptop -- re-reads this snapshot
+    every few seconds and watches disputes appear live.
+
+    Read-only by construction, and deliberately narrow: an explicit field
+    whitelist instead of SELECT *, because this runs on every poll of every
+    open certificate and must stay small, stable, and free of internals
+    (bbox pixels have no business crossing the wire). Returns None when the
+    lot does not exist so the caller can answer 404 honestly rather than an
+    empty-looking success.
+    """
+    conn = connect()
+    try:
+        lot = conn.execute("SELECT id, lot_ref FROM lots WHERE id = ?",
+                           (lot_id,)).fetchone()
+        if lot is None:
+            return None
+        rows = conn.execute(
+            """SELECT id, look_index, cls, confidence,
+                      diameter_mm, size_grade, decision, disputed
+               FROM bulbs WHERE lot_id = ? ORDER BY id""",
+            (lot_id,)).fetchall()
+        return {
+            "ok": True,
+            "lot_id": int(lot["id"]),
+            "lot_ref": lot["lot_ref"],
+            "n_bulbs": len(rows),
+            "bulbs": [dict(r) for r in rows],
+        }
+    finally:
+        conn.close()
+
+
 def mark_disputed(bulb_id: int) -> bool:
     conn = connect()
     try:

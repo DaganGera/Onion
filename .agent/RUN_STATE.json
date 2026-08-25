@@ -31,7 +31,7 @@
     "cycle11:cv-engineer:246 passed, 1 warning in 5.96s",
     "cycle12:backend-engineer:T-7 evidence thumbnails persisted+rendered; 264 passed",
     "cycle12:backend-engineer:264 passed, 1 warning in 5.89s",
-    "I2222:innovator:T-6 verify verdict scoped per-record + RECORD INTACT wording; session-resume checkpoint (tab-discard); IMPACT_EVIDENCE §3b/3c rupee stakes + resolvable gap; certificate headline strip",
+    "I2222:innovator:T-6 verify verdict scoped per-record + RECORD INTACT wording; session-resume checkpoint (tab-discard); IMPACT_EVIDENCE \u00a73b/3c rupee stakes + resolvable gap; certificate headline strip",
     "cycle13:innovator:292 passed, 1 warning in 6.16s",
     "cycle14:india-access:332 passed, 1 warning in 6.25s",
     "cycle15:demo-wow:344 passed, 1 warning in 6.18s",
@@ -79,26 +79,27 @@
     "cycle56:qa-engineer:475 passed, 1 warning in 12.45s",
     "cycle1:backend-engineer:490 passed, 1 warning in 10.54s",
     "T2263:backend-engineer:RT-001 T-1 closed without schema change: result_sha256 column added via guarded migration, digest pinned inside v2 hashed payload so editing result_json flips verify red; report.html hashCoverage line; live attack/restore drill verified; smoke ALL PASS incl all-hash-chains-intact across migrated sama.db; tests/test_result_envelope.py 15 contracts; FULL SUITE 490 passed",
-    "I858:innovator:S-1 visible compensation (defect_pooled_* per-tray clustered crosscheck overlay at /finalize, rendered on certificate+result screen) + HEIC/HEIF/AVIF actionable upload guard + verify-page five-second story line + IMPACT_EVIDENCE §3d max()-inflation table (+17 pts at fitted design, ~7x the sampling promise by five trays, lower bound); INCIDENT found+fixed en route: restore-all corrupted legacy lot 51 via unsigned result_json (recovered 4.05 by row_hash brute-force; sweep now requires matching pinned digest, skipped_unverifiable reported); 534 passed, smoke ALL PASS, all centres chain-intact",
+    "I858:innovator:S-1 visible compensation (defect_pooled_* per-tray clustered crosscheck overlay at /finalize, rendered on certificate+result screen) + HEIC/HEIF/AVIF actionable upload guard + verify-page five-second story line + IMPACT_EVIDENCE \u00a73d max()-inflation table (+17 pts at fitted design, ~7x the sampling promise by five trays, lower bound); INCIDENT found+fixed en route: restore-all corrupted legacy lot 51 via unsigned result_json (recovered 4.05 by row_hash brute-force; sweep now requires matching pinned digest, skipped_unverifiable reported); 534 passed, smoke ALL PASS, all centres chain-intact",
     "cycle2:innovator:534 passed, 1 warning in 12.84s",
-    "A859:india-access:data-cost measurement + <2MB session gate (IMPACT_EVIDENCE 4b), annotated downlink halved 276->143KB, service worker repeat-visit ~0 shell; 549 passed"
+    "A859:india-access:data-cost measurement + <2MB session gate (IMPACT_EVIDENCE 4b), annotated downlink halved 276->143KB, service worker repeat-visit ~0 shell; 549 passed",
+    "cycle3:india-access:549 passed, 1 warning in 12.09s"
   ],
   "failed_tasks": [],
-  "last_successful_action": "LOOP-I858 innovator cycle. (1) S-1 CRITICAL answered by visible compensation without unfreezing grading.py: arbitration.tray_pooled_defect_fields publishes pooled incidence with a mixed-design interval n_eff = sum_t(n_t/m_t) — worst-case rho=1 within tray, full credit across physically distinct trays; single look reproduces plain Wilson bit-for-bit; counts rebuilt only from published class_counts (D8 discipline). Rendered on report.html defect card ('errs high on purpose' sentence), index.html result screen (bilingual), presence-gated so legacy certificates render unchanged. (2) Edge case: iPhone-default HEIC uploads got a dead-end 'try again'; now sniffed via ftyp box before decode and refused with format+fix named (tests assert JPEG passthrough). (3) IMPACT_EVIDENCE regenerated with §3d: max()-selection bias measured on the 130 hand-sorted tray rates = +14.7 pts at two trays, +37 pts at five (lower bound under perfect detection), dwarfing the ±6-pt sampling promise — the measured cost of delaying the S-1 unfreeze. (4) Judge touchpoint: /verify/{id} now carries the one-sentence lot story (grade±CI, defects, evidence base, date) beside RECORD INTACT. EN ROUTE INCIDENT: a routine tamper drill exposed restore-all's sweep corrupting legacy lot 51 through its never-signed result_json blob; signed value recovered by brute-forcing row_hash over the 2-dp grid; fix gates restore-truth on result_sha256 presence AND digest match, names skips in response; regression suite reproduces faithful v1 degradation. Verified: 534 pytest green, smoke_test ALL PASS on restarted server, /api/drift NONE broken after drill, node --check on all four edited pages' inline JS.",
+  "last_successful_action": "LOOP-I858 innovator cycle. (1) S-1 CRITICAL answered by visible compensation without unfreezing grading.py: arbitration.tray_pooled_defect_fields publishes pooled incidence with a mixed-design interval n_eff = sum_t(n_t/m_t) \u2014 worst-case rho=1 within tray, full credit across physically distinct trays; single look reproduces plain Wilson bit-for-bit; counts rebuilt only from published class_counts (D8 discipline). Rendered on report.html defect card ('errs high on purpose' sentence), index.html result screen (bilingual), presence-gated so legacy certificates render unchanged. (2) Edge case: iPhone-default HEIC uploads got a dead-end 'try again'; now sniffed via ftyp box before decode and refused with format+fix named (tests assert JPEG passthrough). (3) IMPACT_EVIDENCE regenerated with \u00a73d: max()-selection bias measured on the 130 hand-sorted tray rates = +14.7 pts at two trays, +37 pts at five (lower bound under perfect detection), dwarfing the \u00b16-pt sampling promise \u2014 the measured cost of delaying the S-1 unfreeze. (4) Judge touchpoint: /verify/{id} now carries the one-sentence lot story (grade\u00b1CI, defects, evidence base, date) beside RECORD INTACT. EN ROUTE INCIDENT: a routine tamper drill exposed restore-all's sweep corrupting legacy lot 51 through its never-signed result_json blob; signed value recovered by brute-forcing row_hash over the 2-dp grid; fix gates restore-truth on result_sha256 presence AND digest match, names skips in response; regression suite reproduces faithful v1 degradation. Verified: 534 pytest green, smoke_test ALL PASS on restarted server, /api/drift NONE broken after drill, node --check on all four edited pages' inline JS.",
   "last_rejected_change": null,
   "top_risks": [
     "synthetic-only model evidence",
     "T8 phone-over-tunnel untested",
     "mat not physically printed/calipered",
     "RT-001 T-1 result_json-outside-hash-envelope CLOSED for new records; legacy rows remain summary-only by design (restore-all now refuses to treat them as truth)",
-    "S-1 estimator itself still frozen (visible compensation shipped, measured cost of delay in IMPACT_EVIDENCE §3d)",
+    "S-1 estimator itself still frozen (visible compensation shipped, measured cost of delay in IMPACT_EVIDENCE \u00a73d)",
     "JURY_LOG/JURY_ANSWERS prose still references old verify banner wording post-T-6 fix"
   ],
   "blockers": [],
-  "last_audit": "2026-08-25T09:58:43+05:30",
+  "last_audit": "2026-08-25T10:17:42+05:30",
   "next_planned_actions": [
-    "data-scientist: decide S-1 unfreeze with new tests — §3d now quantifies the bias being carried (+17 pts at fitted design)",
-    "master triage: T-1 canonical-hash envelope for legacy rows (backfill migration proposal) — restore-all guard is compensation, not coverage",
+    "data-scientist: decide S-1 unfreeze with new tests \u2014 \u00a73d now quantifies the bias being carried (+17 pts at fitted design)",
+    "master triage: T-1 canonical-hash envelope for legacy rows (backfill migration proposal) \u2014 restore-all guard is compensation, not coverage",
     "rehearse tamper-demo script with new skipped_unverifiable wording",
     "physical gates T8 + printed-mat caliper remain the pitch's number-gating items"
   ]
