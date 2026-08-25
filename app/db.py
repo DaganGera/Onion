@@ -10,6 +10,19 @@ audit_chain() pins the break to that record (later rows are checked against
 their own stored hashes rather than cascading, so one bad record cannot
 falsely redden its neighbours).
 
+RT-001 T-1 -- THE V2 ENVELOPE. The first chain covered 11 summary scalars,
+but the certificate PAGE renders from result_json (grade mix, defect tables,
+sizes) and the money endpoints read it too -- a one-statement UPDATE to
+result_json used to rewrite every rendered number while /api/verify stayed
+green. New records therefore also pin sha256 of their exact stored
+result_json bytes in lots.result_sha256 AND bind that digest inside the
+hashed payload itself, so (a) editing result_json breaks the record and
+(b) an attacker cannot repair it by updating the digest column too. Records
+finalised before this column existed keep NULL and verify under the old
+11-field envelope exactly as signed; get_lot marks them covered=False rather
+than pretending. Photographs and per-bulb rows remain annotations outside
+the envelope either way.
+
 This is tamper-EVIDENCE, not tamper-proofing. Anyone with write access to
 the file could recompute the whole chain. Say that plainly if a judge asks;
 claiming blockchain-grade immutability for a local SQLite file would not
@@ -58,6 +71,7 @@ CREATE TABLE IF NOT EXISTS lots (
     scale_conf    REAL,
     result_json   TEXT,
     evidence_json TEXT,
+    result_sha256 TEXT,
     prev_hash     TEXT NOT NULL,
     row_hash      TEXT NOT NULL
 );
@@ -99,34 +113,67 @@ def connect() -> sqlite3.Connection:
     return conn
 
 
+# Whether the lots table currently has result_sha256 (RT-001 T-1). Cached
+# because insert_lot needs the answer on every finalize; reset by init_db so
+# tests that repoint DB_PATH (and a migration that just added the column)
+# never read a stale flag. None = not checked yet.
+_RESULT_SHA_CACHE: bool | None = None
+
+
+def _has_result_sha_column(conn: sqlite3.Connection) -> bool:
+    """Cached check for the v2 envelope column on THIS connection's file."""
+    global _RESULT_SHA_CACHE
+    if _RESULT_SHA_CACHE is None:
+        try:
+            cols = {row["name"] for row in
+                    conn.execute("PRAGMA table_info(lots)").fetchall()}
+            _RESULT_SHA_CACHE = "result_sha256" in cols
+        except sqlite3.Error:
+            # An unreadable schema must not kill finalize: fall back to the
+            # legacy envelope rather than refusing to sign anything.
+            _RESULT_SHA_CACHE = False
+    return _RESULT_SHA_CACHE
+
+
 def init_db() -> None:
+    global _RESULT_SHA_CACHE
     conn = connect()
     try:
         conn.executescript(SCHEMA)
         _migrate(conn)
         conn.commit()
+        _RESULT_SHA_CACHE = None      # re-probe against the real file
     finally:
         conn.close()
 
 
 def _migrate(conn: sqlite3.Connection) -> None:
-    """Add columns that pre-RT-001-T7 databases are missing.
+    """Add columns that pre-T-7 / pre-T-1 databases are missing.
 
     CREATE TABLE IF NOT EXISTS cannot upgrade a file that already exists, so
-    an older sama.db would otherwise lack evidence_json and every thumbnail
-    write would die on an unknown column. Idempotent by inspection; a failed
-    migration must not stop the server from booting -- certificates keep
-    working without photographs, which is exactly where we were before T-7.
+    an older sama.db would otherwise lack evidence_json / result_sha256 and
+    every thumbnail write or v2-envelope insert would die on an unknown
+    column. Idempotent by inspection; a failed migration must not stop the
+    server from booting -- certificates keep working without photographs and,
+    worst case, under the old summary-only hash envelope, which is exactly
+    where every record made before those fixes lived anyway.
     """
+    global _RESULT_SHA_CACHE
     try:
         cols = {row["name"] for row in
                 conn.execute("PRAGMA table_info(lots)").fetchall()}
         if "evidence_json" not in cols:
             conn.execute("ALTER TABLE lots ADD COLUMN evidence_json TEXT")
             print("MIGRATED: lots.evidence_json added (RT-001 T-7)")
+        if "result_sha256" not in cols:
+            conn.execute("ALTER TABLE lots ADD COLUMN result_sha256 TEXT")
+            print("MIGRATED: lots.result_sha256 added (RT-001 T-1)")
+        _RESULT_SHA_CACHE = None          # re-probe after the ALTERs
     except sqlite3.Error as exc:
         print(f"WARNING: schema migration check failed ({exc}); "
-              "continuing without evidence persistence.")
+              "continuing without evidence persistence and with the "
+              "legacy (summary-only) hash envelope.")
+        _RESULT_SHA_CACHE = False
 
 
 def _now() -> str:
@@ -139,6 +186,36 @@ def _canonical(payload: dict) -> str:
 
 def compute_row_hash(payload: dict, prev_hash: str) -> str:
     return hashlib.sha256((_canonical(payload) + prev_hash).encode("utf-8")).hexdigest()
+
+
+def result_digest(result_text: str | None) -> str:
+    """SHA-256 of the EXACT bytes stored in lots.result_json.
+
+    Deliberately byte-exact, not re-canonicalised through json.loads/dumps:
+    the certificate page renders from these very bytes, so pinning the bytes
+    is what makes 'the rendered numbers' a hashed quantity. A one-character
+    edit anywhere in the blob -- a grade percentage, a defect table entry --
+    changes this digest. None hashes the empty string so the check stays
+    deterministic even for rows tampered into having no result at all.
+    """
+    return hashlib.sha256((result_text or "").encode("utf-8")).hexdigest()
+
+
+def result_integrity(lot: dict) -> dict:
+    """Report whether THIS record's rendered numbers are hash-covered.
+
+    Returns {"covered": bool, "ok": True | False | None}:
+      covered=True   -> v2 envelope; ok says whether the result_json bytes on
+                        disk still match the digest pinned inside the chain.
+      covered=False  -> legacy (pre-T-1) record; ok is None because there is
+                        nothing to compare against. We say so rather than
+                        inventing a green tick for data we never pinned.
+    """
+    sha = lot.get("result_sha256")
+    if not sha:
+        return {"covered": False, "ok": None}
+    return {"covered": True,
+            "ok": result_digest(lot.get("result_json")) == sha}
 
 
 # --------------------------------------------------------------------------
@@ -293,6 +370,18 @@ def insert_lot(centre_id: int, lot_ref: str, result: dict, meta: dict,
             prev = _prev_hash(conn, centre_id)
             created_at = meta.get("created_at") or _now()
 
+            # RT-001 T-1: dump ONCE and treat these bytes as the record's
+            # rendered truth -- they go to result_json verbatim and their
+            # digest enters the hashed payload, so certificate pages (which
+            # render from this blob) display hash-covered numbers.
+            result_text = json.dumps(result, default=str)
+
+            # v2 envelope degrades to v1 if the column never made it onto
+            # this file (failed migration on a read-only dir): a summary-only
+            # signature beats refusing to sign at all.
+            use_v2 = _has_result_sha_column(conn)
+            result_sha = result_digest(result_text) if use_v2 else None
+
             payload = {
                 "centre_id": centre_id,
                 "lot_ref": lot_ref,
@@ -306,27 +395,46 @@ def insert_lot(centre_id: int, lot_ref: str, result: dict, meta: dict,
                 "ci_high": result.get("grade_a_ci_high", 0.0),
                 "defect_pct": result.get("defect_rate_corrected", 0.0),
             }
+            if use_v2:
+                # The digest itself is INSIDE the hashed field set: editing
+                # result_json breaks the byte check; editing both the blob
+                # and the digest column breaks the row_hash check.
+                payload["result_sha256"] = result_sha
             row_hash = compute_row_hash(payload, prev)
 
-            cur = conn.execute(
-                """INSERT INTO lots (centre_id, lot_ref, farmer_name, officer_name,
+            params: list = [
+                centre_id, lot_ref, meta.get("farmer_name", ""),
+                meta.get("officer_name", ""), created_at,
+                meta.get("lat"), meta.get("lon"),
+                result.get("n_looks", 0), result.get("n_bulb_observations", 0),
+                result.get("grade_a_pct", 0.0), result.get("grade_a_ci_low", 0.0),
+                result.get("grade_a_ci_high", 0.0),
+                result.get("defect_rate_corrected", 0.0),
+                result.get("n_referred", 0),
+                1 if meta.get("calibrated") else 0,
+                meta.get("scale_source"), meta.get("scale_confidence"),
+                result_text,
+            ]
+
+            if use_v2:
+                insert_sql = """INSERT INTO lots (centre_id, lot_ref, farmer_name, officer_name,
+                                     created_at, lat, lon, n_looks, n_bulbs,
+                                     grade_a_pct, ci_low, ci_high, defect_pct,
+                                     n_referred, calibrated, scale_source, scale_conf,
+                                     result_json, result_sha256, prev_hash, row_hash)
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"""
+                params.append(result_sha)
+            else:
+                insert_sql = """INSERT INTO lots (centre_id, lot_ref, farmer_name, officer_name,
                                      created_at, lat, lon, n_looks, n_bulbs,
                                      grade_a_pct, ci_low, ci_high, defect_pct,
                                      n_referred, calibrated, scale_source, scale_conf,
                                      result_json, prev_hash, row_hash)
-                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-                (centre_id, lot_ref, meta.get("farmer_name", ""),
-                 meta.get("officer_name", ""), created_at,
-                 meta.get("lat"), meta.get("lon"),
-                 result.get("n_looks", 0), result.get("n_bulb_observations", 0),
-                 result.get("grade_a_pct", 0.0), result.get("grade_a_ci_low", 0.0),
-                 result.get("grade_a_ci_high", 0.0),
-                 result.get("defect_rate_corrected", 0.0),
-                 result.get("n_referred", 0),
-                 1 if meta.get("calibrated") else 0,
-                 meta.get("scale_source"), meta.get("scale_confidence"),
-                 json.dumps(result, default=str), prev, row_hash),
-            )
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"""
+            # Both statements end with the chain links: previous record's
+            # hash, then this row's own.
+            params.extend([prev, row_hash])
+            cur = conn.execute(insert_sql, tuple(params))
             lot_id = int(cur.lastrowid)
 
             # Bulb ids come back shaped exactly like meta["looks"] ([look][bulb]),
@@ -380,8 +488,9 @@ def get_lot(lot_id: int) -> dict | None:
         lot = dict(row)
         lot["result"] = json.loads(lot.get("result_json") or "{}")
         # RT-001 T-7: photographic-evidence manifest. Parsed for callers; the
-        # report route turns paths into data URIs. Outside the hash chain like
-        # result_json -- annotations on the record, not signed fields.
+        # report route turns paths into data URIs. Annotations on the record,
+        # not signed fields: since RT-001 T-1's v2 envelope result_json IS
+        # hash-covered, photographs and dispute flags are not.
         lot["evidence"] = evidence_mod.parse_manifest(lot.get("evidence_json"))
         lot["bulbs"] = [dict(b) for b in conn.execute(
             "SELECT * FROM bulbs WHERE lot_id = ? ORDER BY id", (lot_id,)).fetchall()]
@@ -437,8 +546,18 @@ def set_evidence(lot_id: int, manifest: list[dict]) -> bool:
 
 
 def _chain_payload(row: sqlite3.Row) -> dict:
-    """The exact fields covered by the hash -- keep in sync with insert_lot."""
-    return {
+    """The exact fields covered by the hash -- keep in sync with insert_lot.
+
+    Dual envelope: a row WITH a stored result_sha256 hashes over that digest
+    too (v2); a legacy row (NULL / column absent) hashes over exactly the 11
+    summary fields it was signed with, byte-for-byte as before, so every
+    pre-T-1 certificate keeps verifying green.
+    """
+    try:
+        result_sha = row["result_sha256"]
+    except (IndexError, KeyError):
+        result_sha = None            # column missing entirely -> legacy
+    payload = {
         "centre_id": row["centre_id"],
         "lot_ref": row["lot_ref"],
         "farmer_name": row["farmer_name"] or "",
@@ -451,6 +570,9 @@ def _chain_payload(row: sqlite3.Row) -> dict:
         "ci_high": row["ci_high"],
         "defect_pct": row["defect_pct"],
     }
+    if result_sha:
+        payload["result_sha256"] = result_sha
+    return payload
 
 
 def verify_chain(centre_id: int) -> tuple[bool, int]:
@@ -466,6 +588,13 @@ def audit_chain(centre_id: int) -> tuple[bool, list[dict], int]:
     {lot_id, ok}. Every lot AFTER a broken one is also marked not-ok, because
     its prev_hash points at a record that no longer hashes to what it should.
     The tamper demo uses this to light up exactly where the edit happened.
+
+    RT-001 T-1: for v2 records the stored result_json BYTES are also checked
+    against the digest pinned inside that record's hashed payload. Editing
+    only result_json now fails THIS check; editing result_json and its digest
+    column together still fails the row_hash check. Legacy rows have no
+    pinned digest and skip this half -- honestly unverifiable, not silently
+    blessed.
     """
     conn = connect()
     try:
@@ -479,6 +608,13 @@ def audit_chain(centre_id: int) -> tuple[bool, list[dict], int]:
         for row in rows:
             ok = (row["prev_hash"] == prev
                   and compute_row_hash(_chain_payload(row), prev) == row["row_hash"])
+            if ok:
+                try:
+                    pinned = row["result_sha256"]
+                except (IndexError, KeyError):
+                    pinned = None
+                if pinned:
+                    ok = result_digest(row["result_json"]) == pinned
             if not ok:
                 intact = False
             audits.append({"lot_id": row["id"], "ok": ok})

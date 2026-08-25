@@ -304,6 +304,10 @@ def report(lot_id: int, request: Request) -> HTMLResponse:
         # missing/unreadable image drops out of the gallery; the page never
         # fails over photographs.
         lot["evidence"] = evidence_mod.page_views(lot.get("evidence") or [])
+        # RT-001 T-1: the certificate states whether its own numbers are
+        # inside the signed envelope. Guarded: a legacy row reports honestly
+        # instead of claiming coverage it does not have.
+        lot["result_integrity"] = db.result_integrity(lot)
         payload = _json_for_script(lot)
         page = path.read_text(encoding="utf-8").replace(
             '"__LOT_DATA__"', payload
@@ -1072,6 +1076,11 @@ def _lot_verification(lot_id: int) -> dict | None:
         return None
     intact, audits, n_records = db.audit_chain(lot["centre_id"])
     audit_by_id = {a["lot_id"]: a["ok"] for a in audits}
+    # RT-001 T-1: this_record_ok already includes the result-byte check for
+    # v2 records (audit_chain folds it in), so editing result_json flips the
+    # public verdict red. The extra fields let a page SAY what happened and
+    # mark legacy records as summary-only instead of implying full coverage.
+    integrity = db.result_integrity(lot)
     return {
         "lot": {
             "id": lot["id"],
@@ -1094,6 +1103,9 @@ def _lot_verification(lot_id: int) -> dict | None:
             "records_checked": n_records,
             "audit": audits,
         },
+        "result_integrity": integrity,
+        "envelope": ("v2-numbers-covered" if integrity["covered"]
+                     else "v1-legacy-summary"),
     }
 
 
@@ -1234,7 +1246,9 @@ def api_sufficiency(lot_id: int, target: float = arbitration.TARGET_HALF_WIDTH_P
 # access would. The chain then flags THAT certificate red on every verify.
 # Restore puts the original value back from in-memory state; if the server
 # restarted between attack and restore, the value is recoverable from
-# result_json, which the hash never covered.
+# result_json -- which since RT-001 T-1's v2 envelope is itself hash-covered,
+# so restoring from it restores the exact signed bytes (legacy rows predate
+# that coverage; their caveat is stated, not hidden).
 # --------------------------------------------------------------------------
 
 _TAMPER_STATE: dict[int, dict] = {}
@@ -1319,7 +1333,9 @@ def tamper_restore_all():
          made before a server restart, when in-memory state is gone.
     result_json is written once at insert and never edited afterwards, and
     nothing else in the app UPDATEs lots, so a mismatch IS a live attack --
-    restoring from result_json puts back the exact hashed value.
+    restoring from result_json puts back the exact hashed value. Since the
+    RT-001 T-1 v2 envelope those bytes are themselves hash-covered; legacy
+    rows keep the summary-only caveat they were signed under.
     """
     try:
         restored: list[dict] = []

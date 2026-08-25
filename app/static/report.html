@@ -175,6 +175,9 @@
     <div class="min-w-0">
       <div class="text-[10px] uppercase tracking-widest text-slate-500">Record hash (SHA-256)</div>
       <div id="hash" class="font-mono text-[10px] break-all text-slate-700"></div>
+      <!-- RT-001 T-1: states what this hash actually covers. Filled only
+           from injected server data via textContent -- never invented here. -->
+      <div id="hashCoverage" class="text-[10px] font-semibold text-emerald-800 mt-1"></div>
       <div class="text-[10px] text-slate-500 mt-1">
         Chained to the previous record at this centre. Any altered record is individually
         detectable on the verification page — the break is pinned to that record.
@@ -381,6 +384,19 @@ const $ = id => document.getElementById(id);
   }
 
   $('hash').textContent = LOT.row_hash || '';
+  // RT-001 T-1: say what the hash covers, from injected data only. A v2
+  // record's hash covers every number this page renders (the full result
+  // payload); a legacy record pins the headline figures only -- stated,
+  // not hidden. Missing field -> stay silent rather than claim anything.
+  const ri = LOT.result_integrity || {};
+  if (ri.covered === true) {
+    $('hashCoverage').textContent = ri.ok === true
+      ? 'This hash covers every figure on this page — the full graded result, not just the headline numbers.'
+      : 'WARNING: the stored result behind these figures no longer matches its pinned digest — check the verification page.';
+  } else if (ri.covered === false) {
+    $('hashCoverage').textContent =
+      'Legacy record: this hash predates full-payload coverage and pins the headline figures only.';
+  }
   $('verifyUrlText').textContent = location.origin + '/verify/' + LOT.id;
   if (!$('qr').getAttribute('src')) { $('qr').style.display = 'none'; }
   $('wa').href = 'https://wa.me/?text=' +
