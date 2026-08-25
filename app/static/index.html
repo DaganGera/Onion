@@ -8,8 +8,10 @@
 <style>
   :root { color-scheme: light; }
   body { -webkit-tap-highlight-color: transparent; }
-  .screen { display: none; }
-  .screen.active { display: block; }
+  .screen { display: none !important; }
+  .screen.active { display: block !important; }
+  /* shakePanel is a full-screen flex overlay: keep flex when shown */
+  #shakePanel.active { display: flex !important; }
   @keyframes shakeit {
     0%,100% { transform: translateX(0) rotate(0deg); }
     20% { transform: translateX(-14px) rotate(-6deg); }
