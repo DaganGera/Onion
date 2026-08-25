@@ -218,3 +218,5 @@
 {"ts": "2026-08-25T05:56:41+05:30", "agent": "master", "event": "cycle_committed", "detail": "434 passed, 1 warning in 9.55s"}
 {"ts": "2026-08-25T05:56:51+05:30", "agent": "master", "event": "cycle_start", "detail": "{'cycle': 56, 'agent': 'qa-engineer', 'phase': 'F-stabilization'}"}
 {"ts": "2026-08-25T07:01:49+05:30", "agent": "master", "event": "cycle_timeout", "detail": "qa-engineer"}
+{"ts": "2026-08-25T07:02:02+05:30", "agent": "master", "event": "cycle_committed", "detail": "475 passed, 1 warning in 12.45s"}
+{"ts": "2026-08-25T07:02:02+05:30", "agent": "master", "event": "loop_end", "detail": "cycles=56"}
