@@ -70,7 +70,7 @@ fs.writeFileSync('docs/EVALUATION.md', L.join('\n'));
 const rm = fs.readFileSync('README.md', 'utf8');
 const rows = [];
 if (z0) rows.push(`| Tier 0 perception, public real photos (holdout) | healthy vs unhealthy AUC ${z0.holdout.all.auc}, accuracy ${pct(z0.holdout.all.accuracy)} on ${z0.holdout.all.n_unhealthy + z0.holdout.all.n_healthy} photos | reports/zenodo_tier0.json |`);
-if (z1) rows.push(`| Tier 1 learned cross-check, same data (holdout) | AUC ${z1.holdout_image_level.all.auc}, accuracy ${pct(z1.holdout_image_level.all.accuracy)} on ${z1.holdout_image_level.all.n_unhealthy + z1.holdout_image_level.all.n_healthy} photos | reports/zenodo_tier1.json |`);
+if (z1?.same_images_as_tier0?.tier1) { const q = z1.same_images_as_tier0; rows.push(`| Tier 1 vs Tier 0 on the same ${q.n_images} held-out photos | AUC ${q.tier1.auc} vs ${q.tier0.auc}; accuracy ${pct(q.tier1.accuracy)} vs ${pct(q.tier0.accuracy)} (single-bulb photos likely inflated, see caveats) | reports/zenodo_tier1.json |`); }
 if (e2e) rows.push(`| Browser end-to-end checks | ${e2e.results.filter((r) => r.ok).length}/${e2e.results.length} pass | reports/e2e.json |`);
 for (const [n, r] of [['E1 size vs caliper', e1], ['E2 repeatability', e2], ['E3 human baseline', e3], ['E4 lot truth', e4]]) rows.push(`| ${n} | ${r?.status === 'ok' ? 'see docs/EVALUATION.md' : 'awaiting field data'} | reports/ |`);
 const block = ['<!-- numbers:start -->', '| What | Result | Source |', '|---|---|---|', ...rows, '<!-- numbers:end -->'].join('\n');
