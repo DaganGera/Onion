@@ -136,7 +136,14 @@ try {
   await snap('08-capture-review');
   check('auto-shutter fired and measured', true, await page.locator('.cam-msg').innerText());
 
-  // Offline app shell.
+  // Offline app shell: wait until the service worker controls the page and its precache is filled.
+  await page.goto(url);
+  await page.waitForFunction(async () => {
+    if (!navigator.serviceWorker?.controller) return false;
+    const names = await caches.keys();
+    const pre = names.find((n) => n.includes('precache'));
+    return pre ? (await (await caches.open(pre)).keys()).length > 50 : false;
+  }, null, { timeout: 90000, polling: 1000 });
   await ctx.setOffline(true);
   await page.goto(url);
   await page.reload();
