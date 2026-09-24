@@ -4,6 +4,8 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 TMP="$(mktemp -d)"
+git -C "$ROOT" worktree prune
+git -C "$ROOT" branch -D gh-pages-new >/dev/null 2>&1 || true
 git -C "$ROOT" worktree add --force --detach "$TMP" >/dev/null
 cd "$TMP"
 git checkout --orphan gh-pages-new >/dev/null 2>&1
