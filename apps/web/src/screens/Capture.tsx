@@ -43,6 +43,7 @@ export function Capture({ lotId, replay }: { lotId: string; replay: boolean }) {
   const tilt = useRef<number | null>(null);
   const loc = useRef<string | null>(null);
   const busy = useRef(false);
+  const guard = useRef({ scans: 0, failed: 0, refused: 0, byGate: {} as Record<string, number> });
 
   useEffect(() => {
     db.lots.get(lotId).then((l) => setLot(l ?? null));
@@ -87,6 +88,9 @@ export function Capture({ lotId, replay }: { lotId: string; replay: boolean }) {
           const g = evaluateGates(s, { tiltDeg: replay ? 0 : tilt.current, targetFound: noSheet || s.target !== null, bulbs: s.bulbs });
           if (!alive) return;
           setGates(g);
+          guard.current.scans++;
+          const f = g.find((x) => !x.ok);
+          if (f) { guard.current.failed++; guard.current.byGate[f.id] = (guard.current.byGate[f.id] ?? 0) + 1; }
           setHold((h) => (g.every((x) => x.ok) ? h + 1 : 0));
         }
       } catch { /* a dropped frame is fine */ }
@@ -103,7 +107,7 @@ export function Capture({ lotId, replay }: { lotId: string; replay: boolean }) {
 
   async function shoot() {
     if (busy.current || !lot) return;
-    if (firstFail) { setRefusal(gateMsg(firstFail)); return; }
+    if (firstFail) { guard.current.refused++; setRefusal(gateMsg(firstFail)); return; }
     busy.current = true;
     setRefusal('');
     setPhase('busy');
@@ -124,7 +128,9 @@ export function Capture({ lotId, replay }: { lotId: string; replay: boolean }) {
         width: a.width, height: a.height,
         calib: { tier: a.calib.tier, mmPerPx: a.calib.mmPerPx, camHmm: a.calib.camHmm, scaleSd: a.calib.scaleSd, note: a.calib.note },
         bulbs: a.bulbs, timings: a.timings, loc: loc.current ? `${loc.current} · ${await deviceId()}` : null,
+        guard: { ...guard.current },
       };
+      guard.current = { scans: 0, failed: 0, refused: 0, byGate: {} };
       await db.captures.put(row);
       if (last) URL.revokeObjectURL(last.url);
       setLast({ a, url: URL.createObjectURL(ev.blob) });

@@ -13,6 +13,9 @@ const [shard, nShards] = (shardArg ?? '0/1').split('/').map(Number);
 fs.mkdirSync(path.join(out, 'img'), { recursive: true });
 const rows: string[] = ['file,image_id,label,variety,qty,split,bulb'];
 const cells = [['1. Healthy', 0], ['2. Unhealthy', 1]] as const;
+// Resume: crops already on disk are reused instead of re-running perception.
+const done = new Map<number, string[]>();
+for (const f of fs.readdirSync(path.join(out, 'img'))) { const id = parseInt(f); done.set(id, [...(done.get(id) ?? []), f]); }
 const SIZE = 128;
 for (const [hdir, label] of cells) for (const [vdir, variety] of [['1. Red Onion', 'red'], ['2. White Onion', 'white']]) for (const [qdir, qty] of [['1. Single', 'single'], ['2. Multiple', 'multiple']]) {
   const dir = path.join(root, hdir, vdir, qdir);
@@ -24,6 +27,7 @@ for (const [hdir, label] of cells) for (const [vdir, variety] of [['1. Red Onion
     const b = Math.floor(id / 25) % 5;
     const split = b === 0 ? 'tune' : b === 4 ? 'holdout' : 'train';
     if (qty === 'multiple' && split === 'train') continue; // noisy labels: never train on them
+    if (done.has(id)) { for (const name of done.get(id)!) rows.push(`${name},${id},${label},${variety},${qty},${split},${parseInt(name.split('_')[1])}`); continue; }
     const img = readImage(path.join(dir, f));
     const a = analyze(img);
     const { img: work } = downscale(img, 1024);

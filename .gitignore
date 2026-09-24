@@ -15,3 +15,8 @@ playwright-report/
 data_local/
 models/*.onnx.tmp
 tools/fixtures/*.y4m
+apps/web/android/app/build/
+apps/web/android/.gradle/
+apps/web/android/build/
+apps/web/android/local.properties
+field/

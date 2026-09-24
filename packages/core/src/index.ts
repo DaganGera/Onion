@@ -13,3 +13,4 @@ export * from './base45';
 export * from './certificate';
 export * from './compact';
 export * from './packs';
+export * from './agreement';

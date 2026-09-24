@@ -123,7 +123,7 @@ export async function evidenceBundle(certHash: string) {
   const toB64 = async (b: Blob) => btoa(String.fromCharCode(...new Uint8Array(await b.arrayBuffer())));
   return {
     kind: 'parakh.bundle', cert: cert.signed,
-    captures: await Promise.all(caps.map(async (c) => ({ id: c.id, tray: c.tray, look: c.look, at: c.at, imageHash: c.imageHash, jpegBase64: await toB64(c.image), calib: c.calib }))),
+    captures: await Promise.all(caps.map(async (c) => ({ id: c.id, tray: c.tray, look: c.look, at: c.at, imageHash: c.imageHash, jpegBase64: await toB64(c.image), calib: c.calib, guard: c.guard ?? null, timings: c.timings }))),
   };
 }
 

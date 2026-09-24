@@ -1,0 +1,8 @@
+{
+  "generatedBy": "tools/eval_field.ts",
+  "at": "2026-09-24T18:47:40.233Z",
+  "status": "awaiting field data",
+  "needs": "field/e3_rater1..3.csv and a lot named \"E3\" (HUMAN_TASKS T6)",
+  "raters": 0,
+  "lot": false
+}

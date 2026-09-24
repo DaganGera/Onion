@@ -31,7 +31,7 @@ Send back: the photo folders, and every exported `*.parakh.json`.
 1. For 60 numbered bulbs (mix of sizes and varieties), measure the widest diameter across the equator, then the smallest diameter across the equator (turn the bulb). Measure in mm with a caliper.
 2. If you can borrow ring gauges (45, 55, 65 mm), record which rings each bulb passes.
 3. Weigh each bulb on a kitchen scale in grams.
-4. Photograph the same bulbs on the mat with the app (6 to 8 per photo), noting which numbers are in which photo.
+4. Photograph the same bulbs on the mat with the app, 6 to 8 per photo, laid out in bulb-number order: left to right, then the next row. Name the lot "E1". Export the evidence file; in `size_truth.csv`, `photo_file` is the capture id shown in the evidence file (for example `LSG-01-20261001-AB12-t1-l1-...`).
 5. Send back: `field/size_truth.csv` from `docs/field-kit/size_truth.csv`. This feeds E1 (size accuracy) and replaces the assumed weight model.
 
 ## T5. Hand-sort 10 lots (2 hours)
@@ -46,7 +46,7 @@ Send back: the photo folders, and every exported `*.parakh.json`.
 1. Recruit three friends or family members. Nobody sees the others' answers or the app.
 2. Lay out 60 numbered bulbs. Give each person `docs/field-kit/grading_rules_card.md` and a copy of `docs/field-kit/e3_blind_grading.csv`.
 3. Each person writes A, URS, R or ? for every bulb. No talking.
-4. Photograph the same 60 bulbs with the app.
+4. Photograph the same 60 bulbs with the app in a lot named "E3", in bulb-number order (left to right, row by row), 6 to 8 per photo, one look each.
 5. Send back: the three filled CSVs as `field/e3_rater1.csv` etc. This is E3: how much do humans disagree, and does the app agree with the majority at least as well as a typical person?
 
 ## T7. Repeatability runs (1.5 hours)
