@@ -141,6 +141,8 @@
  "home.empty": "No lots yet. Grade one with the camera, or load the demo lot: real market photos from Pune, replayed through the same pipeline.",
  "home.h": "Measure a lot. Issue a receipt anyone can check.",
  "home.more": "More",
+ "home.offline.ok": "Saved on this phone: works without internet.",
+ "home.offline.wait": "Keep this page open online once so it can be saved for offline use.",
  "home.pack": "Rule pack",
  "home.packs": "Rule packs",
  "home.packs.s": "Re-grade any lot under another norm.",

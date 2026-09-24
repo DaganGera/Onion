@@ -12,6 +12,10 @@ export function Home() {
   const [lots, setLots] = useState<(LotRow & { cert?: CertRow })[] | null>(null);
   const [s, setS] = useState<Settings | null>(null);
   const [busy, setBusy] = useState(false);
+  const [offlineReady, setOfflineReady] = useState(false);
+  useEffect(() => {
+    navigator.serviceWorker?.ready.then(() => setOfflineReady(!!navigator.serviceWorker.controller)).catch(() => {});
+  }, []);
   useEffect(() => {
     loadSettings().then(setS);
     (async () => {
@@ -84,6 +88,7 @@ export function Home() {
           <a href="./calibration_mat.pdf" target="_blank" rel="noopener">{t('nav.mat', 'Calibration mat (A4)')}</a>
           <a href="#/about">{t('nav.about', 'How it works & limits')}</a>
         </nav>
+        <p class="xs muted">{offlineReady ? t('home.offline.ok', 'Saved on this phone: works without internet.') : t('home.offline.wait', 'Keep this page open online once so it can be saved for offline use.')}</p>
       </main>
     </>
   );
