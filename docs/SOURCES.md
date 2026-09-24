@@ -34,6 +34,12 @@ The default is the 30 Jul pack because S4 is the latest report and says it is th
 | R2 | USDA AMS onion grade standards. https://www.ams.usda.gov/grades-standards | Grades settle on sample percentages by weight | assumed (page not read in full) |
 | R3 | Agmark Fruits and Vegetables Grading and Marking Rules, 2004, which lists onion among graded commodities. https://agritech.tnau.ac.in/amis/pdf/F_V_G_M_under_Agmark.pdf | Onion has an Agmark schedule; we did not obtain its grade table | verified that it exists; content not read |
 
+## Problem statement
+
+| ID | Source | What it says | Status |
+|---|---|---|---|
+| P1 | Community mirrors of the SIH 2026 list: https://github.com/NoBugNinja/Smart-India-Hackathon-SIH-2026-Problem-Statements and https://zaidsayyed.in/tools/sih-problem-statements/theme/smart-automation | Onion grading problem is SIH26031, Software, Ministry of Consumer Affairs, Food & Public Distribution | press-report (not the official portal) |
+
 ## Datasets
 
 | ID | Source | Licence | Used for |
@@ -73,6 +79,7 @@ Development only: vite, vitest, fast-check, typescript, playwright, tsx, pngjs, 
 | A-WEIGHT-1 | Weight = sphere of density 0.95 g/cm3 on mean Feret diameter, 18% residual | core/sizing.ts | Kitchen-scale fit (HUMAN_TASKS T4) |
 | A-FOV-1 | Camera horizontal field of view 66 degrees; camera-only tier uses 380 mm height with 25% uncertainty | vision/config.ts | Read from the phone, or measure once per phone |
 | A-REPLAY-1 | Stored demo photos analysed as if taken from 260 mm | web/lib/demo.ts | Replace the demo photos with the team's own photos on the mat |
+| A-COIN-1 | Coin diameters Rs 10: 27 mm, Rs 5: 25 mm, Rs 2: 23 mm, Rs 1: 20 mm (current series, from memory, not checked against RBI) | web capture screen | Caliper the coin once (HUMAN_TASKS T1) |
 | A-SAMPLE-1 | Draw ceil(sqrt(sacks)) sacks, at least 3 | core/sampling.ts | Official sampling plan unknown (OQ7) |
 | A-RATE-1 | Indicative rate Rs 2,125/quintal (S5; S4 says Rs 2,335 from 30 Jul) | web settings | User types the day's rate |
 | A-T0-* | Every Tier-0 colour threshold in packages/vision/src/config.ts | vision | Fit on field photos (scripts to come with field data) |
