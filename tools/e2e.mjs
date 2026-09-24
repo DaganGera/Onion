@@ -147,7 +147,7 @@ try {
   await ctx.setOffline(true);
   await page.goto(url);
   await page.reload();
-  const offlineOk = await page.getByText('Measure a lot.').isVisible().catch(() => false);
+  const offlineOk = await page.getByText('Measure a lot.').waitFor({ timeout: 15000 }).then(() => true, () => false);
   check('app loads offline (service worker)', offlineOk);
   await ctx.setOffline(false);
 
