@@ -275,7 +275,7 @@ function measureBulbs(ws: Int32Array, fg: Mask, lab: Lab, calib: Calibration, wm
       if (L > 96 || (saturatedSkin && C < D.specMaxC && dL > D.specDL)) c = CODE.ignored; // specular highlight on glossy skin
       else if (hue >= D.sproutMinHue && hue <= D.sproutMaxHue && C >= D.sproutMinC && a < -4) c = CODE.sprouting;
       else if ((C < D.blackAbsC && L < D.blackAbsL) || (C < D.blackMaxC && dL < -D.blackDL && L < D.blackMaxL)) c = CODE.blackening;
-      else if (dL < -D.rotDL && C >= D.rotMinC) c = CODE.rot;
+      else if (dL < -D.rotDL && C >= D.rotMinC && hue >= D.rotMinHue && hue <= D.rotMaxHue) c = CODE.rot; // brown, not shaded purple
       else if (dL > D.brightDL) c = C < rC * D.sunburnMaxCRatio || Math.abs(angDiff(hue, rH)) > 25 ? CODE.sunburn : CODE.peeled;
       else if (Math.hypot(dL, a - ra, b - rb) > D.spotDE) c = CODE.spots;
       codes[o] = c;

@@ -1,0 +1,80 @@
+/* Hallmark · app · genre: editorial/utilitarian · theme: custom "instrument + receipt"
+ * vibe: "field instrument, government receipt, violet stamp ink"
+ * paper oklch(96.5% 0.011 75) · accent oklch(44% 0.15 290) stamp-violet
+ * display: IBM Plex Sans Condensed · body: IBM Plex Sans · data: IBM Plex Mono
+ * axes: light / grotesk-sans (condensed display) / cool-violet accent
+ */
+:root {
+  /* paper & ink, tinted toward warm oat (hue 75) */
+  --color-paper: oklch(96.5% 0.011 75);
+  --color-paper-2: oklch(93.6% 0.014 75);
+  --color-paper-3: oklch(90.5% 0.016 72);
+  --color-rule: oklch(84% 0.014 70);
+  --color-rule-strong: oklch(70% 0.014 60);
+  --color-neutral: oklch(53% 0.013 60);
+  --color-muted: oklch(41% 0.013 50);
+  --color-ink: oklch(21% 0.018 40);
+  --color-ink-2: oklch(29% 0.018 40);
+  --color-on-ink: oklch(96.5% 0.011 75);
+
+  /* the one accent: rubber-stamp violet, like a procurement office stamp */
+  --color-accent: oklch(44% 0.15 290);
+  --color-accent-tint: oklch(94% 0.028 290);
+  --color-focus: oklch(52% 0.19 290);
+
+  /* grade buckets: colour + letter, never colour alone */
+  --color-a: oklch(49% 0.12 150);
+  --color-a-tint: oklch(93.5% 0.04 150);
+  --color-u: oklch(63% 0.14 72);
+  --color-u-ink: oklch(42% 0.1 65);
+  --color-u-tint: oklch(94% 0.05 85);
+  --color-r: oklch(50% 0.17 30);
+  --color-r-tint: oklch(93.5% 0.035 30);
+  --color-q: oklch(50% 0.03 240);
+  --color-q-tint: oklch(93.5% 0.012 240);
+
+  /* camera surface */
+  --color-cam: oklch(16% 0.01 60);
+  --color-cam-2: oklch(22% 0.012 60);
+  --color-cam-ink: oklch(94% 0.008 75);
+  --color-ok: oklch(78% 0.15 150);
+  --color-wait: oklch(82% 0.13 80);
+
+  --font-display: 'IBM Plex Sans Condensed', 'Noto Sans Devanagari', 'Noto Sans Tamil', 'Noto Sans Telugu', 'Noto Sans Kannada', 'Noto Sans Gujarati', 'Noto Sans Bengali', 'Noto Sans Gurmukhi', system-ui, sans-serif;
+  --font-body: 'IBM Plex Sans', 'Noto Sans Devanagari', 'Noto Sans Tamil', 'Noto Sans Telugu', 'Noto Sans Kannada', 'Noto Sans Gujarati', 'Noto Sans Bengali', 'Noto Sans Gurmukhi', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+
+  --text-xs: 0.8125rem;
+  --text-sm: 0.9375rem;
+  --text-md: 1.0625rem;
+  --text-lg: 1.25rem;
+  --text-xl: 1.625rem;
+  --text-2xl: 2.25rem;
+  --text-3xl: 3.25rem;
+
+  --space-3xs: 2px;
+  --space-2xs: 4px;
+  --space-xs: 8px;
+  --space-sm: 12px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+  --space-3xl: 64px;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --rule-hair: 1px solid var(--color-rule);
+  --rule-strong: 1px solid var(--color-rule-strong);
+
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in: cubic-bezier(0.55, 0, 1, 0.45);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-fast: 120ms;
+  --dur-med: 220ms;
+  --dur-slow: 360ms;
+
+  --tap: 52px;
+  --shell: 560px;
+}

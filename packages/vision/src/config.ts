@@ -25,7 +25,7 @@ export const TIER0 = {
     erode: 3,                  // px shaved off the bulb edge before colour analysis
     refLo: 0.35, refHi: 0.9,   // L quantiles defining "healthy skin" reference pixels
     blackDL: 22, blackMaxL: 45, blackMaxC: 16, blackAbsL: 30, blackAbsC: 9,                  // (fit)
-    rotDL: 18, rotMinC: 14,                                      // (fit)
+    rotDL: 20, rotMinC: 12, rotMinHue: 35, rotMaxHue: 95,                                      // (fit)
     brightDL: 18, sunburnMaxCRatio: 0.55,
     specMinRefC: 16, specMaxC: 12, specDL: 14,                   // (fit) highlights on glossy skin                        // (fit)
     spotDE: 18,                                                  // (fit)

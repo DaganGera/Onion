@@ -14,3 +14,4 @@ test-results/
 playwright-report/
 data_local/
 models/*.onnx.tmp
+tools/fixtures/*.y4m
