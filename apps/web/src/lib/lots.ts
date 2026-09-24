@@ -102,6 +102,9 @@ export async function issueCertificate(lotId: string): Promise<CertRow> {
     await db.log.add({ leaf: await leafHash(signed.hash), certHash: signed.hash, at: core.issuedAt });
     await kvSet('chainHead', signed.hash);
   });
+  // Signed tree head at least once a day, so the log can be audited from any day's export.
+  const last = await db.sth.orderBy('size').last();
+  if (!last || last.at.slice(0, 10) !== new Date().toISOString().slice(0, 10)) await signTreeHead();
   return row;
 }
 

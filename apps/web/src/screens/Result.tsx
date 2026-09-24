@@ -126,6 +126,11 @@ export function Result({ lotId }: { lotId: string }) {
               ? t('res.bayes.n', 'Bayesian view: Jeffreys credible interval on an effective sample of {n} bulbs (design effect {d}). Use it when there are only one or two trays.', { n: Math.round(r.n_bulb_observations / Math.max(1, r.n_looks) / Math.max(1, r.deff)), d: r.deff.toFixed(2) })
               : t('res.ci.n', 'Intervals: {m}, resampling whole trays, never single bulbs. {n} bulb-observations from {tr} tray(s) × {lk} look(s). Looks re-observe the same onions, so they are not counted as new samples.', { m: vw.GRADE_A.method === 'cluster-bootstrap' ? t('res.boot', 'tray bootstrap') : t('res.wilson', 'Wilson with design effect (fewer than 3 trays)'), n: r.n_bulb_observations, tr: r.n_trays, lk: r.n_looks })}
           </p>
+          {secondLook.length > 0 && (() => {
+            const spreads = r.perLookNonA.filter((x) => x.length > 1).map((x) => Math.max(...x) - Math.min(...x));
+            const mean = spreads.reduce((a, b) => a + b, 0) / spreads.length;
+            return <p class="note"><b>{t('res.rep', 'Repeat-capture spread')}:</b> {t('res.rep.v', '{m} percentage points on average between looks at the same tray (largest {x}). A big spread means the result depends on which face is up; shake and look once more.', { m: mean.toFixed(1), x: Math.max(...spreads).toFixed(1) })}</p>;
+          })()}
           {secondLook.length > 0 && (
             <p class="note">{t('res.look2', 'Second look changed the non-Grade-A share by {d} percentage points (per tray). Hidden faces are why we shake and look again.', { d: secondLook.map((x) => (x >= 0 ? '+' : '') + x.toFixed(1)).join(', ') })}</p>
           )}
