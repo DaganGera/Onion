@@ -75,7 +75,7 @@ def predict(rs):
     net.eval()
     out = []
     for i in range(0, len(rs), 256):
-        x = torch.stack([plain(Image.open(os.path.join(a.crops, 'img', r['file'])).convert('RGB')) for r in rs[i:i + 256]]).to(dev)
+        x = torch.stack([plain(Image.open(os.path.join(a.crops, 'img', r['file'])).convert('RGB')) for r in rs[i:i + 256]]).to(next(net.parameters()).device)
         out += torch.softmax(net(x), 1)[:, 1].cpu().tolist()
     return out
 
@@ -168,9 +168,24 @@ report = {
     'holdout_single_crop': metrics([r['label'] for r in hold if r['qty'] == 'single'], [pp for r, pp in zip(hold, hold_p) if r['qty'] == 'single'], thr),
     'same_images_as_tier0': same,
     'onnx': {'path': onnx_path, 'bytes': os.path.getsize(onnx_path)},
-    'caveats': ['Labels are the dataset authors\' healthy/unhealthy folders, not procurement grades.',
+    'caveats': ['Single-bulb photos in this dataset appear to repeat the same onions across many shots, so scores on single-bulb photos are likely inflated by near-duplicates across blocks; the multi-bulb holdout is the harder test.',
+                'Labels are the dataset authors\' healthy/unhealthy folders, not procurement grades.',
                 'One phone, one city; field photos will differ.',
                 'Multiple-bulb photos inherit the image label, so a healthy bulb in an "unhealthy" photo counts as unhealthy.'],
 }
+# "Confident unhealthy" threshold: 95th percentile on healthy MULTI-bulb tune crops (realistic crops,
+# 5% false alarms), floored at 0.5. Single-bulb crops are near-duplicates and give a useless threshold.
+tune_healthy = sorted(pp for r, pp in zip(tune, predict(tune)) if r['qty'] == 'multiple' and r['label'] == 0)
+thr_high = max(0.5, tune_healthy[int(0.95 * (len(tune_healthy) - 1))]) if tune_healthy else 0.9
+import hashlib
+sha = hashlib.sha256(open(onnx_path, 'rb').read()).hexdigest()
+ship = bool(same and same['tier1']['auc'] > same['tier0']['auc'])
+report['ship'] = ship
+report['ship_rule'] = 'Ship only if Tier-1 AUC > Tier-0 AUC on the same held-out images.'
+report['thr_high'] = round(thr_high, 4)
+report['onnx']['sha256'] = sha
+json.dump({'ship': ship, 'file': 'tier1.onnx', 'size': a.size, 'mean': MEAN, 'std': STD, 'thr_high': round(thr_high, 4),
+           'sha256': sha, 'version': datetime.now(timezone.utc).strftime('%Y%m%d'), 'source': 'scripts/train_tier1.py'},
+          open(os.path.join(a.out, 'tier1.json'), 'w'), indent=1)
 json.dump(report, open('reports/zenodo_tier1.json', 'w'), indent=2)
 print(json.dumps(report['holdout_image_level']['all']), 'same-images:', json.dumps(same))

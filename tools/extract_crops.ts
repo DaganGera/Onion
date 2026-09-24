@@ -51,4 +51,4 @@ for (const [hdir, label] of cells) for (const [vdir, variety] of [['1. Red Onion
   }
   console.log(hdir, vdir, qdir, 'done', rows.length);
 }
-fs.writeFileSync(path.join(out, 'crops.csv'), rows.join('\n'));
+fs.writeFileSync(path.join(out, `crops_${shard}.csv`), rows.join('\n'));

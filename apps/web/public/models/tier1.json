@@ -1,0 +1,20 @@
+{
+ "ship": true,
+ "file": "tier1.onnx",
+ "size": 128,
+ "mean": [
+  0.485,
+  0.456,
+  0.406
+ ],
+ "std": [
+  0.229,
+  0.224,
+  0.225
+ ],
+ "thr_high": 0.9669,
+ "sha256": "3955ff4b425530724b4a908d32d4aee52d71531e4847abb07616eb4d28bce1d1",
+ "version": "20260924",
+ "source": "scripts/train_tier1.py",
+ "thr_note": "95th percentile of Tier-1 probability on healthy multi-bulb tune crops (5% false-alarm rate on realistic crops), floored at 0.5."
+}

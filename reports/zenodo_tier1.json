@@ -1,0 +1,101 @@
+{
+  "generatedBy": "scripts/train_tier1.py",
+  "at": "2026-09-24T19:18:51.562859+00:00",
+  "model": "MobileNetV3-Small (torchvision, ImageNet init), 2-class healthy/unhealthy bulb crop, input 128 px",
+  "data": "Zenodo 10.5281/zenodo.20254934 (CC-BY 4.0) bulb crops cut by Tier-0; train = single-bulb photos in blocks 1-3",
+  "n_train_crops": 4171,
+  "n_tune_crops": 12657,
+  "n_holdout_crops": 12223,
+  "best_tune_single_crop_auc": 0.999,
+  "image_threshold_from_tune": 0.9673,
+  "holdout_image_level": {
+    "all": {
+      "auc": 0.982,
+      "n_unhealthy": 794,
+      "n_healthy": 1440,
+      "sensitivity": 0.924,
+      "specificity": 0.927,
+      "accuracy": 0.926
+    },
+    "red": {
+      "auc": 0.998,
+      "n_unhealthy": 399,
+      "n_healthy": 819,
+      "sensitivity": 0.992,
+      "specificity": 0.972,
+      "accuracy": 0.979
+    },
+    "white": {
+      "auc": 0.953,
+      "n_unhealthy": 395,
+      "n_healthy": 621,
+      "sensitivity": 0.856,
+      "specificity": 0.868,
+      "accuracy": 0.863
+    },
+    "single": {
+      "auc": 0.998,
+      "n_unhealthy": 396,
+      "n_healthy": 992,
+      "sensitivity": 0.904,
+      "specificity": 1.0,
+      "accuracy": 0.973
+    },
+    "multiple": {
+      "auc": 0.961,
+      "n_unhealthy": 398,
+      "n_healthy": 448,
+      "sensitivity": 0.945,
+      "specificity": 0.766,
+      "accuracy": 0.85
+    }
+  },
+  "holdout_single_crop": {
+    "auc": 0.998,
+    "n_unhealthy": 396,
+    "n_healthy": 992,
+    "sensitivity": 0.904,
+    "specificity": 1.0,
+    "accuracy": 0.973
+  },
+  "same_images_as_tier0": {
+    "n_images": 306,
+    "tier1": {
+      "auc": 0.973,
+      "n_unhealthy": 159,
+      "n_healthy": 147,
+      "sensitivity": 0.925,
+      "specificity": 0.878,
+      "accuracy": 0.902
+    },
+    "tier0": {
+      "auc": 0.782,
+      "n_unhealthy": 159,
+      "n_healthy": 147,
+      "sensitivity": 0.774,
+      "specificity": 0.68,
+      "accuracy": 0.729
+    },
+    "tier0_images_without_tier1_crop": 14
+  },
+  "onnx": {
+    "path": "apps/web/public/models\\tier1.onnx",
+    "bytes": 6089229,
+    "sha256": "3955ff4b425530724b4a908d32d4aee52d71531e4847abb07616eb4d28bce1d1"
+  },
+  "caveats": [
+    "Single-bulb photos in this dataset appear to repeat the same onions across many shots, so scores on single-bulb photos are likely inflated by near-duplicates across blocks; the multi-bulb holdout is the harder test.",
+    "Labels are the dataset authors' healthy/unhealthy folders, not procurement grades.",
+    "One phone, one city; field photos will differ.",
+    "Multiple-bulb photos inherit the image label, so a healthy bulb in an \"unhealthy\" photo counts as unhealthy."
+  ],
+  "ship": true,
+  "ship_rule": "Ship only if Tier-1 AUC > Tier-0 AUC on the same held-out images.",
+  "thr_high": 0.9669,
+  "thr_note": "95th percentile of Tier-1 probability on healthy multi-bulb tune crops (5% false-alarm rate on realistic crops), floored at 0.5.",
+  "thr_high_check": {
+    "healthy_multi_tune_crops_above": 0.05,
+    "unhealthy_multi_tune_crops_above": 0.401,
+    "generatedBy": "inline recalibration with onnxruntime (see docs/DECISIONS.md 13)"
+  }
+}

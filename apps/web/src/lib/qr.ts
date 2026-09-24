@@ -3,7 +3,7 @@ import qrcode from 'qrcode-generator';
 /** QR matrix for a Parakh code. Base45 fits the alphanumeric mode (~5.5 bits/char). */
 export function qrMatrix(text: string): boolean[][] {
   const alnum = /^[0-9A-Z $%*+\-./:]*$/.test(text);
-  for (const ecc of ['M', 'L'] as const) {
+  for (const ecc of ['L', 'M'] as const) { // smallest symbol first: dense codes scan better from phone screens
     try {
       const q = qrcode(0, ecc);
       q.addData(text, alnum ? 'Alphanumeric' : 'Byte');

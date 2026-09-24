@@ -108,6 +108,9 @@ export function Result({ lotId }: { lotId: string }) {
           <p>{decisionLine(g)}</p>
         </section>
 
+        {g.captures.some((c) => c.calib.tier === 'intrinsics') && (
+          <p class="banner warn">{t('res.nosheet', 'Some photos had no calibration sheet, so sizes come from the camera alone (about ±25%). Bulbs near a size limit go to a person. Use the printed mat or an A4 sheet for real grading.')}</p>
+        )}
         <section class="section">
           <div class="section-head">
             <h2>{t('res.mix', 'Grade mix')}</h2>

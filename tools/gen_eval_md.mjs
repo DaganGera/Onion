@@ -4,6 +4,7 @@ import fs from 'node:fs';
 
 const R = (f) => (fs.existsSync(`reports/${f}`) ? JSON.parse(fs.readFileSync(`reports/${f}`, 'utf8')) : null);
 const z0 = R('zenodo_tier0.json'), z1 = R('zenodo_tier1.json'), e2e = R('e2e.json');
+const bench = R('bench.json');
 const e1 = R('e1_size.json'), e2 = R('e2_repeatability.json'), e3 = R('e3_human_baseline.json'), e4 = R('e4_lot_truth.json'), perf = R('perf.json');
 const pct = (x) => (x == null ? 'n/a' : `${(100 * x).toFixed(1)}%`);
 const ci = (a) => (a ? ` (95% CI ${pct(a[0])} to ${pct(a[1])})` : '');
@@ -22,7 +23,7 @@ if (z0) {
     const s = z1.same_images_as_tier0;
     L.push(`Like-for-like on the same ${s.n_images} holdout images: Tier 0 AUC ${s.tier0.auc}, accuracy ${pct(s.tier0.accuracy)}; Tier 1 AUC ${s.tier1.auc}, accuracy ${pct(s.tier1.accuracy)}.`, '');
   }
-  L.push(`Tier 0 threshold ${z0.threshold_from_tune} was chosen on the tune split only. Tier 0 runtime on desktop Node: median ${z0.node_latency_ms.p50} ms, 95th percentile ${z0.node_latency_ms.p95} ms per 1024 px photo (not a phone measurement).`, '');
+  L.push(`Tier 0 threshold ${z0.threshold_from_tune} was chosen on the tune split only.`, '');
   L.push('Caveats:', '', ...z0.caveats.map((c) => `- ${c}`), ...(z1 ? z1.caveats.map((c) => `- Tier 1: ${c}`) : []), '');
 } else L.push('Not run yet: `node --import tsx tools/eval_zenodo.ts <zenodo dir>`.', '');
 
@@ -51,6 +52,7 @@ field('E3 human baseline', e3, (r) => {
 field('E4 lot-level truth', e4, (r) => {
   L.push(`${r.n_lots} hand-sorted lots. Mean absolute error in Grade A % by weight: ${r.mae_gradeA_pp} percentage points. The 95% interval contained the truth in ${pct(r.coverage_95)} of lots.`);
 });
+if (bench) L.push('## Speed on a laptop', '', `${bench.note} ${bench.n} photos: Tier 0 median ${bench.tier0_ms.p50} ms, 95th percentile ${bench.tier0_ms.p95} ms${bench.tier1_ms ? `; Tier 1 on all bulbs of a photo median ${bench.tier1_ms.p50} ms` : ''}. Machine: ${bench.machine}.`, '');
 L.push('## E5 robustness and E6 phone performance', '', perf ? `Phone: ${perf.device}. Capture to verdict: median ${perf.p50} ms, 95th percentile ${perf.p95} ms.` : 'Not measured on a phone yet. The app shows the analysis time after every photo; HUMAN_TASKS T9 collects it.', '');
 fs.writeFileSync('docs/EVALUATION.md', L.join('\n'));
 

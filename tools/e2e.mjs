@@ -41,6 +41,15 @@ try {
   await page.locator('.verdict').waitFor({ timeout: 90000 });
   check('demo lot graded', true, `${Date.now() - t0} ms for 4 photos incl. decode`);
   await snap('02-result');
+  const t1 = await page.evaluate(() => new Promise((res) => {
+    const rq = indexedDB.open('parakh');
+    rq.onsuccess = () => { const g = rq.result.transaction('captures').objectStore('captures').getAll(); g.onsuccess = () => {
+      const bs = g.result.flatMap((c) => c.bulbs.filter((b) => !b.excluded));
+      const ps = bs.map((b) => b.p1).filter((p) => typeof p === 'number');
+      res({ n: bs.length, withP: ps.length, disagree: bs.filter((b) => b.disagree).length, ms: g.result.map((c) => Math.round(c.timings.tier1 ?? -1)) });
+    }; };
+  }));
+  check('Tier-1 model ran in the browser (ONNX Runtime Web)', t1.withP === t1.n && t1.n > 0, JSON.stringify(t1));
   await page.screenshot({ path: path.join(shots, '02b-result-full.png'), fullPage: true });
 
   // Tap a bulb, see reasons + mask.

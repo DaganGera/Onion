@@ -1,6 +1,6 @@
 {
   "generatedBy": "tools/e2e.mjs",
-  "at": "2026-09-24T18:10:41.742Z",
+  "at": "2026-09-24T19:22:39.529Z",
   "browser": "chromium headless (Playwright)",
   "results": [
     {
@@ -11,7 +11,12 @@
     {
       "name": "demo lot graded",
       "ok": true,
-      "detail": "9395 ms for 4 photos incl. decode"
+      "detail": "15101 ms for 4 photos incl. decode"
+    },
+    {
+      "name": "Tier-1 model ran in the browser (ONNX Runtime Web)",
+      "ok": true,
+      "detail": "{\"n\":59,\"withP\":59,\"disagree\":1,\"ms\":[164,250,83,81]}"
     },
     {
       "name": "bulb sheet shows reasons",
@@ -31,7 +36,7 @@
     {
       "name": "QR payload size",
       "ok": true,
-      "detail": "3114 base45 chars"
+      "detail": "3091 base45 chars"
     },
     {
       "name": "second phone verifies offline",
@@ -41,12 +46,12 @@
     {
       "name": "tampered code rejected",
       "ok": true,
-      "detail": "This is not a readable Parakh code. (TypeError: Failed to fetch)"
+      "detail": "This code is damaged, altered, or not a Parakh receipt. Nothing could be verifie"
     },
     {
       "name": "time travel: packs give different procured shares",
       "ok": true,
-      "detail": "0.0 / 2.6 / 11.8 / 18.5 / 0.0"
+      "detail": "0.0 / 0.0 / 11.8 / 11.8 / 0.0"
     },
     {
       "name": "capture guard explains refusal in one sentence",
@@ -56,7 +61,7 @@
     {
       "name": "auto-shutter fired and measured",
       "ok": true,
-      "detail": "8 onions measured.\nScale: intrinsics · 580 ms"
+      "detail": "8 onions measured.\nScale: intrinsics · 662 ms"
     },
     {
       "name": "app loads offline (service worker)",

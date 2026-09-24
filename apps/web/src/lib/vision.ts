@@ -24,7 +24,7 @@ function call<T>(msg: Record<string, unknown>, bitmap: ImageBitmap): Promise<T> 
   });
 }
 
-export const analyzeBitmap = (bitmap: ImageBitmap, opts: AnalyzeOptions = {}) => call<Analysis>({ kind: 'analyze', opts }, bitmap);
+export const analyzeBitmap = (bitmap: ImageBitmap, opts: AnalyzeOptions = {}) => call<Analysis>({ kind: 'analyze', opts, base: new URL('./', location.href).href }, bitmap);
 export const scanBitmap = (bitmap: ImageBitmap) =>
   call<{ target: 'aruco' | 'a4' | null; bulbs: number; sharp: number; meanL: number; clipped: number }>({ kind: 'scan' }, bitmap);
 
