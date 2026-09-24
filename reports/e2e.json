@@ -1,6 +1,6 @@
 {
   "generatedBy": "tools/e2e.mjs",
-  "at": "2026-09-24T19:22:39.529Z",
+  "at": "2026-09-24T19:32:18.050Z",
   "browser": "chromium headless (Playwright)",
   "results": [
     {
@@ -11,12 +11,12 @@
     {
       "name": "demo lot graded",
       "ok": true,
-      "detail": "15101 ms for 4 photos incl. decode"
+      "detail": "7008 ms for 4 photos incl. decode"
     },
     {
       "name": "Tier-1 model ran in the browser (ONNX Runtime Web)",
       "ok": true,
-      "detail": "{\"n\":59,\"withP\":59,\"disagree\":1,\"ms\":[164,250,83,81]}"
+      "detail": "{\"n\":59,\"withP\":59,\"disagree\":1,\"ms\":[110,41,77,82]}"
     },
     {
       "name": "bulb sheet shows reasons",
@@ -36,7 +36,7 @@
     {
       "name": "QR payload size",
       "ok": true,
-      "detail": "3091 base45 chars"
+      "detail": "3097 base45 chars"
     },
     {
       "name": "second phone verifies offline",
@@ -61,12 +61,17 @@
     {
       "name": "auto-shutter fired and measured",
       "ok": true,
-      "detail": "8 onions measured.\nScale: intrinsics · 662 ms"
+      "detail": "8 onions measured.\nScale: intrinsics · 675 ms"
     },
     {
       "name": "app loads offline (service worker)",
       "ok": true,
       "detail": ""
+    },
+    {
+      "name": "UI switches to Hindi",
+      "ok": true,
+      "detail": "लॉट मापें। ऐसी रसीद दें जिसे कोई भी जाँच सके।"
     },
     {
       "name": "no page errors",

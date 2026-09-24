@@ -238,6 +238,8 @@
  "res.overrode": "changed",
  "res.proc": "procurable",
  "res.rate": "Rate, ₹ per quintal",
+ "res.rep": "Repeat-capture spread",
+ "res.rep.v": "{m} percentage points on average between looks at the same tray (largest {x}). A big spread means the result depends on which face is up; shake and look once more.",
  "res.resign": "Sign new revision",
  "res.sign": "Sign and issue receipt",
  "res.tap": "Tap a bulb for its reasons",

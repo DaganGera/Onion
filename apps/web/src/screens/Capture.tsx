@@ -3,7 +3,7 @@ import { X, RefreshCw, ArrowRight, Check } from 'lucide-preact';
 import { evaluateGates, tiltFromOrientation, type Analysis, type Gate } from '@parakh/vision';
 import { sha256Hex } from '@parakh/core';
 import { db, type CaptureRow, type LotRow } from '../lib/db';
-import { deviceId, loadSettings, type Settings } from '../lib/device';
+import { loadSettings, type Settings } from '../lib/device';
 import { t } from '../lib/i18n';
 import { go } from '../lib/router';
 import { analyzeBitmap, scanBitmap, toEvidenceJpeg } from '../lib/vision';
@@ -127,7 +127,7 @@ export function Capture({ lotId, replay }: { lotId: string; replay: boolean }) {
         mode: replay ? 'replay' : 'live', image: ev.blob, imageHash: await sha256Hex(new Uint8Array(await ev.blob.arrayBuffer())),
         width: a.width, height: a.height,
         calib: { tier: a.calib.tier, mmPerPx: a.calib.mmPerPx, camHmm: a.calib.camHmm, scaleSd: a.calib.scaleSd, note: a.calib.note },
-        bulbs: a.bulbs, timings: a.timings, loc: loc.current ? `${loc.current} · ${await deviceId()}` : null,
+        bulbs: a.bulbs, timings: a.timings, loc: loc.current,
         guard: { ...guard.current },
       };
       guard.current = { scans: 0, failed: 0, refused: 0, byGate: {} };

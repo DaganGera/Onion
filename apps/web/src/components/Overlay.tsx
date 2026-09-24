@@ -12,6 +12,7 @@ export function Overlay({ url, w, h, bulbs, verdict, onTap, selected, caption }:
   url: string; w: number; h: number; bulbs: BulbResult[];
   verdict?: (idx: number) => Bucket | undefined; onTap?: (idx: number) => void; selected?: number; caption?: string;
 }) {
+  const k = Math.max(18, Math.round(Math.max(w, h) / 34)); // badge size in image px, readable on a phone
   return (
     <figure class="shot" style={{ margin: 0, aspectRatio: `${w} / ${h}`, width: '100%', maxHeight: '100%' }}>
       <img src={url} alt="" width={w} height={h} />
@@ -29,8 +30,8 @@ export function Overlay({ url, w, h, bulbs, verdict, onTap, selected, caption }:
               </polygon>
               {v && (
                 <>
-                  <rect x={b.centroid.x - 9} y={b.centroid.y - 9} width={18} height={18} rx={4} fill={col} style={{ pointerEvents: 'none' }} />
-                  <text class="tag" x={b.centroid.x} y={b.centroid.y + 4} text-anchor="middle" fill="var(--color-on-ink)">{BUCKET_LETTER[v]}</text>
+                  <rect x={b.centroid.x - k / 2} y={b.centroid.y - k / 2} width={k} height={k} rx={k / 5} fill={col} style={{ pointerEvents: 'none' }} />
+                  <text class="tag" x={b.centroid.x} y={b.centroid.y + k * 0.24} text-anchor="middle" fill="var(--color-on-ink)" style={{ fontSize: `${k * 0.66}px` }}>{BUCKET_LETTER[v]}</text>
                 </>
               )}
             </g>

@@ -147,8 +147,11 @@ try {
   // Fleet + languages.
   await page.goto(url + '#/settings');
   await page.locator('select').first().selectOption('hi');
+  await page.waitForTimeout(1200);
   await page.goto(url);
-  await page.waitForTimeout(500);
+  await page.waitForTimeout(1200);
+  const h1 = await page.locator('h1').first().innerText();
+  check('UI switches to Hindi', /[ऀ-ॿ]/.test(h1), h1);
   await snap('09-home-hindi');
   await page.goto(url + '#/settings');
   await page.locator('select').first().selectOption('en');

@@ -27,4 +27,8 @@ Read docs/BRIEF.md for the full brief and docs/DECISIONS.md for deviations.
 - `node tools/gen_eval_md.mjs`: regenerate docs/EVALUATION.md from reports/
 
 ## Gate status
-P0 done · P1 done (p1-core) · P2/P3 software done, real-phone check pending (HUMAN_TASKS T9) · P4 public-data eval done, field studies pending · P5 done · P6 see README
+P0 done · P1 done (p1-core) · P2/P3 software done (demo-safe-v1/v2), real-phone check pending (HUMAN_TASKS T9) · P4 public-data eval done, Tier 1 ships as cross-check, field studies pending · P5 done · P6 done (Pages: https://dagangera.github.io/Onion/, APK: release v0.1.0-demo)
+
+## Deploy
+- Web: `npm run build && bash tools/deploy_pages.sh`
+- APK: `cd apps/web && npx cap sync android && cd android && gradlew assembleDebug` with JAVA_HOME=JDK 21 and sdk.dir in android/local.properties
