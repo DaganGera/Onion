@@ -25,6 +25,10 @@ export interface BulbResult {
   conf: number;                 // 0..1
   weightG: number; weightSdG: number;
   labels: { x0: number; y0: number; w: number; h: number; data: Uint8Array };
+  /** Tier-1 learned cross-check: probability the bulb is unhealthy (absent when no model ran). */
+  p1?: number;
+  /** True when Tier 1 is confident the bulb is unhealthy but Tier 0 measured it clean: sent to a human. */
+  disagree?: boolean;
 }
 
 export interface Analysis {
@@ -345,6 +349,33 @@ export function toMeasurement(b: BulbResult, id: string, tray: number, look: num
     frac, fsd: Math.round(b.fsd * 1000), shape: { ...b.shape }, conf: Math.round(b.conf * 1000),
     w: Math.min(65535, Math.round(b.weightG * 10)), wsd: Math.min(65535, Math.round(b.weightSdG * 10)),
   };
+}
+
+/** Square bulb crop (Tier-1 input), nearest-neighbour, same geometry as tools/extract_crops.ts. */
+export function bulbCrop(work: RGBA, b: BulbResult, size: number): Uint8ClampedArray {
+  const [x0, y0, x1, y1] = b.bbox;
+  const side = Math.round(Math.max(x1 - x0, y1 - y0) * 1.1);
+  const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+  const out = new Uint8ClampedArray(size * size * 4);
+  for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
+    const sx = Math.round(cx - side / 2 + ((x + 0.5) * side) / size), sy = Math.round(cy - side / 2 + ((y + 0.5) * side) / size);
+    const o = (y * size + x) * 4;
+    if (sx >= 0 && sy >= 0 && sx < work.width && sy < work.height) { const i = (sy * work.width + sx) * 4; out[o] = work.data[i]; out[o + 1] = work.data[i + 1]; out[o + 2] = work.data[i + 2]; }
+    out[o + 3] = 255;
+  }
+  return out;
+}
+
+/**
+ * Fold a Tier-1 probability into a bulb. Only one direction changes anything:
+ * the learned model is confident the bulb is unhealthy while the colour model
+ * found neither rot nor blackening. Then the bulb goes to a human (low
+ * confidence -> REFER); the colour model's measurements stay as they are.
+ */
+export function applyTier1(b: BulbResult, p: number, thrHigh: number) {
+  b.p1 = p;
+  const t0 = (b.frac.rot ?? 0) + (b.frac.blackening ?? 0);
+  if (p >= thrHigh && t0 < 0.01) { b.disagree = true; b.conf = Math.min(b.conf, 0.45); }
 }
 
 /**

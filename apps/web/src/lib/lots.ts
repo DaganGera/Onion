@@ -6,10 +6,22 @@ import { TIER0, toMeasurement, type BulbResult } from '@parakh/vision';
 import { db, kvGet, kvSet, type CaptureRow, type CertRow, type LotRow } from './db';
 import { deviceId, deviceKey } from './device';
 
-export const MODEL_ID = `${TIER0.id}@${TIER0.version}`;
+/** Tier-1 manifest, if a learned model ships in this build (public/models/tier1.json). */
+let t1: { ship: boolean; sha256: string; version: string } | null | undefined;
+async function tier1Meta() {
+  if (t1 !== undefined) return t1;
+  try { const r = await fetch('./models/tier1.json'); t1 = r.ok ? await r.json() : null; } catch { t1 = null; }
+  return t1?.ship ? t1 : (t1 = null);
+}
+export async function modelId() {
+  const m = await tier1Meta();
+  return `${TIER0.id}@${TIER0.version}` + (m ? `+tier1@${m.version}` : '');
+}
 let modelHashCache = '';
+/** Hash of everything that shapes perception: the Tier-0 config and, if present, the Tier-1 weights hash. */
 export async function modelHash() {
-  return (modelHashCache ||= await hashCanonical(TIER0));
+  const m = await tier1Meta();
+  return (modelHashCache ||= await hashCanonical({ tier0: TIER0, tier1: m ? m.sha256 : null }));
 }
 
 export interface BulbRef { id: string; captureId: string; idx: number; tray: number; look: number }
@@ -73,7 +85,7 @@ export async function issueCertificate(lotId: string): Promise<CertRow> {
     rev: lot.certHashes.length, parent, prev, issuedAt: new Date().toISOString(),
     capture: { mode: captures.some((c) => c.mode === 'replay') || lot.mode === 'replay' ? 'replay' : 'live', device: await deviceId(), loc: captures.find((c) => c.loc)?.loc ?? null, first: times[0] ?? '', last: times[times.length - 1] ?? '' },
     calib: { tier: (cal?.tier ?? 'intrinsics') as CertCore['calib']['tier'], scaleSdPpm: Math.round((cal?.scaleSd ?? 0.12) * 1e6), camHmm: Math.round(cal?.camHmm ?? 0) },
-    model: { id: MODEL_ID, hash: await modelHash() },
+    model: { id: await modelId(), hash: await modelHash() },
     pack: { id: pack.id, version: pack.version, hash: await packHash(pack) },
     sampling: lot.sampling ? { seed: lot.sampling.seed, draws } : null,
     evidence: await evidenceHash(captures),

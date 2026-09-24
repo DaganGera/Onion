@@ -76,7 +76,9 @@ export function BulbSheet({ g, refIdx, url, ai, onClose, onChanged }: { g: Grade
           <dt>{t('bs.weight', 'Estimated weight')}</dt><dd>{(m.w / 10).toFixed(0)} ± {(m.wsd / 10).toFixed(0)} g</dd>
           <dt>{t('bs.conf', 'Picture confidence')}</dt><dd>{(m.conf / 10).toFixed(0)}%</dd>
           <dt>{t('bs.shape', 'Shape flags')}</dt><dd>{Object.entries(m.shape).filter(([, v]) => v).map(([k]) => k).join(', ') || '—'}</dd>
+          {bulb.p1 !== undefined && <><dt>{t('bs.t1', 'Learned cross-check (Tier 1)')}</dt><dd>{t('bs.t1v', '{p}% unhealthy', { p: Math.round(bulb.p1 * 100) })}</dd></>}
         </dl>
+        {bulb.disagree && <p class="banner warn">{t('bs.disagree', 'The learned model thinks this bulb is unhealthy, but the colour model found no rot or blackening. It goes to a person.')}</p>}
         <div class="fracs">
           {DEFECTS.map((d) => {
             const v = m.frac[d];
