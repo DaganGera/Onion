@@ -9,6 +9,7 @@ export const TIER0 = {
   id: 'tier0-lab',
   version: '1.0.0',
   workSide: 1024,              // analysis resolution, long side px
+  normalise: true,             // exposure normalisation + 3x3 denoise before analysis (E5)
   seg: {
     borderFrac: 0.04,          // image border ring used to model background
     minDeltaE: 14,             // (fit) minimum colour distance from background

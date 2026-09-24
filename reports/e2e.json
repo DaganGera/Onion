@@ -1,6 +1,6 @@
 {
   "generatedBy": "tools/e2e.mjs",
-  "at": "2026-09-24T19:32:18.050Z",
+  "at": "2026-09-24T19:53:36.168Z",
   "browser": "chromium headless (Playwright)",
   "results": [
     {
@@ -11,12 +11,12 @@
     {
       "name": "demo lot graded",
       "ok": true,
-      "detail": "7008 ms for 4 photos incl. decode"
+      "detail": "3917 ms for 4 photos incl. decode"
     },
     {
       "name": "Tier-1 model ran in the browser (ONNX Runtime Web)",
       "ok": true,
-      "detail": "{\"n\":59,\"withP\":59,\"disagree\":1,\"ms\":[110,41,77,82]}"
+      "detail": "{\"n\":56,\"withP\":56,\"disagree\":2,\"ms\":[109,41,79,65]}"
     },
     {
       "name": "bulb sheet shows reasons",
@@ -36,7 +36,7 @@
     {
       "name": "QR payload size",
       "ok": true,
-      "detail": "3097 base45 chars"
+      "detail": "3006 base45 chars"
     },
     {
       "name": "second phone verifies offline",
@@ -51,7 +51,7 @@
     {
       "name": "time travel: packs give different procured shares",
       "ok": true,
-      "detail": "0.0 / 0.0 / 11.8 / 11.8 / 0.0"
+      "detail": "0.0 / 0.0 / 11.2 / 11.2 / 0.0"
     },
     {
       "name": "capture guard explains refusal in one sentence",
@@ -61,7 +61,7 @@
     {
       "name": "auto-shutter fired and measured",
       "ok": true,
-      "detail": "8 onions measured.\nScale: intrinsics · 675 ms"
+      "detail": "8 onions measured.\nScale: intrinsics · 654 ms"
     },
     {
       "name": "app loads offline (service worker)",

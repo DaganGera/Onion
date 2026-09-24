@@ -10,20 +10,20 @@ Dataset: Zenodo 10.5281/zenodo.20254934 (CC-BY 4.0), bulb images, real photos fr
 
 | Model | Split | Images | AUC | Sensitivity | Specificity | Accuracy |
 |---|---|---|---|---|---|---|
-| Tier 0 (tier0-lab@1.0.0) | holdout, all | 320 | 0.779 | 76.9% | 68.1% | 72.5% |
-| Tier 0 (tier0-lab@1.0.0) | holdout, red | 160 | 0.741 | 75.0% | 62.5% | 68.8% |
-| Tier 0 (tier0-lab@1.0.0) | holdout, white | 160 | 0.809 | 78.8% | 73.8% | 76.3% |
-| Tier 0 (tier0-lab@1.0.0) | holdout, single | 160 | 0.732 | 60.0% | 70.0% | 65.0% |
-| Tier 0 (tier0-lab@1.0.0) | holdout, multiple | 160 | 0.85 | 93.8% | 66.3% | 80.0% |
-| Tier 1 (MobileNetV3-Small) | holdout, all | 2234 | 0.982 | 92.4% | 92.7% | 92.6% |
-| Tier 1 (MobileNetV3-Small) | holdout, red | 1218 | 0.998 | 99.2% | 97.2% | 97.9% |
-| Tier 1 (MobileNetV3-Small) | holdout, white | 1016 | 0.953 | 85.6% | 86.8% | 86.3% |
-| Tier 1 (MobileNetV3-Small) | holdout, single | 1388 | 0.998 | 90.4% | 100.0% | 97.3% |
-| Tier 1 (MobileNetV3-Small) | holdout, multiple | 846 | 0.961 | 94.5% | 76.6% | 85.0% |
+| Tier 0 (tier0-lab@1.0.0) | holdout, all | 320 | 0.773 | 63.8% | 78.1% | 70.9% |
+| Tier 0 (tier0-lab@1.0.0) | holdout, red | 160 | 0.754 | 61.3% | 73.8% | 67.5% |
+| Tier 0 (tier0-lab@1.0.0) | holdout, white | 160 | 0.786 | 66.3% | 82.5% | 74.4% |
+| Tier 0 (tier0-lab@1.0.0) | holdout, single | 160 | 0.714 | 45.0% | 78.8% | 61.9% |
+| Tier 0 (tier0-lab@1.0.0) | holdout, multiple | 160 | 0.862 | 82.5% | 77.5% | 80.0% |
+| Tier 1 (MobileNetV3-Small) | holdout, all | 2234 | 0.984 | 91.4% | 95.7% | 94.2% |
+| Tier 1 (MobileNetV3-Small) | holdout, red | 1218 | 0.999 | 98.5% | 98.2% | 98.3% |
+| Tier 1 (MobileNetV3-Small) | holdout, white | 1016 | 0.957 | 84.3% | 92.4% | 89.3% |
+| Tier 1 (MobileNetV3-Small) | holdout, single | 1388 | 0.998 | 88.6% | 100.0% | 96.8% |
+| Tier 1 (MobileNetV3-Small) | holdout, multiple | 846 | 0.965 | 94.2% | 86.2% | 90.0% |
 
-Like-for-like on the same 306 holdout images: Tier 0 AUC 0.782, accuracy 72.9%; Tier 1 AUC 0.973, accuracy 90.2%.
+Like-for-like on the same 306 holdout images: Tier 0 AUC 0.772, accuracy 70.6%; Tier 1 AUC 0.976, accuracy 93.1%.
 
-Tier 0 threshold 0.102 was chosen on the tune split only.
+Tier 0 threshold 0.186 was chosen on the tune split only.
 
 Caveats:
 
@@ -42,17 +42,17 @@ Caveats:
 | Check | Result | Detail |
 |---|---|---|
 | home renders | pass |  |
-| demo lot graded | pass | 7008 ms for 4 photos incl. decode |
-| Tier-1 model ran in the browser (ONNX Runtime Web) | pass | {"n":59,"withP":59,"disagree":1,"ms":[110,41,77,82]} |
+| demo lot graded | pass | 3917 ms for 4 photos incl. decode |
+| Tier-1 model ran in the browser (ONNX Runtime Web) | pass | {"n":56,"withP":56,"disagree":2,"ms":[109,41,79,65]} |
 | bulb sheet shows reasons | pass | 2 reason lines |
 | override + contest recorded | pass |  |
 | receipt has QR | pass |  |
-| QR payload size | pass | 3097 base45 chars |
+| QR payload size | pass | 3006 base45 chars |
 | second phone verifies offline | pass | Receipt checks out |
 | tampered code rejected | pass | This code is damaged, altered, or not a Parakh receipt. Nothing could be verifie |
-| time travel: packs give different procured shares | pass | 0.0 / 0.0 / 11.8 / 11.8 / 0.0 |
+| time travel: packs give different procured shares | pass | 0.0 / 0.0 / 11.2 / 11.2 / 0.0 |
 | capture guard explains refusal in one sentence | pass | Keep the calibration sheet fully in view. |
-| auto-shutter fired and measured | pass | 8 onions measured. Scale: intrinsics · 675 ms |
+| auto-shutter fired and measured | pass | 8 onions measured. Scale: intrinsics · 654 ms |
 | app loads offline (service worker) | pass |  |
 | UI switches to Hindi | pass | लॉट मापें। ऐसी रसीद दें जिसे कोई भी जाँच सके। |
 | no page errors | pass |  |
@@ -75,8 +75,22 @@ Awaiting field data. field/lot_truth.csv + evidence files (HUMAN_TASKS T5)
 
 ## Speed on a laptop
 
-Node.js, single thread, 1024 px working resolution, idle machine. 8 photos: Tier 0 median 1008 ms, 95th percentile 1082 ms. Machine: AMD Ryzen 7 5700G with Radeon Graphics         , Node v22.23.1.
+Node.js, single thread, 1024 px working resolution, idle machine. 8 photos: Tier 0 median 870 ms, 95th percentile 1019 ms. Machine: AMD Ryzen 7 5700G with Radeon Graphics         , Node v22.23.1.
 
-## E5 robustness and E6 phone performance
+## E5 robustness (perturbed real photos, stability only)
+
+How much does Tier-0 output move when a real held-out photo is darkened, brightened, colour-shifted, blurred, skewed, partly covered or noised? 40 held-out photos. Perturbed copies of real photos, used only to measure stability. Not an accuracy result. The Capture Guard would refuse some of these (dark, blur).
+
+| Perturbation | Mean relative change in bulb count | Mean change in defect score | Image decisions that flip |
+|---|---|---|---|
+| dark_x0_6 | 4.3% | 0.02 | 2.5% |
+| bright_x1_4 | 30.6% | 0.139 | 15.0% |
+| warm_light | 43.1% | 0.18 | 27.5% |
+| blur_r3 | 18.4% | 0.085 | 10.0% |
+| tilt_skew_10pct | 55.0% | 0.155 | 15.0% |
+| occlusion_band | 44.9% | 0.273 | 20.0% |
+| jpeg_noise | 12.3% | 0.07 | 0.0% |
+
+## E6 phone performance
 
 Not measured on a phone yet. The app shows the analysis time after every photo; HUMAN_TASKS T9 collects it.

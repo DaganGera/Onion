@@ -1,11 +1,11 @@
 {
   "generatedBy": "tools/bench.ts",
-  "at": "2026-09-24T19:23:07.293Z",
+  "at": "2026-09-24T19:52:38.570Z",
   "note": "Node.js, single thread, 1024 px working resolution, idle machine.",
   "machine": "AMD Ryzen 7 5700G with Radeon Graphics         , Node v22.23.1",
   "n": 8,
   "tier0_ms": {
-    "p50": 1008,
-    "p95": 1082
+    "p50": 870,
+    "p95": 1019
   }
 }
