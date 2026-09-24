@@ -3,7 +3,7 @@ import {
   rootOf, sha256Hex, signCore, signHash, toHex, type BulbMeasurement, type BulbVerdict, type CertCore, type LotResult, type Override, type RulePack,
 } from '@parakh/core';
 import { TIER0, toMeasurement, type BulbResult } from '@parakh/vision';
-import { db, kvGet, kvSet, type CaptureRow, type CertRow, type LotRow } from './db';
+import { db, kvGet, type CaptureRow, type CertRow, type LotRow } from './db';
 import { deviceId, deviceKey } from './device';
 
 /** Tier-1 manifest, if a learned model ships in this build (public/models/tier1.json). */
@@ -96,11 +96,13 @@ export async function issueCertificate(lotId: string): Promise<CertRow> {
   let qr = '';
   try { qr = await encodeCompact(signed); } catch { qr = ''; }
   const row: CertRow = { hash: signed.hash, lotId, rev: core.rev, issuedAt: core.issuedAt, signed, qr, centre: lot.centre };
+  // No non-IndexedDB awaits inside the transaction: WebCrypto calls there let it auto-commit on some engines.
+  const leaf = await leafHash(signed.hash);
   await db.transaction('rw', db.certs, db.lots, db.log, db.kv, async () => {
     await db.certs.put(row);
     await db.lots.update(lotId, { certHashes: [...lot.certHashes, signed.hash] });
-    await db.log.add({ leaf: await leafHash(signed.hash), certHash: signed.hash, at: core.issuedAt });
-    await kvSet('chainHead', signed.hash);
+    await db.log.add({ leaf, certHash: signed.hash, at: core.issuedAt });
+    await db.kv.put({ k: 'chainHead', v: signed.hash });
   });
   // Signed tree head at least once a day, so the log can be audited from any day's export.
   const last = await db.sth.orderBy('size').last();

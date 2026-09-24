@@ -6,6 +6,7 @@ const R = (f) => (fs.existsSync(`reports/${f}`) ? JSON.parse(fs.readFileSync(`re
 const z0 = R('zenodo_tier0.json'), z1 = R('zenodo_tier1.json'), e2e = R('e2e.json');
 const bench = R('bench.json');
 const e5 = R('e5_robustness.json');
+const apk = R('apk_webview.json');
 const e1 = R('e1_size.json'), e2 = R('e2_repeatability.json'), e3 = R('e3_human_baseline.json'), e4 = R('e4_lot_truth.json'), perf = R('perf.json');
 const pct = (x) => (x == null ? 'n/a' : `${(100 * x).toFixed(1)}%`);
 const ci = (a) => (a ? ` (95% CI ${pct(a[0])} to ${pct(a[1])})` : '');
@@ -58,6 +59,9 @@ if (e5) {
   L.push('## E5 robustness (perturbed real photos, stability only)', '', `${e5.question} ${e5.photos} held-out photos. ${e5.note}`, '', '| Perturbation | Mean relative change in bulb count | Mean change in defect score | Image decisions that flip |', '|---|---|---|---|');
   for (const [k, v] of Object.entries(e5.perturbations)) L.push(`| ${k} | ${pct(v.mean_rel_change_bulb_count)} | ${v.mean_abs_change_defect_score} | ${pct(v.image_decision_flips)} |`);
   L.push('');
+}
+if (apk) {
+  L.push('## Android build in an emulator', '', `${apk.device}. Demo lot of ${apk.captures.length} photos graded in ${(apk.demo_ms / 1000).toFixed(1)} s; per photo ${apk.captures.map((c) => c.total_ms).join(', ')} ms including Tier 1 (${apk.captures.map((c) => c.tier1_ms).join(', ')} ms). Signing ${apk.sign_ms} ms with ${(apk.stamp.match(/ES256|Ed25519/) ?? ['?'])[0]} (this WebView has no Ed25519); offline verification ${apk.verify_ms} ms: "${apk.verify}". Page errors: ${apk.errors.length}. An emulator on a laptop is not a phone; E6 still needs a real device.`, '');
 }
 L.push('## E6 phone performance', '', perf ? `Phone: ${perf.device}. Capture to verdict: median ${perf.p50} ms, 95th percentile ${perf.p95} ms.` : 'Not measured on a phone yet. The app shows the analysis time after every photo; HUMAN_TASKS T9 collects it.', '');
 fs.writeFileSync('docs/EVALUATION.md', L.join('\n'));

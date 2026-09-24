@@ -37,23 +37,23 @@ Caveats:
 
 ## Software checks in a real browser
 
-15 of 15 end-to-end checks passed (chromium headless (Playwright), 2026-09-24). The camera was fed a real photo through Chromium's fake capture device.
+14 of 15 end-to-end checks passed (chromium headless (Playwright), 2026-09-24). The camera was fed a real photo through Chromium's fake capture device.
 
 | Check | Result | Detail |
 |---|---|---|
 | home renders | pass |  |
-| demo lot graded | pass | 4408 ms for 4 photos incl. decode |
-| Tier-1 model ran in the browser (ONNX Runtime Web) | pass | {"n":56,"withP":56,"disagree":2,"ms":[127,45,75,78]} |
+| demo lot graded | pass | 4959 ms for 4 photos incl. decode |
+| Tier-1 model ran in the browser (ONNX Runtime Web) | pass | {"n":56,"withP":56,"disagree":2,"ms":[167,50,82,70]} |
 | bulb sheet shows reasons | pass | 2 reason lines |
 | override + contest recorded | pass |  |
 | receipt has QR | pass |  |
-| QR payload size | pass | 3012 base45 chars |
+| QR payload size | pass | 3013 base45 chars |
 | second phone verifies offline | pass | Receipt checks out |
 | tampered code rejected | pass | This code is damaged, altered, or not a Parakh receipt. Nothing could be verifie |
 | time travel: packs give different procured shares | pass | 0.0 / 0.0 / 11.2 / 11.2 / 0.0 |
 | capture guard explains refusal in one sentence | pass | Keep the calibration sheet fully in view. |
-| auto-shutter fired and measured | pass | 8 onions measured. Scale: intrinsics · 774 ms |
-| app loads offline (service worker) | pass |  |
+| auto-shutter fired and measured | pass | 8 onions measured. Scale: intrinsics · 705 ms |
+| app loads offline (service worker) | FAIL |  |
 | UI switches to Hindi | pass | लॉट मापें। ऐसी रसीद दें जिसे कोई भी जाँच सके। |
 | no page errors | pass |  |
 
@@ -90,6 +90,10 @@ How much does Tier-0 output move when a real held-out photo is darkened, brighte
 | tilt_skew_10pct | 55.0% | 0.155 | 15.0% |
 | occlusion_band | 44.9% | 0.273 | 20.0% |
 | jpeg_noise | 12.3% | 0.07 | 0.0% |
+
+## Android build in an emulator
+
+Android 15 emulator (x86_64, WHPX, swiftshader GPU), system WebView. Demo lot of 4 photos graded in 8.1 s; per photo 2839, 1292, 1376, 1041 ms including Tier 1 (538, 99, 123, 99 ms). Signing 1043 ms with ES256 (this WebView has no Ed25519); offline verification 1220 ms: "Receipt checks out". Page errors: 0. An emulator on a laptop is not a phone; E6 still needs a real device.
 
 ## E6 phone performance
 

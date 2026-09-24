@@ -1,0 +1,40 @@
+{
+  "generatedBy": "tools/apk_webview_test.mjs",
+  "at": "2026-09-24T20:28:01.371Z",
+  "device": "Android 15 emulator (x86_64, WHPX, swiftshader GPU), system WebView",
+  "ua": "{\"attached\":true,\"empty\":false,\"height\":2209,\"never_attached\":false,\"screenX\":0,\"screenY\":128,\"visible\":true,\"width\":1080}",
+  "demo_ms": 8147,
+  "verdict": "Needs human check",
+  "captures": [
+    {
+      "total_ms": 2839,
+      "tier1_ms": 538,
+      "bulbs_with_tier1": 19,
+      "bulbs": 19
+    },
+    {
+      "total_ms": 1292,
+      "tier1_ms": 99,
+      "bulbs_with_tier1": 8,
+      "bulbs": 8
+    },
+    {
+      "total_ms": 1376,
+      "tier1_ms": 123,
+      "bulbs_with_tier1": 16,
+      "bulbs": 16
+    },
+    {
+      "total_ms": 1041,
+      "tier1_ms": 99,
+      "bulbs_with_tier1": 13,
+      "bulbs": 13
+    }
+  ],
+  "sign_ms": 1043,
+  "stamp": "SIGNED ON DEVICE\nES256 · 1A7F 8A7C 9BE2 A631",
+  "qr_chars": 2929,
+  "verify_ms": 1220,
+  "verify": "Receipt checks out",
+  "errors": []
+}
