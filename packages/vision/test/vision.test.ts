@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import fs from 'node:fs';
 import { PNG } from 'pngjs';
 import { heightCorrect } from '@parakh/core';
-import { applyH, calibFromMarkers, components, convexHull, detectAruco, distanceTransform, feret, mask, watershedSplit } from '../src';
+import { applyH, calibFromCoin, calibFromMarkers, toLab, components, convexHull, detectAruco, distanceTransform, feret, mask, watershedSplit } from '../src';
 
 describe('calibration', () => {
   it('finds all 8 markers of the legacy printed mat and recovers its scale (11.81 px/mm at 300 dpi)', () => {
@@ -15,6 +15,22 @@ describe('calibration', () => {
     const p = applyH(cal.H!, m.find((x) => x.id === 0)!.corners[0]);
     expect(p.x).toBeCloseTo(12, 0);
     expect(p.y).toBeCloseTo(12, 0);
+  });
+});
+
+describe('coin tier', () => {
+  it('a tapped 27 mm disc of 90 px gives 0.3 mm/px; tapping a non-disc is refused', () => {
+    const w = 800, h = 600, d = new Uint8ClampedArray(w * h * 4);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const i = (y * w + x) * 4, inDisc = Math.hypot(x - 200, y - 150) < 45, inBar = x > 20 && x < 120 && y > 20 && y < 40;
+      const v = inDisc ? [190, 170, 90] : inBar ? [40, 120, 40] : [235, 235, 230];
+      d[i] = v[0]; d[i + 1] = v[1]; d[i + 2] = v[2]; d[i + 3] = 255;
+    }
+    const lab = toLab({ width: w, height: h, data: d });
+    const cal = calibFromCoin(lab, { x: 200, y: 150 }, 27)!;
+    expect(cal.tier).toBe('coin');
+    expect(cal.mmPerPx).toBeCloseTo(27 / 90, 2);
+    expect(calibFromCoin(lab, { x: 70, y: 30 }, 27)).toBeNull();
   });
 });
 

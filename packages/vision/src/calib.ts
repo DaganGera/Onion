@@ -1,7 +1,7 @@
 import { AR } from '../vendor/aruco/index.js';
 import { TIER_SCALE_SD, type CalibrationTier } from '@parakh/core';
 import { TIER0 } from './config';
-import { applyH, convexHull, homography, localScale, polygonArea, type H3, type Pt } from './geom';
+import { applyH, convexHull, feret, homography, localScale, polygonArea, type H3, type Pt } from './geom';
 import { components } from './morph';
 import { mask, type Lab, type RGBA } from './img';
 
@@ -116,10 +116,14 @@ export function calibFromCoin(lab: Lab, tap: Pt, coinMm: number): Calibration | 
       if (dE < 16) { seen[j] = 1; stack.push(j); }
     }
   }
-  if (area < 50) return null;
-  const hullA = polygonArea(convexHull(pts));
+  if (area < 50 || area > 0.03 * w * h) return null;
+  const hull = convexHull(pts);
+  const hullA = polygonArea(hull);
+  const f = feret(hull);
+  // A coin seen from above is a near-perfect disc: reject blobs that are not.
+  if (f.max <= 0 || f.min / f.max < 0.85 || (4 * hullA) / (Math.PI * f.max * f.max) < 0.8) return null;
   const dPx = 2 * Math.sqrt(hullA / Math.PI);
-  const cal = finish('coin', null, coinMm / dPx, w, h, { exclude: [convexHull(pts)], note: `coin ${coinMm} mm = ${dPx.toFixed(1)} px` });
+  const cal = finish('coin', null, coinMm / dPx, w, h, { exclude: [hull], note: `coin ${coinMm} mm = ${dPx.toFixed(1)} px` });
   return cal;
 }
 

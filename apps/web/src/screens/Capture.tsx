@@ -35,7 +35,9 @@ export function Capture({ lotId, replay }: { lotId: string; replay: boolean }) {
   const [hold, setHold] = useState(0);            // consecutive all-pass scans
   const [refusal, setRefusal] = useState('');
   const [noSheet, setNoSheet] = useState(replay);
-  const [last, setLast] = useState<{ a: Analysis; url: string } | null>(null);
+  const [last, setLast] = useState<{ a: Analysis; url: string; id: string; blob: Blob } | null>(null);
+  const [coinMode, setCoinMode] = useState(false);
+  const [coinMm, setCoinMm] = useState(27);
   const [count, setCount] = useState(0);
   const [err, setErr] = useState('');
   const [sampleIdx, setSampleIdx] = useState(0);
@@ -133,13 +135,28 @@ export function Capture({ lotId, replay }: { lotId: string; replay: boolean }) {
       guard.current = { scans: 0, failed: 0, refused: 0, byGate: {} };
       await db.captures.put(row);
       if (last) URL.revokeObjectURL(last.url);
-      setLast({ a, url: URL.createObjectURL(ev.blob) });
+      setLast({ a, url: URL.createObjectURL(ev.blob), id: row.id, blob: ev.blob });
       setCount((c) => c + 1);
       setPhase('review');
       if (navigator.vibrate) navigator.vibrate(30);
     } catch (e) {
       setErr(String(e)); setPhase('error');
     } finally { busy.current = false; setHold(0); }
+  }
+
+  /** Coin tier: re-measure the stored photo using a tapped coin of known diameter as the scale. */
+  async function useCoin(x: number, y: number) {
+    if (!last) return;
+    setCoinMode(false);
+    setPhase('busy');
+    try {
+      const a = await analyzeBitmap(await createImageBitmap(last.blob), { coin: { x, y, mm: coinMm } });
+      if (a.calib.tier !== 'coin') { setRefusal(t('cap.coin.fail', 'Could not find a coin there. Tap the middle of the coin.')); setPhase('review'); return; }
+      await db.captures.update(last.id, { bulbs: a.bulbs, calib: { tier: a.calib.tier, mmPerPx: a.calib.mmPerPx, camHmm: a.calib.camHmm, scaleSd: a.calib.scaleSd, note: a.calib.note }, timings: a.timings });
+      setLast({ ...last, a });
+      setRefusal('');
+      setPhase('review');
+    } catch (e) { setErr(String(e)); setPhase('error'); }
   }
 
   const nextLook = () => { setLook(look + 1); setPhase('aim'); if (replay) setSampleIdx((i) => i + 1); };
@@ -163,7 +180,7 @@ export function Capture({ lotId, replay }: { lotId: string; replay: boolean }) {
         {phase === 'busy' && <div class="busy"><div><div>{t('cap.measuring', 'Measuring…')}</div><div class="bar"><i /></div></div></div>}
         {phase === 'review' && last && (
           <div style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', background: 'var(--color-cam)' }}>
-            <Overlay url={last.url} w={last.a.width} h={last.a.height} bulbs={last.a.bulbs} />
+            <Overlay url={last.url} w={last.a.width} h={last.a.height} bulbs={last.a.bulbs} onImageTap={coinMode ? useCoin : undefined} />
           </div>
         )}
       </div>
@@ -195,7 +212,17 @@ export function Capture({ lotId, replay }: { lotId: string; replay: boolean }) {
             <p class="cam-msg">
               {t('cap.measured', '{n} onions measured.', { n: used })}{setAside > 0 ? ' ' + t('cap.aside', '{n} set aside (cut off by the frame edge or not onion-shaped).', { n: setAside }) : ''}
               <br /><span class="mono xs">{t('cap.calib', 'Scale')}: {last.a.calib.tier} · {Math.round(last.a.timings.total ?? 0)} ms</span>
+              {refusal && <><br />{refusal}</>}
             </p>
+            {last.a.calib.tier === 'intrinsics' && !coinMode && !replay && (
+              <div class="row">
+                <select class="select" style={{ flex: 1, minHeight: 44, background: 'var(--color-cam-2)', color: 'var(--color-cam-ink)', borderColor: 'var(--color-cam-2)' }} value={coinMm} onChange={(e) => setCoinMm(parseFloat((e.target as HTMLSelectElement).value))} aria-label={t('cap.coin.which', 'Which coin')}>
+                  {[[27, '₹10 · 27 mm'], [25, '₹5 · 25 mm'], [23, '₹2 · 23 mm'], [20, '₹1 · 20 mm']].map(([mm, l]) => <option key={mm} value={mm}>{l}</option>)}
+                </select>
+                <button class="btn small" onClick={() => setCoinMode(true)}>{t('cap.coin', 'Use a coin for scale')}</button>
+              </div>
+            )}
+            {coinMode && <p class="cam-msg">{t('cap.coin.tap', 'Tap the coin in the photo.')}</p>}
             <div class={replay ? '' : 'grid2'}>
               {!replay && <button class="btn" onClick={nextLook}><RefreshCw size={18} aria-hidden="true" />{t('cap.shake', 'Shake, look again')}</button>}
               <button class="btn" style={{ width: '100%' }} onClick={nextTray}><ArrowRight size={18} aria-hidden="true" />{replay ? t('cap.nextphoto', 'Next stored photo (new tray)') : t('cap.nexttray', 'Next tray')}</button>

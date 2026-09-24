@@ -8,9 +8,11 @@ const STROKE: Record<Bucket | 'none', string> = {
 };
 
 /** Photo with each bulb's outline, coloured by its verdict, tappable. */
-export function Overlay({ url, w, h, bulbs, verdict, onTap, selected, caption }: {
+export function Overlay({ url, w, h, bulbs, verdict, onTap, selected, caption, onImageTap }: {
   url: string; w: number; h: number; bulbs: BulbResult[];
   verdict?: (idx: number) => Bucket | undefined; onTap?: (idx: number) => void; selected?: number; caption?: string;
+  /** When set, a tap anywhere reports image coordinates (used to mark the reference coin). */
+  onImageTap?: (x: number, y: number) => void;
 }) {
   const k = Math.max(18, Math.round(Math.max(w, h) / 34)); // badge size in image px, readable on a phone
   return (
@@ -37,6 +39,10 @@ export function Overlay({ url, w, h, bulbs, verdict, onTap, selected, caption }:
             </g>
           );
         })}
+        {onImageTap && (
+          <rect x={0} y={0} width={w} height={h} fill="transparent" style={{ cursor: 'crosshair' }}
+            onClick={(e) => { const r = (e.currentTarget as SVGRectElement).ownerSVGElement!.getBoundingClientRect(); onImageTap(((e.clientX - r.left) / r.width) * w, ((e.clientY - r.top) / r.height) * h); }} />
+        )}
       </svg>
       {caption && <figcaption>{caption}</figcaption>}
     </figure>
