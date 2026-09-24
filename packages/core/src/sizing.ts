@@ -12,7 +12,7 @@ export const TIER_SCALE_SD: Record<CalibrationTier, number> = {
   aruco: 0.006,
   a4: 0.015,
   coin: 0.03,
-  intrinsics: 0.12,
+  intrinsics: 0.25, // tracks the assumed camera-height uncertainty (A-FOV-1)
 };
 
 /**

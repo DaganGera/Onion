@@ -1,6 +1,6 @@
 import { b45decode, b45encode } from './base45';
 import { canonicalize } from './canonical';
-import { fromHex, toHex } from './hash';
+import { fromHex, hashCanonical, toHex } from './hash';
 import type { CertCore, SignedCert } from './certificate';
 import { DEFECTS, SHAPES, type BulbMeasurement } from './types';
 
@@ -89,6 +89,5 @@ export async function decodeCompact(text: string): Promise<SignedCert> {
   const rest = JSON.parse(new TextDecoder().decode(body.slice(4, 4 + hl)));
   const bulbs = unpackBulbs(body.slice(4 + hl));
   const core = { ...rest, bulbs } as CertCore;
-  const { hashCanonical } = await import('./hash');
   return { core, hash: await hashCanonical(core), sig: { alg, pub: toHex(pub), sig: toHex(sig) } };
 }

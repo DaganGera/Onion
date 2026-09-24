@@ -1,0 +1,103 @@
+{
+  "generatedBy": "tools/eval_zenodo.ts",
+  "at": "2026-09-24T18:17:52.025Z",
+  "dataset": "Zenodo 10.5281/zenodo.20254934 (CC-BY 4.0), bulb images, real photos from Pune markets",
+  "model": "tier0-lab@1.0.0",
+  "modelHash": "26c2cd03b30931ac0c6022aada993cd4fb4c5563a5d4a6ede860ec75f3213511",
+  "question": "Image-level: does max(rot+blackening share) over detected bulbs separate authors' \"unhealthy\" from \"healthy\" photos?",
+  "caveats": [
+    "Labels are per image, from the dataset authors; \"unhealthy\" is not the same as a procurement Reject.",
+    "No size truth and no grader labels: this says nothing about Grade A / URS accuracy.",
+    "Single-camera dataset (Motorola Edge 50 Ultra), one city; field photos will differ."
+  ],
+  "threshold_from_tune": 0.102,
+  "n_tune": 160,
+  "n_holdout": 320,
+  "holdout": {
+    "all": {
+      "auc": 0.69,
+      "n_unhealthy": 160,
+      "n_healthy": 160,
+      "sensitivity": 0.669,
+      "sensitivity_ci95": [
+        0.593,
+        0.737
+      ],
+      "specificity": 0.613,
+      "specificity_ci95": [
+        0.535,
+        0.685
+      ],
+      "accuracy": 0.641
+    },
+    "red": {
+      "auc": 0.688,
+      "n_unhealthy": 80,
+      "n_healthy": 80,
+      "sensitivity": 0.675,
+      "sensitivity_ci95": [
+        0.566,
+        0.768
+      ],
+      "specificity": 0.625,
+      "specificity_ci95": [
+        0.515,
+        0.723
+      ],
+      "accuracy": 0.65
+    },
+    "white": {
+      "auc": 0.695,
+      "n_unhealthy": 80,
+      "n_healthy": 80,
+      "sensitivity": 0.663,
+      "sensitivity_ci95": [
+        0.554,
+        0.757
+      ],
+      "specificity": 0.6,
+      "specificity_ci95": [
+        0.49,
+        0.7
+      ],
+      "accuracy": 0.631
+    },
+    "single": {
+      "auc": 0.644,
+      "n_unhealthy": 80,
+      "n_healthy": 80,
+      "sensitivity": 0.525,
+      "sensitivity_ci95": [
+        0.417,
+        0.631
+      ],
+      "specificity": 0.675,
+      "specificity_ci95": [
+        0.566,
+        0.768
+      ],
+      "accuracy": 0.6
+    },
+    "multiple": {
+      "auc": 0.761,
+      "n_unhealthy": 80,
+      "n_healthy": 80,
+      "sensitivity": 0.813,
+      "sensitivity_ci95": [
+        0.713,
+        0.883
+      ],
+      "specificity": 0.55,
+      "specificity_ci95": [
+        0.441,
+        0.654
+      ],
+      "accuracy": 0.681
+    }
+  },
+  "node_latency_ms": {
+    "p50": 644,
+    "p95": 1004,
+    "note": "desktop Node, not a phone"
+  }
+}
