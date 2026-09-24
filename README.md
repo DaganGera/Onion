@@ -17,7 +17,7 @@ Generated from `reports/*.json` by `node tools/gen_eval_md.mjs`. Full tables and
 |---|---|---|
 | Tier 0 perception, public real photos (holdout) | healthy vs unhealthy AUC 0.773, accuracy 70.9% on 320 photos | reports/zenodo_tier0.json |
 | Tier 1 learned cross-check, same data (holdout) | AUC 0.984, accuracy 94.2% on 2234 photos | reports/zenodo_tier1.json |
-| Browser end-to-end checks | 15/15 pass | reports/e2e.json |
+| Browser end-to-end checks | 14/15 pass | reports/e2e.json |
 | E1 size vs caliper | awaiting field data | reports/ |
 | E2 repeatability | awaiting field data | reports/ |
 | E3 human baseline | awaiting field data | reports/ |
@@ -28,8 +28,10 @@ Generated from `reports/*.json` by `node tools/gen_eval_md.mjs`. Full tables and
 
 ```bash
 npm install
-npm run dev          # http://localhost:5173, open on a phone on the same Wi-Fi
+npm run dev          # http://localhost:5173 on this computer
 ```
+
+Phones only allow the camera and the signing key on HTTPS, so on a phone use https://dagangera.github.io/Onion/ or the APK rather than the dev server's LAN address.
 
 On the home screen, "Load the demo lot" replays four real market photos from a public dataset through the same pipeline. Or start a new lot, print `apps/web/public/calibration_mat.pdf` at 100%, put the onions next to it in a single layer, and point the camera down. The Capture Guard refuses blurry, dark, glary or tilted shots and says why in one sentence; when every check is green it takes the photo by itself.
 
