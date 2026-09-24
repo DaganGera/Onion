@@ -5,6 +5,7 @@ import fs from 'node:fs';
 const R = (f) => (fs.existsSync(`reports/${f}`) ? JSON.parse(fs.readFileSync(`reports/${f}`, 'utf8')) : null);
 const z0 = R('zenodo_tier0.json'), z1 = R('zenodo_tier1.json'), e2e = R('e2e.json');
 const bench = R('bench.json');
+const e5 = R('e5_robustness.json');
 const e1 = R('e1_size.json'), e2 = R('e2_repeatability.json'), e3 = R('e3_human_baseline.json'), e4 = R('e4_lot_truth.json'), perf = R('perf.json');
 const pct = (x) => (x == null ? 'n/a' : `${(100 * x).toFixed(1)}%`);
 const ci = (a) => (a ? ` (95% CI ${pct(a[0])} to ${pct(a[1])})` : '');
@@ -53,7 +54,12 @@ field('E4 lot-level truth', e4, (r) => {
   L.push(`${r.n_lots} hand-sorted lots. Mean absolute error in Grade A % by weight: ${r.mae_gradeA_pp} percentage points. The 95% interval contained the truth in ${pct(r.coverage_95)} of lots.`);
 });
 if (bench) L.push('## Speed on a laptop', '', `${bench.note} ${bench.n} photos: Tier 0 median ${bench.tier0_ms.p50} ms, 95th percentile ${bench.tier0_ms.p95} ms${bench.tier1_ms ? `; Tier 1 on all bulbs of a photo median ${bench.tier1_ms.p50} ms` : ''}. Machine: ${bench.machine}.`, '');
-L.push('## E5 robustness and E6 phone performance', '', perf ? `Phone: ${perf.device}. Capture to verdict: median ${perf.p50} ms, 95th percentile ${perf.p95} ms.` : 'Not measured on a phone yet. The app shows the analysis time after every photo; HUMAN_TASKS T9 collects it.', '');
+if (e5) {
+  L.push('## E5 robustness (perturbed real photos, stability only)', '', `${e5.question} ${e5.photos} held-out photos. ${e5.note}`, '', '| Perturbation | Mean relative change in bulb count | Mean change in defect score | Image decisions that flip |', '|---|---|---|---|');
+  for (const [k, v] of Object.entries(e5.perturbations)) L.push(`| ${k} | ${pct(v.mean_rel_change_bulb_count)} | ${v.mean_abs_change_defect_score} | ${pct(v.image_decision_flips)} |`);
+  L.push('');
+}
+L.push('## E6 phone performance', '', perf ? `Phone: ${perf.device}. Capture to verdict: median ${perf.p50} ms, 95th percentile ${perf.p95} ms.` : 'Not measured on a phone yet. The app shows the analysis time after every photo; HUMAN_TASKS T9 collects it.', '');
 fs.writeFileSync('docs/EVALUATION.md', L.join('\n'));
 
 // README numbers block between markers.

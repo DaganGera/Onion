@@ -15,8 +15,8 @@ Generated from `reports/*.json` by `node tools/gen_eval_md.mjs`. Full tables and
 <!-- numbers:start -->
 | What | Result | Source |
 |---|---|---|
-| Tier 0 perception, public real photos (holdout) | healthy vs unhealthy AUC 0.779, accuracy 72.5% on 320 photos | reports/zenodo_tier0.json |
-| Tier 1 learned cross-check, same data (holdout) | AUC 0.982, accuracy 92.6% on 2234 photos | reports/zenodo_tier1.json |
+| Tier 0 perception, public real photos (holdout) | healthy vs unhealthy AUC 0.773, accuracy 70.9% on 320 photos | reports/zenodo_tier0.json |
+| Tier 1 learned cross-check, same data (holdout) | AUC 0.984, accuracy 94.2% on 2234 photos | reports/zenodo_tier1.json |
 | Browser end-to-end checks | 15/15 pass | reports/e2e.json |
 | E1 size vs caliper | awaiting field data | reports/ |
 | E2 repeatability | awaiting field data | reports/ |

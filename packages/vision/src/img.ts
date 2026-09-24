@@ -67,3 +67,30 @@ export function quantile(sorted: Float32Array, q: number): number {
   if (!sorted.length) return 0;
   return sorted[Math.min(sorted.length - 1, Math.max(0, Math.floor(q * (sorted.length - 1))))];
 }
+
+/**
+ * Exposure normalisation + light denoise before analysis: scale so the 97th
+ * percentile of luminance lands at 235 (gain clamped to 0.7-2.2), then a 3x3
+ * box blur. Makes the colour thresholds less sensitive to exposure and sensor
+ * noise (E5 robustness sweep).
+ */
+export function normalise(img: RGBA): RGBA {
+  const { width: w, height: h, data } = img;
+  const hist = new Uint32Array(256);
+  for (let i = 0; i < data.length; i += 4) hist[Math.round(0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2])]++;
+  let acc = 0, p97 = 255;
+  const target = 0.97 * w * h;
+  for (let v = 0; v < 256; v++) { acc += hist[v]; if (acc >= target) { p97 = v; break; } }
+  const gain = Math.max(0.7, Math.min(2.2, 235 / Math.max(1, p97)));
+  const out = new Uint8ClampedArray(data.length);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const o = (y * w + x) * 4;
+    for (let c = 0; c < 3; c++) {
+      let s = 0, n = 0;
+      for (let dy = -1; dy <= 1; dy++) { const yy = y + dy; if (yy < 0 || yy >= h) continue; for (let dx = -1; dx <= 1; dx++) { const xx = x + dx; if (xx < 0 || xx >= w) continue; s += data[(yy * w + xx) * 4 + c]; n++; } }
+      out[o + c] = (s / n) * gain;
+    }
+    out[o + 3] = 255;
+  }
+  return { width: w, height: h, data: out };
+}

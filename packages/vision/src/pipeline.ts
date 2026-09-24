@@ -2,7 +2,7 @@ import { DEFECTS, heightCorrect, predictWeight, sizeSigmaMm, type BulbMeasuremen
 import { calibFromCoin, calibFromIntrinsics, calibFromMarkers, detectA4, detectAruco, toPlane, type Calibration } from './calib';
 import { TIER0 } from './config';
 import { convexHull, feret, polygonArea, type Pt } from './geom';
-import { downscale, mask, median, toLab, type Lab, type Mask, type RGBA } from './img';
+import { downscale, mask, median, normalise, toLab, type Lab, type Mask, type RGBA } from './img';
 import { close, components, distanceTransform, erode, open } from './morph';
 import { watershedSplit } from './watershed';
 
@@ -49,8 +49,9 @@ const now = () => (typeof performance !== 'undefined' ? performance.now() : Date
 export function analyze(original: RGBA, opts: AnalyzeOptions = {}): Analysis {
   const t: Record<string, number> = {};
   let t0 = now();
-  const { img, s } = downscale(original, TIER0.workSide);
-  const { width: w, height: h } = img;
+  const { img: raw, s } = downscale(original, TIER0.workSide);
+  const { width: w, height: h } = raw;
+  const img = TIER0.normalise ? normalise(raw) : raw;
   const lab = toLab(img);
   t.prep = now() - t0; t0 = now();
 
