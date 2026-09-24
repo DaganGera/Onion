@@ -87,8 +87,8 @@ export function NewLot() {
           <button class="btn quiet" disabled={!codesOk} onClick={doDraw}><Dices size={18} aria-hidden="true" />{t('nl.draw', 'Draw sacks')}</button>
           {draw && (
             <>
-              <ol class="mono small" style={{ margin: 0, paddingLeft: '1.4em', columns: 2 }}>
-                {draw.draws.map((d) => <li key={d.sack}>{t('nl.sack', 'Sack')} {d.sack} · {t(`layer.${d.layer}`, d.layer)}</li>)}
+              <ol class="draws" aria-label={t('nl.draw.h', 'Which sacks to open')}>
+                {draw.draws.map((d, i) => <li key={d.sack}><span class="mono xs muted">{i + 1}</span><b class="mono">{t('nl.sack', 'Sack')} {d.sack}</b><span class="small muted">{t(`layer.${d.layer}`, d.layer)}</span></li>)}
               </ol>
               <p class="hash mono xs muted" style={{ overflowWrap: 'anywhere' }}>seed {draw.seed.slice(0, 32)}…</p>
             </>

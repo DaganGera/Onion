@@ -42,17 +42,17 @@ Caveats:
 | Check | Result | Detail |
 |---|---|---|
 | home renders | pass |  |
-| demo lot graded | pass | 3943 ms for 4 photos incl. decode |
-| Tier-1 model ran in the browser (ONNX Runtime Web) | pass | {"n":56,"withP":56,"disagree":2,"ms":[113,38,73,65]} |
+| demo lot graded | pass | 4408 ms for 4 photos incl. decode |
+| Tier-1 model ran in the browser (ONNX Runtime Web) | pass | {"n":56,"withP":56,"disagree":2,"ms":[127,45,75,78]} |
 | bulb sheet shows reasons | pass | 2 reason lines |
 | override + contest recorded | pass |  |
 | receipt has QR | pass |  |
-| QR payload size | pass | 3013 base45 chars |
+| QR payload size | pass | 3012 base45 chars |
 | second phone verifies offline | pass | Receipt checks out |
 | tampered code rejected | pass | This code is damaged, altered, or not a Parakh receipt. Nothing could be verifie |
 | time travel: packs give different procured shares | pass | 0.0 / 0.0 / 11.2 / 11.2 / 0.0 |
 | capture guard explains refusal in one sentence | pass | Keep the calibration sheet fully in view. |
-| auto-shutter fired and measured | pass | 8 onions measured. Scale: intrinsics · 668 ms |
+| auto-shutter fired and measured | pass | 8 onions measured. Scale: intrinsics · 774 ms |
 | app loads offline (service worker) | pass |  |
 | UI switches to Hindi | pass | लॉट मापें। ऐसी रसीद दें जिसे कोई भी जाँच सके। |
 | no page errors | pass |  |

@@ -1,0 +1,28 @@
+// Extra screenshots for docs/pitch: node tools/shots.mjs (after npm run build)
+import { spawn } from 'node:child_process';
+import { chromium } from 'playwright';
+const srv = spawn(process.execPath, ['../../node_modules/vite/bin/vite.js', 'preview', '--port', '4182', '--strictPort'], { cwd: 'apps/web' });
+await new Promise((r) => setTimeout(r, 3000));
+const b = await chromium.launch();
+const p = await (await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 })).newPage();
+const u = 'http://localhost:4182/';
+await p.goto(u + '#/fleet');
+await p.getByRole('button', { name: /Add demo centres/ }).click();
+await p.locator('.card').first().waitFor({ timeout: 180000 });
+await p.waitForTimeout(500);
+await p.screenshot({ path: 'docs/screens/10-fleet.png', fullPage: true });
+await p.goto(u + '#/packs');
+await p.locator('.tbl').waitFor();
+await p.getByRole('button', { name: 'Show rules and sources' }).nth(4).click();
+await p.screenshot({ path: 'docs/screens/11-packs-rules.png', fullPage: true });
+await p.goto(u + '#/settings');
+await p.waitForTimeout(800);
+await p.screenshot({ path: 'docs/screens/12-settings.png', fullPage: true });
+await p.goto(u + '#/new');
+await p.locator('.input.code').first().fill('4821');
+await p.locator('.input.code').nth(1).fill('1177');
+await p.getByRole('button', { name: 'Draw sacks' }).click();
+await p.waitForTimeout(400);
+await p.screenshot({ path: 'docs/screens/13-new-lot-draw.png', fullPage: true });
+await b.close(); srv.kill();
+console.log('ok');

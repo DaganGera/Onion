@@ -111,6 +111,10 @@ img, svg, canvas, video { display: block; max-width: 100%; }
 .stepper button:last-child { border-radius: 0 var(--radius-md) var(--radius-md) 0; }
 .stepper .input { border-radius: 0; border-left: 0; border-right: 0; text-align: center; font-family: var(--font-mono); }
 
+.draws { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-xs); }
+.draws li { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0 var(--space-xs); align-items: baseline; padding: var(--space-xs) var(--space-sm); border-radius: var(--radius-sm); background: var(--color-paper-2); }
+.draws li span:last-child { grid-column: 2; }
+
 /* ---------- bucket language ---------- */
 .b-pill {
   display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 4px; border-radius: 999px;
@@ -207,8 +211,8 @@ img, svg, canvas, video { display: block; max-width: 100%; }
 @keyframes fade { from { opacity: 0; } }
 
 .reasons { display: flex; flex-direction: column; gap: var(--space-xs); padding: 0; margin: 0; list-style: none; }
-.reasons li { display: grid; grid-template-columns: 16px minmax(0, 1fr); gap: var(--space-xs); font-size: var(--text-sm); }
-.reasons li::before { content: ''; width: 8px; height: 8px; margin-top: 7px; border-radius: 2px; background: var(--b, var(--color-ink)); }
+.reasons > li { display: grid; grid-template-columns: 16px minmax(0, 1fr); gap: var(--space-xs); font-size: var(--text-sm); }
+.reasons > li::before { content: ''; width: 8px; height: 8px; margin-top: 7px; border-radius: 2px; background: var(--b, var(--color-ink)); }
 .reasons code { font: 400 var(--text-xs) var(--font-mono); color: var(--color-muted); display: block; overflow-wrap: anywhere; }
 
 .fracs { display: flex; flex-direction: column; gap: 6px; }
@@ -277,7 +281,7 @@ img, svg, canvas, video { display: block; max-width: 100%; }
 
 /* ---------- verify checklist ---------- */
 .checks { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; }
-.checks li { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: var(--space-sm); padding: var(--space-sm) 0; border-bottom: var(--rule-hair); align-items: start; }
+.checks > li { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: var(--space-sm); padding: var(--space-sm) 0; border-bottom: var(--rule-hair); align-items: start; }
 .checks .ic { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; color: var(--color-on-ink); }
 .checks .ic[data-s='ok'] { background: var(--color-a); }
 .checks .ic[data-s='bad'] { background: var(--color-r); }
@@ -298,11 +302,11 @@ img, svg, canvas, video { display: block; max-width: 100%; }
 
 /* ---------- timeline (rule packs) ---------- */
 .timeline { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
-.timeline li { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: var(--space-sm); padding-bottom: var(--space-md); position: relative; }
-.timeline li::before { content: ''; position: absolute; left: 8px; top: 18px; bottom: 0; width: 2px; background: var(--color-rule); }
-.timeline li:last-child::before { display: none; }
+.timeline > li { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: var(--space-sm); padding-bottom: var(--space-md); position: relative; }
+.timeline > li::before { content: ''; position: absolute; left: 8px; top: 18px; bottom: 0; width: 2px; background: var(--color-rule); }
+.timeline > li:last-child::before { display: none; }
 .timeline .dot { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--color-ink); background: var(--color-paper); margin-top: 2px; }
-.timeline li[aria-current='true'] .dot { background: var(--color-accent); border-color: var(--color-accent); }
+.timeline > li[aria-current='true'] > .dot { background: var(--color-accent); border-color: var(--color-accent); }
 .timeline .when { font: 500 var(--text-xs) var(--font-mono); color: var(--color-muted); }
 .chip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 4px; font: 600 11px/1.5 var(--font-mono); letter-spacing: 0.03em; background: var(--color-paper-3); color: var(--color-muted); white-space: nowrap; }
 .chip.press { background: var(--color-u-tint); color: var(--color-u-ink); }
