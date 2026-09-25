@@ -1,7 +1,7 @@
 import { DEFECTS, heightCorrect, predictWeight, sizeSigmaMm, type BulbMeasurement, type Defect, type WeightModel, DEFAULT_WEIGHT_MODEL } from '@parakh/core';
 import { calibFromCoin, calibFromIntrinsics, calibFromMarkers, detectA4, detectAruco, toPlane, type Calibration } from './calib';
 import { TIER0 } from './config';
-import { convexHull, feret, polygonArea, type Pt } from './geom';
+import { applyH, convexHull, feret, inv3, polygonArea, type Pt } from './geom';
 import { downscale, mask, median, normalise, toLab, type Lab, type Mask, type RGBA } from './img';
 import { close, components, distanceTransform, erode, open } from './morph';
 import { watershedSplit } from './watershed';
@@ -74,34 +74,64 @@ export function analyze(original: RGBA, opts: AnalyzeOptions = {}): Analysis {
   const ws = watershedSplit(fg, dist, compLabels, { minPeak: TIER0.seg.wsMinPeakFrac * Math.max(w, h), nms: TIER0.seg.wsNms });
   t.watershed = now() - t0; t0 = now();
 
+  if (TIER0.seg.merge) mergeFragments(ws, w, h, calib);
   const filled = assignEnclosedHoles(ws, fg);
   const bulbs = measureBulbs(ws, filled, lab, calib, opts.weightModel ?? DEFAULT_WEIGHT_MODEL);
   t.defects = now() - t0;
   return { width: w, height: h, scale: s, calib, bulbs, timings: t };
 }
 
+/** k-means in Lab over a pixel sample: several background colours (wood grain, cloth folds). */
+function kmeansLab(lab: Lab, idx: number[], k: number, minShare = 0): [number, number, number][] {
+  const step = Math.max(1, Math.floor(idx.length / 4000));
+  const pts: [number, number, number][] = [];
+  for (let j = 0; j < idx.length; j += step) { const i = idx[j]; pts.push([lab.L[i], lab.a[i], lab.b[i]]); }
+  if (!pts.length) return [];
+  const c: [number, number, number][] = Array.from({ length: Math.min(k, pts.length) }, (_, q) => [...pts[Math.floor(((q + 0.5) * pts.length) / k)]] as [number, number, number]);
+  for (let it = 0; it < 10; it++) {
+    const acc = c.map(() => [0, 0, 0, 0]);
+    for (const p of pts) {
+      let bi = 0, bd = Infinity;
+      c.forEach((q, qi) => { const d = (p[0] - q[0]) ** 2 + (p[1] - q[1]) ** 2 + (p[2] - q[2]) ** 2; if (d < bd) { bd = d; bi = qi; } });
+      acc[bi][0] += p[0]; acc[bi][1] += p[1]; acc[bi][2] += p[2]; acc[bi][3]++;
+    }
+    acc.forEach((a, qi) => { if (a[3]) c[qi] = [a[0] / a[3], a[1] / a[3], a[2] / a[3]]; });
+  }
+  // Drop minor clusters: an onion touching the border must not become "background".
+  const share = c.map(() => 0);
+  for (const p of pts) { let bi = 0, bd = Infinity; c.forEach((q, qi) => { const d = (p[0] - q[0]) ** 2 + (p[1] - q[1]) ** 2 + (p[2] - q[2]) ** 2; if (d < bd) { bd = d; bi = qi; } }); share[bi]++; }
+  const kept = c.filter((_, qi) => share[qi] >= minShare * pts.length);
+  return kept.length ? kept : [c[share.indexOf(Math.max(...share))]];
+}
+
+/** Calibration sheet outline in image px (printed mat from its homography, or the detected A4 quad). */
+export function sheetQuad(calib: Calibration, a4: Calibration | null): Pt[] | null {
+  if (calib.tier === 'aruco' && calib.H) {
+    const Hi = inv3(calib.H);
+    return [{ x: 0, y: 0 }, { x: 297, y: 0 }, { x: 297, y: 210 }, { x: 0, y: 210 }].map((p) => applyH(Hi, p));
+  }
+  return a4?.sheet ?? null;
+}
+
 function segment(lab: Lab, calib: Calibration, a4: Calibration | null): Mask {
   const { width: w, height: h } = lab;
   const n = w * h;
-  const bgModels: [number, number, number][] = [];
-  // Border ring model.
+  const S = TIER0.seg;
+  // Background colours sampled from the image border (several clusters: wood grain, cloth, tiles).
   const ring: number[] = [];
-  const bw = Math.max(2, Math.round(TIER0.seg.borderFrac * Math.min(w, h)));
+  const bw = Math.max(2, Math.round(S.borderFrac * Math.min(w, h)));
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (x < bw || y < bw || x >= w - bw || y >= h - bw) ring.push(y * w + x);
-  const med = (idx: number[], arr: Float32Array) => { const v = Float32Array.from(idx, (i) => arr[i]).sort(); return v[v.length >> 1] ?? 0; };
-  bgModels.push([med(ring, lab.L), med(ring, lab.a), med(ring, lab.b)]);
-  // Sheet (A4 or printed mat) is usually the background right under the onions.
-  if (a4?.sheet) {
-    const q = a4.sheet;
-    const cx = q.reduce((s, p) => s + p.x, 0) / 4, cy = q.reduce((s, p) => s + p.y, 0) / 4;
-    const idx: number[] = [];
-    for (let y = Math.round(cy - h * 0.05); y < cy + h * 0.05; y++) for (let x = Math.round(cx - w * 0.05); x < cx + w * 0.05; x++) {
-      const i = y * w + x;
-      if (i >= 0 && i < n && lab.L[i] > 68 && Math.hypot(lab.a[i], lab.b[i]) < 18) idx.push(i);
-    }
-    if (idx.length > 20) bgModels.push([med(idx, lab.L), med(idx, lab.a), med(idx, lab.b)]);
+  const bgModels = kmeansLab(lab, ring, S.bgClusters, S.bgMinShare);
+  // The calibration sheet: its paper colour is background too, and so is everything printed on it.
+  const quad = sheetQuad(calib, a4);
+  const onSheet = mask(w, h);
+  if (quad) {
+    fillPoly(onSheet, grow(quad, 1.02), 1);
+    const paper: number[] = [];
+    for (let i = 0; i < n; i++) if (onSheet.data[i] && lab.L[i] > 60 && Math.hypot(lab.a[i], lab.b[i]) < 14) paper.push(i);
+    if (paper.length > 50) bgModels.push(...kmeansLab(lab, paper, 1));
   }
-  // Distance with lightness down-weighted, so soft shadows on the sheet stay background.
+  // Distance with lightness down-weighted, so soft shadows stay background.
   const kL = 0.45;
   const d = new Float32Array(n);
   for (let i = 0; i < n; i++) {
@@ -109,7 +139,7 @@ function segment(lab: Lab, calib: Calibration, a4: Calibration | null): Mask {
     for (const [L, a, b] of bgModels) best = Math.min(best, Math.hypot(kL * (lab.L[i] - L), lab.a[i] - a, lab.b[i] - b));
     d[i] = best;
   }
-  let thr: number = TIER0.seg.minDeltaE;
+  let thr: number = S.minDeltaE;
   { // Otsu on the distance histogram, but never below the floor.
     const hist = new Float64Array(100);
     for (let i = 0; i < n; i++) hist[Math.min(99, Math.floor(d[i]))]++;
@@ -119,25 +149,87 @@ function segment(lab: Lab, calib: Calibration, a4: Calibration | null): Mask {
     thr = Math.max(thr, Math.min(o, 40));
   }
   let m = mask(w, h);
-  // Cast shadows and crevices between touching bulbs: dark, near-neutral, darker than the background.
   const bgL = Math.max(...bgModels.map((b) => b[0]));
   for (let i = 0; i < n; i++) {
     const C = Math.hypot(lab.a[i], lab.b[i]);
-    // Near-black is mould on a bulb, not a cast shadow on a light background.
-    const shadow = C < TIER0.seg.shadowMaxC && lab.L[i] < bgL - 12 && lab.L[i] < TIER0.seg.shadowMaxL && lab.L[i] > Math.max(TIER0.seg.shadowMinL, 0.38 * bgL);
-    m.data[i] = d[i] > thr && !shadow ? 1 : 0;
+    const L = lab.L[i];
+    // Grey, white and black (paper, printing, cables, shadows) are never onion skin.
+    // Onion rot/mould inside a bulb is recovered later by the enclosed-hole fill.
+    const a = lab.a[i], b = lab.b[i];
+    // Grey/white only counts as background on the sheet (paper, print); pale onions elsewhere stay.
+    // Black print/markers are on the sheet; off the sheet, dark patches may be mould on a bulb and must stay.
+    const neutral = onSheet.data[i] && (C < S.sheetNeutralMaxC || (L < 35 && C < S.darkNeutralMaxC));
+    // Onion skin is red, purple, pink, golden, brown or cream, never blue or cyan (paper tint, cables, bags).
+    const cool = a < S.coolMaxA && b < S.coolMaxB;
+    const shadow = C < S.shadowMaxC && L < bgL - 12 && L < S.shadowMaxL && L > Math.max(S.shadowMinL, 0.38 * bgL);
+    m.data[i] = d[i] > thr && !neutral && !cool && !shadow ? 1 : 0;
   }
-  // Remove calibration targets from the foreground.
   for (const poly of calib.exclude) fillPoly(m, grow(poly, 1.35), 0);
-  m = open(close(m, TIER0.seg.closeR), TIER0.seg.openR);
-  m = fillSmallHoles(m, TIER0.seg.smallHoleFrac * n);
-  // Drop tiny specks.
+  m = open(close(m, S.closeR), S.openR);
+  m = fillSmallHoles(m, S.smallHoleFrac * n);
+  // Keep only onion-sized, onion-coloured blobs.
   const { labels, comps } = components(m);
-  const minA = TIER0.seg.minAreaFrac * n;
+  const minA = S.minAreaFrac * n;
+  const sumC = new Float64Array(comps.length + 1);
+  for (let i = 0; i < n; i++) if (labels[i]) sumC[labels[i]] += Math.hypot(lab.a[i], lab.b[i]);
   const keep = new Uint8Array(comps.length + 1);
-  for (const c of comps) keep[c.id] = c.area >= minA ? 1 : 0;
+  for (const c of comps) keep[c.id] = c.area >= minA && sumC[c.id] / c.area >= S.minMeanC ? 1 : 0;
   for (let i = 0; i < n; i++) if (labels[i] && !keep[labels[i]]) m.data[i] = 0;
   return m;
+}
+
+/**
+ * Rejoin pieces of one onion. Shadows, highlights or a crease can make the
+ * watershed cut a bulb in two. Two touching regions are merged when their
+ * union is still convex (one round bulb, not two touching bulbs, whose union
+ * has a waist) and not larger than an onion. Greedy, longest shared border first.
+ */
+function mergeFragments(ws: Int32Array, w: number, h: number, calib: Calibration) {
+  const n = ws.reduce((m, v) => Math.max(m, v), 0);
+  if (n < 2) return;
+  const GAP = Math.max(2, Math.round(Math.max(w, h) / 200));
+  const area = new Float64Array(n + 1);
+  const pts: Pt[][] = Array.from({ length: n + 1 }, () => []);
+  const border = new Map<number, number>();
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const i = y * w + x, a = ws[i];
+    if (!a) continue;
+    area[a]++;
+    const r = x < w - 1 ? ws[i + 1] : 0, d = y < h - 1 ? ws[i + w] : 0;
+    const l = x > 0 ? ws[i - 1] : 0, u = y > 0 ? ws[i - w] : 0;
+    if (r !== a || d !== a || l !== a || u !== a) pts[a].push({ x, y });
+    // Neighbours within a small gap count as touching (a crease or glare line can leave a thin gap).
+    for (let g = 1; g <= GAP; g++) {
+      const bs = [x + g < w ? ws[i + g] : 0, y + g < h ? ws[i + g * w] : 0];
+      for (const b of bs) if (b && b !== a) { const k = a < b ? a * 65536 + b : b * 65536 + a; border.set(k, (border.get(k) ?? 0) + 1); }
+    }
+  }
+  const parent = Array.from({ length: n + 1 }, (_, i) => i);
+  const find = (i: number): number => (parent[i] === i ? i : (parent[i] = find(parent[i])));
+  const hulls = new Map<number, Pt[]>();
+  const hullOf = (r: number) => { if (!hulls.has(r)) hulls.set(r, convexHull(pts[r])); return hulls.get(r)!; };
+  const mmPerPx = calib.tier !== 'intrinsics' ? calib.mmPerPx : 0;
+  const pairs = [...border.entries()].sort((p, q) => q[1] - p[1]);
+  for (const [k, len] of pairs) {
+    const a = find(Math.floor(k / 65536)), b = find(k % 65536);
+    if (a === b || len < 4) continue;
+    const hull = convexHull([...hullOf(a), ...hullOf(b)]);
+    const union = area[a] + area[b];
+    const solidity = union / Math.max(1, polygonArea(hull));
+    const f = feret(hull);
+    const tooBig = mmPerPx ? f.max * mmPerPx > TIER0.seg.maxDiamMm : false;
+    const elongated = f.min > 0 && f.max / f.min > 1.6;
+    // A bulb cut in two shares a long seam (a chord); two touching bulbs meet at a short neck.
+    const contact = len / GAP;
+    const smaller = feret(area[a] < area[b] ? hullOf(a) : hullOf(b)).min;
+    const longSeam = contact >= TIER0.seg.mergeMinSeam * smaller;
+    if (solidity < TIER0.seg.mergeMinSolidity || !longSeam || tooBig || elongated) continue;
+    parent[b] = a;
+    area[a] = union;
+    pts[a] = hull;
+    hulls.set(a, hull);
+  }
+  for (let i = 0; i < ws.length; i++) if (ws[i]) ws[i] = find(ws[i]);
 }
 
 /** Fill background holes smaller than maxArea (specks inside a bulb). */
@@ -281,7 +373,12 @@ function measureBulbs(ws: Int32Array, fg: Mask, lab: Lab, calib: Calibration, wm
       else if (hue >= D.sproutMinHue && hue <= D.sproutMaxHue && C >= D.sproutMinC && a < -4) c = CODE.sprouting;
       else if ((C < D.blackAbsC && L < D.blackAbsL) || (C < D.blackMaxC && dL < -D.blackDL && L < D.blackMaxL)) c = CODE.blackening;
       else if (dL < -D.rotDL && C >= D.rotMinC && hue >= D.rotMinHue && hue <= D.rotMaxHue) c = CODE.rot; // brown, not shaded purple
-      else if (dL > D.brightDL) c = C < rC * D.sunburnMaxCRatio || Math.abs(angDiff(hue, rH)) > 25 ? CODE.sunburn : CODE.peeled;
+      else if (dL > D.brightDL) {
+        // Pale patch: bleached and yellow-shifted = sunburn; much paler than the skin with the same hue = peeled
+        // (flesh under a lost tunic). Natural paler streaks on red skin stay healthy.
+        if (C < rC * D.sunburnMaxCRatio || Math.abs(angDiff(hue, rH)) > 25) c = CODE.sunburn;
+        else if (dL > D.peelDL && C < rC * D.peelMaxCRatio) c = CODE.peeled;
+      }
       else if (Math.hypot(dL, a - ra, b - rb) > D.spotDE) c = CODE.spots;
       codes[o] = c;
     }
@@ -306,7 +403,11 @@ function measureBulbs(ws: Int32Array, fg: Mask, lab: Lab, calib: Calibration, wm
     if (solidity < 0.8) conf -= 0.25;
     if (refIdx.length < 50) conf -= 0.2;
     if (calib.tier === 'intrinsics') conf -= 0.05;
-    const excluded = edge ? 'edge' : aspect > TIER0.seg.maxAspect || solidity < TIER0.seg.minSolidity ? 'shape' : null;
+    // With a real scale (mat, sheet or coin), a blob outside the onion size window is not an onion.
+    const realScale = calib.tier !== 'intrinsics';
+    const sizeOut = realScale && (maxMm < TIER0.seg.minDiamMm || minMm > TIER0.seg.maxDiamMm);
+    const greenBlob = (frac.sprouting ?? 0) > 0.6; // mostly green: a leaf, sprout or bag, not a bulb
+    const excluded = edge ? 'edge' : sizeOut ? 'small' : greenBlob ? 'shape' : aspect > TIER0.seg.maxAspect || solidity < TIER0.seg.minSolidity ? 'shape' : null;
     const { g, sdG } = predictWeight(meanMm, wm);
     out.push({
       idx: out.length, hull, bbox: [x0, y0, x1, y1], centroid: { x: cx, y: cy }, excluded, areaPx: P.length, solidity,

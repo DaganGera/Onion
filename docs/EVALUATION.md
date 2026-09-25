@@ -10,20 +10,20 @@ Dataset: Zenodo 10.5281/zenodo.20254934 (CC-BY 4.0), bulb images, real photos fr
 
 | Model | Split | Images | AUC | Sensitivity | Specificity | Accuracy |
 |---|---|---|---|---|---|---|
-| Tier 0 (tier0-lab@1.0.0) | holdout, all | 320 | 0.773 | 63.8% | 78.1% | 70.9% |
-| Tier 0 (tier0-lab@1.0.0) | holdout, red | 160 | 0.754 | 61.3% | 73.8% | 67.5% |
-| Tier 0 (tier0-lab@1.0.0) | holdout, white | 160 | 0.786 | 66.3% | 82.5% | 74.4% |
-| Tier 0 (tier0-lab@1.0.0) | holdout, single | 160 | 0.714 | 45.0% | 78.8% | 61.9% |
-| Tier 0 (tier0-lab@1.0.0) | holdout, multiple | 160 | 0.862 | 82.5% | 77.5% | 80.0% |
-| Tier 1 (MobileNetV3-Small) | holdout, all | 2234 | 0.984 | 91.4% | 95.7% | 94.2% |
-| Tier 1 (MobileNetV3-Small) | holdout, red | 1218 | 0.999 | 98.5% | 98.2% | 98.3% |
-| Tier 1 (MobileNetV3-Small) | holdout, white | 1016 | 0.957 | 84.3% | 92.4% | 89.3% |
-| Tier 1 (MobileNetV3-Small) | holdout, single | 1388 | 0.998 | 88.6% | 100.0% | 96.8% |
-| Tier 1 (MobileNetV3-Small) | holdout, multiple | 846 | 0.965 | 94.2% | 86.2% | 90.0% |
+| Tier 0 (tier0-lab@1.0.0) | holdout, all | 320 | 0.765 | 68.1% | 70.0% | 69.1% |
+| Tier 0 (tier0-lab@1.0.0) | holdout, red | 160 | 0.798 | 78.8% | 66.3% | 72.5% |
+| Tier 0 (tier0-lab@1.0.0) | holdout, white | 160 | 0.743 | 57.5% | 73.8% | 65.6% |
+| Tier 0 (tier0-lab@1.0.0) | holdout, single | 160 | 0.711 | 51.3% | 78.8% | 65.0% |
+| Tier 0 (tier0-lab@1.0.0) | holdout, multiple | 160 | 0.834 | 85.0% | 61.3% | 73.1% |
+| Tier 1 (MobileNetV3-Small) | holdout, all | 2234 | 0.98 | 91.8% | 92.8% | 92.5% |
+| Tier 1 (MobileNetV3-Small) | holdout, red | 1218 | 0.998 | 99.0% | 96.3% | 97.2% |
+| Tier 1 (MobileNetV3-Small) | holdout, white | 1016 | 0.946 | 84.6% | 88.2% | 86.8% |
+| Tier 1 (MobileNetV3-Small) | holdout, single | 1388 | 0.998 | 89.6% | 99.9% | 97.0% |
+| Tier 1 (MobileNetV3-Small) | holdout, multiple | 846 | 0.953 | 94.0% | 77.2% | 85.1% |
 
-Like-for-like on the same 306 holdout images: Tier 0 AUC 0.772, accuracy 70.6%; Tier 1 AUC 0.976, accuracy 93.1%.
+Like-for-like on the same 306 holdout images: Tier 0 AUC 0.756, accuracy 68.3%; Tier 1 AUC 0.975, accuracy 90.8%.
 
-Tier 0 threshold 0.186 was chosen on the tune split only.
+Tier 0 threshold 0.133 was chosen on the tune split only.
 
 Caveats:
 
@@ -75,7 +75,7 @@ Awaiting field data. field/lot_truth.csv + evidence files (HUMAN_TASKS T5)
 
 ## Speed on a laptop
 
-Node.js, single thread, 1024 px working resolution, idle machine. 8 photos: Tier 0 median 870 ms, 95th percentile 1019 ms. Machine: AMD Ryzen 7 5700G with Radeon Graphics         , Node v22.23.1.
+Node.js, single thread, 1024 px working resolution, idle machine. 8 photos: Tier 0 median 911 ms, 95th percentile 1052 ms. Machine: AMD Ryzen 7 5700G with Radeon Graphics         , Node v22.23.1.
 
 ## E5 robustness (perturbed real photos, stability only)
 
@@ -83,13 +83,13 @@ How much does Tier-0 output move when a real held-out photo is darkened, brighte
 
 | Perturbation | Mean relative change in bulb count | Mean change in defect score | Image decisions that flip |
 |---|---|---|---|
-| dark_x0_6 | 4.3% | 0.02 | 2.5% |
-| bright_x1_4 | 30.6% | 0.139 | 15.0% |
-| warm_light | 43.1% | 0.18 | 27.5% |
-| blur_r3 | 18.4% | 0.085 | 10.0% |
-| tilt_skew_10pct | 55.0% | 0.155 | 15.0% |
-| occlusion_band | 44.9% | 0.273 | 20.0% |
-| jpeg_noise | 12.3% | 0.07 | 0.0% |
+| dark_x0_6 | 26.7% | 0.048 | 7.5% |
+| bright_x1_4 | 100.0% | 0.152 | 22.5% |
+| warm_light | 146.6% | 0.187 | 40.0% |
+| blur_r3 | 38.0% | 0.068 | 10.0% |
+| tilt_skew_10pct | 104.3% | 0.166 | 30.0% |
+| occlusion_band | 92.3% | 0.29 | 30.0% |
+| jpeg_noise | 50.3% | 0.101 | 17.5% |
 
 ## Android build in an emulator
 
