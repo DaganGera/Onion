@@ -29,6 +29,8 @@ export interface BulbResult {
   p1?: number;
   /** True when Tier 1 is confident the bulb is unhealthy but Tier 0 measured it clean: sent to a human. */
   disagree?: boolean;
+  /** True when Tier 1 cleared the colour defect marks (confidently healthy bulb). */
+  gated?: boolean;
 }
 
 export interface Analysis {
@@ -42,6 +44,16 @@ export interface AnalyzeOptions {
   coin?: { x: number; y: number; mm: number };  // tap in ORIGINAL image px
   camHmm?: number;                               // used by the intrinsics tier
   weightModel?: WeightModel;
+  /** Onion instance labels from the Tier-2 segmentation model, at working resolution (see workSize). */
+  instances?: Int32Array;
+}
+
+/** Working-resolution size analyze() will use for an image (callers resize model output to this). */
+export function workSize(width: number, height: number): { w: number; h: number } {
+  const long = Math.max(width, height);
+  if (long <= TIER0.workSide) return { w: width, h: height };
+  const s = TIER0.workSide / long;
+  return { w: Math.max(1, Math.round(width * s)), h: Math.max(1, Math.round(height * s)) };
 }
 
 const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
@@ -64,17 +76,25 @@ export function analyze(original: RGBA, opts: AnalyzeOptions = {}): Analysis {
   if (!calib) calib = calibFromIntrinsics(w, h, opts.camHmm);
   t.calib = now() - t0; t0 = now();
 
-  // ---- L2b foreground: colour distance from background model(s) ----
-  const fg = segment(lab, calib, a4);
-  t.segment = now() - t0; t0 = now();
-
-  // ---- split touching bulbs ----
-  const { labels: compLabels } = components(fg);
-  const dist = distanceTransform(fg);
-  const ws = watershedSplit(fg, dist, compLabels, { minPeak: TIER0.seg.wsMinPeakFrac * Math.max(w, h), nms: TIER0.seg.wsNms });
-  t.watershed = now() - t0; t0 = now();
-
-  if (TIER0.seg.merge) mergeFragments(ws, w, h, calib);
+  let fg: Mask, ws: Int32Array;
+  if (opts.instances && opts.instances.length === w * h) {
+    // ---- L2b Tier-2: learned onion instances ----
+    ws = Int32Array.from(opts.instances);
+    const cut = mask(w, h);
+    for (const poly of calib.exclude) fillPoly(cut, grow(poly, 1.2), 1);
+    fg = mask(w, h);
+    for (let i = 0; i < w * h; i++) { if (cut.data[i]) ws[i] = 0; fg.data[i] = ws[i] ? 1 : 0; }
+    t.segment = now() - t0; t0 = now();
+  } else {
+    // ---- L2b Tier-0 fallback: colour distance from background model(s) ----
+    fg = segment(lab, calib, a4);
+    t.segment = now() - t0; t0 = now();
+    const { labels: compLabels } = components(fg);
+    const dist = distanceTransform(fg);
+    ws = watershedSplit(fg, dist, compLabels, { minPeak: TIER0.seg.wsMinPeakFrac * Math.max(w, h), nms: TIER0.seg.wsNms });
+    t.watershed = now() - t0; t0 = now();
+    if (TIER0.seg.merge) mergeFragments(ws, w, h, calib);
+  }
   const filled = assignEnclosedHoles(ws, fg);
   const bulbs = measureBulbs(ws, filled, lab, calib, opts.weightModel ?? DEFAULT_WEIGHT_MODEL);
   t.defects = now() - t0;
@@ -474,10 +494,16 @@ export function bulbCrop(work: RGBA, b: BulbResult, size: number): Uint8ClampedA
  * found neither rot nor blackening. Then the bulb goes to a human (low
  * confidence -> REFER); the colour model's measurements stay as they are.
  */
-export function applyTier1(b: BulbResult, p: number, thrHigh: number) {
+export function applyTier1(b: BulbResult, p: number, thrHigh: number, gate = 0) {
   b.p1 = p;
   const t0 = (b.frac.rot ?? 0) + (b.frac.blackening ?? 0);
-  if (p >= thrHigh && t0 < 0.01) { b.disagree = true; b.conf = Math.min(b.conf, 0.45); }
+  if (p < gate) {
+    // Confidently healthy: the colour marks on it are lighting and natural skin variation, not defects.
+    for (const d of Object.keys(b.frac) as (keyof typeof b.frac)[]) if (b.frac[d] !== null) b.frac[d] = 0;
+    const L = b.labels.data;
+    for (let i = 0; i < L.length; i++) if (L[i] >= CODE.blackening && L[i] <= CODE.peeled) L[i] = CODE.healthy;
+    b.gated = true;
+  } else if (p >= thrHigh && t0 < 0.01) { b.disagree = true; b.conf = Math.min(b.conf, 0.45); }
 }
 
 /**

@@ -7,6 +7,8 @@ const z0 = R('zenodo_tier0.json'), z1 = R('zenodo_tier1.json'), e2e = R('e2e.jso
 const bench = R('bench.json');
 const e5 = R('e5_robustness.json');
 const apk = R('apk_webview.json');
+const cnt = R('count_eval.json');
+const gate = R('fit_gate.json');
 const e1 = R('e1_size.json'), e2 = R('e2_repeatability.json'), e3 = R('e3_human_baseline.json'), e4 = R('e4_lot_truth.json'), perf = R('perf.json');
 const pct = (x) => (x == null ? 'n/a' : `${(100 * x).toFixed(1)}%`);
 const ci = (a) => (a ? ` (95% CI ${pct(a[0])} to ${pct(a[1])})` : '');
@@ -29,6 +31,20 @@ if (z0) {
   L.push('Caveats:', '', ...z0.caveats.map((c) => `- ${c}`), ...(z1 ? z1.caveats.map((c) => `- Tier 1: ${c}`) : []), '');
 } else L.push('Not run yet: `node --import tsx tools/eval_zenodo.ts <zenodo dir>`.', '');
 
+if (cnt) {
+  const c0 = cnt.clear_photos.tier0, c2 = cnt.clear_photos.tier2;
+  L.push('## Finding and counting onions', '', `${cnt.question} Truth: ${cnt.truth}`, '', '| Detector | Photos | Mean count error | Exactly right | Within ±1 | Mean bias |', '|---|---|---|---|---|---|');
+  L.push(`| Tier 0 colour rules | ${c0.n_photos} | ${c0.mae} | ${pct(c0.exact)} | ${pct(c0.within1)} | ${c0.mean_error > 0 ? '+' : ''}${c0.mean_error} |`);
+  if (c2) L.push(`| Tier 2 learned segmentation | ${c2.n_photos} | ${c2.mae} | ${pct(c2.exact)} | ${pct(c2.within1)} | ${c2.mean_error > 0 ? '+' : ''}${c2.mean_error} |`);
+  L.push('', `Ambiguous piles (onions hidden under others, counted separately): Tier 0 error ${cnt.ambiguous_piles.tier0.mae}, Tier 2 ${cnt.ambiguous_piles.tier2?.mae ?? 'n/a'}. Field photo (team's own, printed mat on a wooden table): ${cnt.field_photos.map((f) => `${f.photo}: Tier 0 found ${f.tier0}, Tier 2 found ${f.tier2}`).join('; ')}.`, '');
+}
+if (gate) {
+  const h = gate.holdout;
+  L.push('## Defect checks: full pipeline on held-out photos', '', `Onions found by Tier 2, defects measured by the colour model, and the learned healthy/unhealthy check (Tier 1) clearing colour marks on bulbs it rates healthy (p(unhealthy) below ${gate.chosenGate}, chosen on tune photos). Photos from the held-out blocks.`, '', '| | Colour rules alone | With the learned check |', '|---|---|---|');
+  L.push(`| Unhealthy photos with rot or mould found | ${pct(h.noGate.tpr)} | ${pct(h.chosen.tpr)} |`);
+  L.push(`| Healthy photos wrongly flagged for rot or mould | ${pct(h.noGate.fpr)} | ${pct(h.chosen.fpr)} |`);
+  L.push(`| Healthy onions wrongly failing a Grade A defect limit | ${pct(h.noGate.healthyBulbFail)} | ${pct(h.chosen.healthyBulbFail)} |`, '');
+}
 L.push('## Software checks in a real browser', '');
 if (e2e) {
   L.push(`${e2e.results.filter((r) => r.ok).length} of ${e2e.results.length} end-to-end checks passed (${e2e.browser}, ${e2e.at.slice(0, 10)}). The camera was fed a real photo through Chromium's fake capture device.`, '');
@@ -71,6 +87,8 @@ const rm = fs.readFileSync('README.md', 'utf8');
 const rows = [];
 if (z0) rows.push(`| Tier 0 perception, public real photos (holdout) | healthy vs unhealthy AUC ${z0.holdout.all.auc}, accuracy ${pct(z0.holdout.all.accuracy)} on ${z0.holdout.all.n_unhealthy + z0.holdout.all.n_healthy} photos | reports/zenodo_tier0.json |`);
 if (z1?.same_images_as_tier0?.tier1) { const q = z1.same_images_as_tier0; rows.push(`| Tier 1 vs Tier 0 on the same ${q.n_images} held-out photos | AUC ${q.tier1.auc} vs ${q.tier0.auc}; accuracy ${pct(q.tier1.accuracy)} vs ${pct(q.tier0.accuracy)} (single-bulb photos likely inflated, see caveats) | reports/zenodo_tier1.json |`); }
+if (cnt?.clear_photos?.tier2) rows.push(`| Onion counting, held-out photos counted by eye | mean error ${cnt.clear_photos.tier2.mae} onions (was ${cnt.clear_photos.tier0.mae} with colour rules); exact on ${pct(cnt.clear_photos.tier2.exact)} | reports/count_eval.json |`);
+if (gate) rows.push(`| Healthy onions wrongly failing Grade A (held-out) | ${pct(gate.holdout.chosen.healthyBulbFail)} (was ${pct(gate.holdout.noGate.healthyBulbFail)}); rot/mould photos caught ${pct(gate.holdout.chosen.tpr)} | reports/fit_gate.json |`);
 if (e2e) rows.push(`| Browser end-to-end checks | ${e2e.results.filter((r) => r.ok).length}/${e2e.results.length} pass | reports/e2e.json |`);
 for (const [n, r] of [['E1 size vs caliper', e1], ['E2 repeatability', e2], ['E3 human baseline', e3], ['E4 lot truth', e4]]) rows.push(`| ${n} | ${r?.status === 'ok' ? 'see docs/EVALUATION.md' : 'awaiting field data'} | reports/ |`);
 const block = ['<!-- numbers:start -->', '| What | Result | Source |', '|---|---|---|', ...rows, '<!-- numbers:end -->'].join('\n');

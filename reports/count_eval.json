@@ -1,0 +1,220 @@
+{
+  "generatedBy": "tools/eval_count.ts",
+  "at": "2026-09-25T07:58:55.927Z",
+  "question": "How many onions does the detector find, compared with a count by eye?",
+  "truth": "tools/fixtures/count_truth.csv: onions visible (including ones cut by the frame edge), counted by eye by the build assistant on held-out Zenodo photos (block % 5 == 4). Not a grader study.",
+  "model": {
+    "tier2": "seg.onnx",
+    "sha256": "f282d24b64ae4d84cd04e8ac9f508f062d2586604964631a2b59e98c11c5b2b7",
+    "version": "20260925"
+  },
+  "clear_photos": {
+    "tier0": {
+      "n_photos": 18,
+      "mae": 10.89,
+      "exact": 0.06,
+      "within1": 0.17,
+      "mean_error": 10
+    },
+    "tier2": {
+      "n_photos": 18,
+      "mae": 0.56,
+      "exact": 0.61,
+      "within1": 0.89,
+      "mean_error": 0.22
+    }
+  },
+  "ambiguous_piles": {
+    "tier0": {
+      "n_photos": 5,
+      "mae": 8.6,
+      "exact": 0,
+      "within1": 0,
+      "mean_error": 4.2
+    },
+    "tier2": {
+      "n_photos": 5,
+      "mae": 0.8,
+      "exact": 0.6,
+      "within1": 0.8,
+      "mean_error": 0.8
+    }
+  },
+  "field_photos": [
+    {
+      "photo": "field_test_2.jpg",
+      "tier0": 14,
+      "tier2": 6
+    }
+  ],
+  "per_photo": [
+    {
+      "id": "Onion07482",
+      "truth": 11,
+      "amb": false,
+      "t0": 8,
+      "t2": 11
+    },
+    {
+      "id": "Onion07238",
+      "truth": 8,
+      "amb": true,
+      "t0": 19,
+      "t2": 8
+    },
+    {
+      "id": "Onion07601",
+      "truth": 9,
+      "amb": true,
+      "t0": 3,
+      "t2": 9
+    },
+    {
+      "id": "Onion07866",
+      "truth": 12,
+      "amb": false,
+      "t0": 13,
+      "t2": 12
+    },
+    {
+      "id": "Onion07112",
+      "truth": 11,
+      "amb": false,
+      "t0": 23,
+      "t2": 11
+    },
+    {
+      "id": "Onion07118",
+      "truth": 11,
+      "amb": false,
+      "t0": 14,
+      "t2": 8
+    },
+    {
+      "id": "Onion12235",
+      "truth": 8,
+      "amb": false,
+      "t0": 14,
+      "t2": 8
+    },
+    {
+      "id": "Onion11862",
+      "truth": 12,
+      "amb": true,
+      "t0": 33,
+      "t2": 15
+    },
+    {
+      "id": "Onion11249",
+      "truth": 10,
+      "amb": false,
+      "t0": 28,
+      "t2": 10
+    },
+    {
+      "id": "Onion11618",
+      "truth": null,
+      "amb": true,
+      "t0": 29,
+      "t2": 10
+    },
+    {
+      "id": "Onion11874",
+      "truth": 10,
+      "amb": false,
+      "t0": 31,
+      "t2": 11
+    },
+    {
+      "id": "Onion11239",
+      "truth": 14,
+      "amb": true,
+      "t0": 12,
+      "t2": 14
+    },
+    {
+      "id": "Onion13979",
+      "truth": 11,
+      "amb": false,
+      "t0": 44,
+      "t2": 11
+    },
+    {
+      "id": "Onion13604",
+      "truth": 11,
+      "amb": false,
+      "t0": 22,
+      "t2": 12
+    },
+    {
+      "id": "Onion13359",
+      "truth": 11,
+      "amb": false,
+      "t0": 22,
+      "t2": 11
+    },
+    {
+      "id": "Onion13372",
+      "truth": 11,
+      "amb": false,
+      "t0": 39,
+      "t2": 12
+    },
+    {
+      "id": "Onion13861",
+      "truth": 12,
+      "amb": true,
+      "t0": 9,
+      "t2": 13
+    },
+    {
+      "id": "Onion13857",
+      "truth": 4,
+      "amb": false,
+      "t0": 4,
+      "t2": 4
+    },
+    {
+      "id": "Onion15367",
+      "truth": 6,
+      "amb": false,
+      "t0": 2,
+      "t2": 8
+    },
+    {
+      "id": "Onion15611",
+      "truth": 6,
+      "amb": false,
+      "t0": 5,
+      "t2": 6
+    },
+    {
+      "id": "Onion15373",
+      "truth": 4,
+      "amb": false,
+      "t0": 11,
+      "t2": 4
+    },
+    {
+      "id": "Onion15991",
+      "truth": 8,
+      "amb": false,
+      "t0": 19,
+      "t2": 9
+    },
+    {
+      "id": "Onion15858",
+      "truth": 6,
+      "amb": false,
+      "t0": 16,
+      "t2": 7
+    },
+    {
+      "id": "Onion15365",
+      "truth": 7,
+      "amb": false,
+      "t0": 23,
+      "t2": 7
+    }
+  ]
+}

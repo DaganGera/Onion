@@ -21,6 +21,7 @@
     "@types/pngjs": "^6.0.5",
     "fast-check": "^4.3.0",
     "jpeg-js": "^0.4.4",
+    "onnxruntime-node": "^1.30.0",
     "playwright": "^1.63.0",
     "pngjs": "^7.0.0",
     "tsx": "^4.23.15",

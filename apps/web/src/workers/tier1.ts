@@ -2,7 +2,7 @@
 // Tier-1 learned cross-check, run in the vision worker when models/tier1.json says it ships.
 import { applyTier1, bulbCrop, downscale, TIER0, type BulbResult, type RGBA } from '@parakh/vision';
 
-interface Meta { ship: boolean; file: string; size: number; mean: number[]; std: number[]; thr_high: number; sha256: string }
+interface Meta { ship: boolean; file: string; size: number; mean: number[]; std: number[]; thr_high: number; gate?: number; sha256: string }
 let meta: Meta | null | undefined;
 let session: unknown = null;
 
@@ -42,7 +42,7 @@ export async function runTier1(img: RGBA, bulbs: BulbResult[], baseHref: string)
   const logits = out.logits.data;
   use.forEach((b, k) => {
     const a = logits[2 * k], z = logits[2 * k + 1];
-    applyTier1(b, 1 / (1 + Math.exp(a - z)), m.thr_high);
+    applyTier1(b, 1 / (1 + Math.exp(a - z)), m.thr_high, m.gate ?? 0);
   });
   return { ms: performance.now() - t0 };
 }

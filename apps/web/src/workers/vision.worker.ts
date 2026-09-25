@@ -1,6 +1,7 @@
 /// <reference lib="webworker" />
 import { analyze, frameStats, quickScan, type AnalyzeOptions } from '@parakh/vision';
 import { runTier1 } from './tier1';
+import { runSeg } from './seg';
 
 type Req =
   | { id: number; kind: 'analyze'; bitmap: ImageBitmap; opts: AnalyzeOptions; base: string }
@@ -24,7 +25,9 @@ self.onmessage = async (e: MessageEvent<Req>) => {
       (self as unknown as Worker).postMessage({ id: m.id, ok: true, value: { ...s, ...f } });
     } else {
       const t0 = performance.now();
-      const a = analyze(img, m.opts);
+      const seg = await runSeg(img, m.base).catch(() => null);
+      const a = analyze(img, seg ? { ...m.opts, instances: seg.labels } : m.opts);
+      a.timings.seg = seg ? seg.ms : -1;
       const t1 = await runTier1(img, a.bulbs, m.base);
       if (t1) a.timings.tier1 = t1.ms;
       a.timings.total = performance.now() - t0;

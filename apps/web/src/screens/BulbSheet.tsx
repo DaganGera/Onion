@@ -78,6 +78,7 @@ export function BulbSheet({ g, refIdx, url, ai, onClose, onChanged }: { g: Grade
           <dt>{t('bs.shape', 'Shape flags')}</dt><dd>{Object.entries(m.shape).filter(([, v]) => v).map(([k]) => k).join(', ') || '—'}</dd>
           {bulb.p1 !== undefined && <><dt>{t('bs.t1', 'Learned cross-check (Tier 1)')}</dt><dd>{t('bs.t1v', '{p}% unhealthy', { p: Math.round(bulb.p1 * 100) })}</dd></>}
         </dl>
+        {bulb.gated && <p class="note">{t('bs.gated', 'The learned check rates this bulb healthy, so colour marks from light and natural skin streaks were cleared.')}</p>}
         {bulb.disagree && <p class="banner warn">{t('bs.disagree', 'The learned model thinks this bulb is unhealthy, but the colour model found no rot or blackening. It goes to a person.')}</p>}
         <div class="fracs">
           {DEFECTS.map((d) => {
