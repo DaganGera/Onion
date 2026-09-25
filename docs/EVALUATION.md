@@ -37,22 +37,22 @@ Caveats:
 
 ## Software checks in a real browser
 
-15 of 15 end-to-end checks passed (chromium headless (Playwright), 2026-09-24). The camera was fed a real photo through Chromium's fake capture device.
+15 of 15 end-to-end checks passed (chromium headless (Playwright), 2026-09-25). The camera was fed a real photo through Chromium's fake capture device.
 
 | Check | Result | Detail |
 |---|---|---|
 | home renders | pass |  |
-| demo lot graded | pass | 7527 ms for 4 photos incl. decode |
-| Tier-1 model ran in the browser (ONNX Runtime Web) | pass | {"n":56,"withP":56,"disagree":2,"ms":[168,63,148,95]} |
+| demo lot graded | pass | 14845 ms for 4 photos incl. decode |
+| Tier-1 model ran in the browser (ONNX Runtime Web) | pass | {"n":56,"withP":56,"disagree":2,"ms":[156,45,90,80]} |
 | bulb sheet shows reasons | pass | 2 reason lines |
 | override + contest recorded | pass |  |
 | receipt has QR | pass |  |
-| QR payload size | pass | 3006 base45 chars |
+| QR payload size | pass | 3010 base45 chars |
 | second phone verifies offline | pass | Receipt checks out |
 | tampered code rejected | pass | This code is damaged, altered, or not a Parakh receipt. Nothing could be verifie |
 | time travel: packs give different procured shares | pass | 0.0 / 0.0 / 11.2 / 11.2 / 0.0 |
 | capture guard explains refusal in one sentence | pass | Keep the calibration sheet fully in view. |
-| auto-shutter fired and measured | pass | 8 onions measured. Scale: intrinsics · 676 ms |
+| auto-shutter fired and measured | pass | 8 onions measured. Scale: intrinsics · 748 ms |
 | app loads offline (service worker) | pass |  |
 | UI switches to Hindi | pass | लॉट मापें। ऐसी रसीद दें जिसे कोई भी जाँच सके। |
 | no page errors | pass |  |

@@ -41,8 +41,8 @@ export const TIER0 = {
   conf: { minPx: 900 },        // bulbs smaller than this many px get low confidence
   guard: {
     minSharp: 55,              // Laplacian variance on the 480px preview (fit)
-    minMeanL: 28, maxMeanL: 88,
-    maxClipped: 0.05,          // fraction of near-saturated pixels
+    minMeanL: 25, maxMeanL: 92,
+    maxClipped: 0.12,          // fraction of near-saturated pixels (a white sheet in daylight clips a lot)
     maxTiltDeg: 12,
     minBulbs: 1,
   },
