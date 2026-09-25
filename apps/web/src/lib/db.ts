@@ -35,7 +35,7 @@ export interface CaptureRow {
   timings: Record<string, number>;
   loc: string | null;
   /** Capture Guard telemetry since the previous photo: scans seen, scans with a failing gate, refused shutter presses. */
-  guard?: { scans: number; failed: number; refused: number; byGate: Record<string, number> };
+  guard?: { scans: number; failed: number; refused: number; byGate: Record<string, number>; forced?: string };
 }
 
 export interface CertRow { hash: string; lotId: string; rev: number; issuedAt: string; signed: SignedCert; qr: string; centre: string }

@@ -1,6 +1,6 @@
 {
   "generatedBy": "tools/e2e.mjs",
-  "at": "2026-09-24T20:31:33.826Z",
+  "at": "2026-09-25T05:34:37.070Z",
   "browser": "chromium headless (Playwright)",
   "results": [
     {
@@ -11,12 +11,12 @@
     {
       "name": "demo lot graded",
       "ok": true,
-      "detail": "7527 ms for 4 photos incl. decode"
+      "detail": "14845 ms for 4 photos incl. decode"
     },
     {
       "name": "Tier-1 model ran in the browser (ONNX Runtime Web)",
       "ok": true,
-      "detail": "{\"n\":56,\"withP\":56,\"disagree\":2,\"ms\":[168,63,148,95]}"
+      "detail": "{\"n\":56,\"withP\":56,\"disagree\":2,\"ms\":[156,45,90,80]}"
     },
     {
       "name": "bulb sheet shows reasons",
@@ -36,7 +36,7 @@
     {
       "name": "QR payload size",
       "ok": true,
-      "detail": "3006 base45 chars"
+      "detail": "3010 base45 chars"
     },
     {
       "name": "second phone verifies offline",
@@ -61,7 +61,7 @@
     {
       "name": "auto-shutter fired and measured",
       "ok": true,
-      "detail": "8 onions measured.\nScale: intrinsics · 676 ms"
+      "detail": "8 onions measured.\nScale: intrinsics · 748 ms"
     },
     {
       "name": "app loads offline (service worker)",

@@ -62,10 +62,13 @@ export function Capture({ lotId, replay }: { lotId: string; replay: boolean }) {
     let stream: MediaStream | null = null;
     const onOri = (e: DeviceOrientationEvent) => { tilt.current = tiltFromOrientation(e.beta, e.gamma); };
     addEventListener('deviceorientation', onOri);
-    navigator.mediaDevices?.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1440 } }, audio: false })
+    navigator.mediaDevices?.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 960 } }, audio: false })
       .then((s) => { stream = s; if (video.current) { video.current.srcObject = s; video.current.play().catch(() => {}); } })
       .catch(() => { setErr(t('cap.nocam', 'The camera could not be opened. Allow camera access for this site, or use Replay.')); setPhase('error'); });
-    navigator.geolocation?.getCurrentPosition(
+    // Coarse location is optional. Inside the Android app it is never requested:
+    // overlapping permission prompts crashed the native permission bridge.
+    const native = !!(window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.();
+    if (!native) navigator.geolocation?.getCurrentPosition(
       (p) => { loc.current = `${p.coords.latitude.toFixed(2)},${p.coords.longitude.toFixed(2)}`; },
       () => { loc.current = null; }, { maximumAge: 600000, timeout: 8000, enableHighAccuracy: false });
     return () => { removeEventListener('deviceorientation', onOri); stream?.getTracks().forEach((tr) => tr.stop()); };
@@ -85,7 +88,8 @@ export function Capture({ lotId, replay }: { lotId: string; replay: boolean }) {
         } else if (video.current && video.current.readyState >= 2 && video.current.videoWidth) {
           bmp = await createImageBitmap(video.current, { resizeWidth: 480, resizeQuality: 'medium' });
         }
-        if (bmp && !busy.current) {
+        if (bmp && busy.current) { bmp.close(); bmp = null; }
+        if (bmp) {
           const s = await scanBitmap(bmp);
           const g = evaluateGates(s, { tiltDeg: replay ? 0 : tilt.current, targetFound: noSheet || s.target !== null, bulbs: s.bulbs });
           if (!alive) return;
@@ -96,7 +100,7 @@ export function Capture({ lotId, replay }: { lotId: string; replay: boolean }) {
           setHold((h) => (g.every((x) => x.ok) ? h + 1 : 0));
         }
       } catch { /* a dropped frame is fine */ }
-      if (alive) setTimeout(tick, replay ? 500 : 280);
+      if (alive) setTimeout(tick, replay ? 500 : 450); // ~2 scans/s keeps cheap phones responsive
     };
     tick();
     return () => { alive = false; };
@@ -109,7 +113,12 @@ export function Capture({ lotId, replay }: { lotId: string; replay: boolean }) {
 
   async function shoot() {
     if (busy.current || !lot) return;
-    if (firstFail) { guard.current.refused++; setRefusal(gateMsg(firstFail)); return; }
+    // Refuse twice with the reason; the third tap takes it anyway and the capture records which check was overridden.
+    let forced: string | undefined;
+    if (firstFail && !replay) {
+      if (guard.current.refused < 2) { guard.current.refused++; setRefusal(gateMsg(firstFail) + ' ' + t('cap.force', 'Tap again to take it anyway.')); return; }
+      forced = firstFail.id;
+    }
     busy.current = true;
     setRefusal('');
     setPhase('busy');
@@ -130,9 +139,9 @@ export function Capture({ lotId, replay }: { lotId: string; replay: boolean }) {
         width: a.width, height: a.height,
         calib: { tier: a.calib.tier, mmPerPx: a.calib.mmPerPx, camHmm: a.calib.camHmm, scaleSd: a.calib.scaleSd, note: a.calib.note },
         bulbs: a.bulbs, timings: a.timings, loc: loc.current,
-        guard: { ...guard.current },
+        guard: { ...guard.current, forced },
       };
-      guard.current = { scans: 0, failed: 0, refused: 0, byGate: {} };
+      guard.current = { scans: 0, failed: 0, refused: 0, byGate: {} as Record<string, number> };
       await db.captures.put(row);
       if (last) URL.revokeObjectURL(last.url);
       setLast({ a, url: URL.createObjectURL(ev.blob), id: row.id, blob: ev.blob });
