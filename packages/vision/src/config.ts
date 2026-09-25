@@ -16,11 +16,21 @@ export const TIER0 = {
     closeR: 2, openR: 2,
     shadowMaxC: 10, shadowMaxL: 62, shadowMinL: 28,  // (fit) dark near-neutral = shadow/crevice
     smallHoleFrac: 0.0008,
+    bgClusters: 4,             // colours learned from the image border (wood grain, cloth folds)
+    bgMinShare: 0.15,          // a border colour must cover this share of the border to count as background
+    sheetNeutralMaxC: 12,      // on the calibration sheet, paper + print up to this chroma is background
+    darkNeutralMaxC: 10,       // dark + low chroma (printing, black markers) is not onion skin
+    coolMaxA: 4, coolMaxB: 4,  // a* and b* both below these = blue/cyan: never onion skin
+    minMeanC: 6,               // a blob whose mean chroma is below this is not an onion (paper, cable, shadow)
+    minDiamMm: 22, maxDiamMm: 120, // physical size window for a bulb when a real scale is known
     minAreaFrac: 0.0015,       // components smaller than this share of the image are dropped
     maxAspect: 3.0,
     minSolidity: 0.6,
     wsMinPeakFrac: 0.012,      // peak distance >= this * long side
-    wsNms: 1.35,               // peaks closer than nms*radius are the same bulb
+    wsNms: 1.35,
+    merge: true,
+    mergeMinSolidity: 0.85,    // union must stay this convex to be one bulb
+    mergeMinSeam: 0.45,        // ... and the shared seam must be at least this share of the smaller piece's width               // peaks closer than nms*radius are the same bulb
   },
   defects: {
     erode: 3,                  // px shaved off the bulb edge before colour analysis
@@ -28,6 +38,7 @@ export const TIER0 = {
     blackDL: 22, blackMaxL: 45, blackMaxC: 16, blackAbsL: 30, blackAbsC: 9,                  // (fit)
     rotDL: 20, rotMinC: 12, rotMinHue: 35, rotMaxHue: 95,                                      // (fit)
     brightDL: 18, sunburnMaxCRatio: 0.55,
+    peelDL: 28, peelMaxCRatio: 0.7,                              // (fit) peeled needs a strong pale shift
     specMinRefC: 16, specMaxC: 12, specDL: 14,                   // (fit) highlights on glossy skin                        // (fit)
     spotDE: 18,                                                  // (fit)
     sproutMinHue: 95, sproutMaxHue: 170, sproutMinC: 14,         // (fit) degrees in Lab a*b* plane

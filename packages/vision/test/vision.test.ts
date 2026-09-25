@@ -18,6 +18,21 @@ describe('calibration', () => {
   });
 });
 
+describe('real field photo: 5 onions on/near the printed mat on a wooden table', () => {
+  it('counts onions, not the mat, its printing, the table grain, a cable or a bag', async () => {
+    const jpeg = (await import('jpeg-js')).default;
+    const j = jpeg.decode(fs.readFileSync('packages/vision/test/fixtures/field_mat_on_wood.jpg'), { useTArray: true });
+    const { analyze } = await import('../src');
+    const a = analyze({ width: j.width, height: j.height, data: j.data });
+    const ok = a.bulbs.filter((b) => !b.excluded);
+    expect(a.calib.tier).toBe('aruco');
+    // Before the fix: 29. The photo is recovered from a screenshot whose overlay
+    // lines still cut two onions, so allow some fragments, never the mat.
+    expect(ok.length).toBeGreaterThanOrEqual(5);
+    expect(ok.length).toBeLessThanOrEqual(13);
+  });
+});
+
 describe('coin tier', () => {
   it('a tapped 27 mm disc of 90 px gives 0.3 mm/px; tapping a non-disc is refused', () => {
     const w = 800, h = 600, d = new Uint8ClampedArray(w * h * 4);

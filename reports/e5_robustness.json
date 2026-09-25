@@ -1,48 +1,48 @@
 {
   "generatedBy": "tools/eval_robustness.ts",
-  "at": "2026-09-24T19:43:15.417Z",
+  "at": "2026-09-25T06:29:45.787Z",
   "model": "tier0-lab@1.0.0",
-  "modelHash": "7def229b7ce2d0f340b2a9cbb84ee032a9a0f647fc524114f07945281793039f",
+  "modelHash": "68697eb88a47939db285e45a3a912cc634004a0b89d6ca64cb66097cd8089319",
   "question": "How much does Tier-0 output move when a real held-out photo is darkened, brightened, colour-shifted, blurred, skewed, partly covered or noised?",
   "photos": 40,
   "source": "Zenodo 10.5281/zenodo.20254934 multi-bulb photos, holdout blocks only (block % 5 == 4)",
   "note": "Perturbed copies of real photos, used only to measure stability. Not an accuracy result. The Capture Guard would refuse some of these (dark, blur).",
-  "threshold": 0.102,
+  "threshold": 0.133,
   "perturbations": {
     "dark_x0_6": {
-      "mean_rel_change_bulb_count": 0.043,
-      "mean_abs_change_defect_score": 0.02,
-      "image_decision_flips": 0.025
+      "mean_rel_change_bulb_count": 0.267,
+      "mean_abs_change_defect_score": 0.048,
+      "image_decision_flips": 0.075
     },
     "bright_x1_4": {
-      "mean_rel_change_bulb_count": 0.306,
-      "mean_abs_change_defect_score": 0.139,
-      "image_decision_flips": 0.15
+      "mean_rel_change_bulb_count": 1,
+      "mean_abs_change_defect_score": 0.152,
+      "image_decision_flips": 0.225
     },
     "warm_light": {
-      "mean_rel_change_bulb_count": 0.431,
-      "mean_abs_change_defect_score": 0.18,
-      "image_decision_flips": 0.275
+      "mean_rel_change_bulb_count": 1.466,
+      "mean_abs_change_defect_score": 0.187,
+      "image_decision_flips": 0.4
     },
     "blur_r3": {
-      "mean_rel_change_bulb_count": 0.184,
-      "mean_abs_change_defect_score": 0.085,
+      "mean_rel_change_bulb_count": 0.38,
+      "mean_abs_change_defect_score": 0.068,
       "image_decision_flips": 0.1
     },
     "tilt_skew_10pct": {
-      "mean_rel_change_bulb_count": 0.55,
-      "mean_abs_change_defect_score": 0.155,
-      "image_decision_flips": 0.15
+      "mean_rel_change_bulb_count": 1.043,
+      "mean_abs_change_defect_score": 0.166,
+      "image_decision_flips": 0.3
     },
     "occlusion_band": {
-      "mean_rel_change_bulb_count": 0.449,
-      "mean_abs_change_defect_score": 0.273,
-      "image_decision_flips": 0.2
+      "mean_rel_change_bulb_count": 0.923,
+      "mean_abs_change_defect_score": 0.29,
+      "image_decision_flips": 0.3
     },
     "jpeg_noise": {
-      "mean_rel_change_bulb_count": 0.123,
-      "mean_abs_change_defect_score": 0.07,
-      "image_decision_flips": 0
+      "mean_rel_change_bulb_count": 0.503,
+      "mean_abs_change_defect_score": 0.101,
+      "image_decision_flips": 0.175
     }
   }
 }
