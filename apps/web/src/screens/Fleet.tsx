@@ -61,7 +61,7 @@ export function Fleet() {
 
   return (
     <>
-      <TopBar title={t('fl.title', 'Fleet dashboard')} />
+      <TopBar title={t('fl.title', 'Fleet dashboard')} backTo="more" />
       <main class="page">
         <p class="small muted">{t('fl.intro', 'Built from signed receipts only. Watch for a centre whose results drift, whose human overrides disagree with the model often, or that falls back to weak size calibration.')}</p>
         {rows && rows.length === 0 && <p class="small">{t('fl.empty', 'No signed receipts on this phone yet.')}</p>}

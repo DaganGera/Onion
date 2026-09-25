@@ -19,7 +19,7 @@ Generated from `reports/*.json` by `node tools/gen_eval_md.mjs`. Full tables and
 | Tier 1 vs Tier 0 on the same 306 held-out photos | AUC 0.975 vs 0.756; accuracy 90.8% vs 68.3% (single-bulb photos likely inflated, see caveats) | reports/zenodo_tier1.json |
 | Onion counting, held-out photos counted by eye | mean error 0.56 onions (was 10.89 with colour rules); exact on 61.0% | reports/count_eval.json |
 | Healthy onions wrongly failing Grade A (held-out) | 10.1% (was 91.9%); rot/mould photos caught 85.0% | reports/fit_gate.json |
-| Browser end-to-end checks | 15/15 pass | reports/e2e.json |
+| Browser end-to-end checks | 17/17 pass | reports/e2e.json |
 | E1 size vs caliper | awaiting field data | reports/ |
 | E2 repeatability | awaiting field data | reports/ |
 | E3 human baseline | awaiting field data | reports/ |

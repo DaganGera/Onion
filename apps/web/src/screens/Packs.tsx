@@ -42,7 +42,7 @@ export function Packs({ lotId }: { lotId?: string }) {
 
   return (
     <>
-      <TopBar title={t('pk.title', 'Rule packs')} />
+      <TopBar title={t('pk.title', 'Rule packs')} backTo={lotId ? `lot/${lotId}` : 'more'} />
       <main class="page">
         <p class="small muted">{t('pk.intro', 'A rule pack is the rulebook: size window, defect limits, which buckets are bought. Packs are versioned and hashed. The same stored measurements can be re-graded under any pack, and each result can be verified on its own.')}</p>
         <div class="banner warn"><span>{t('pk.warn', 'No official circular was found. Every pack here is built from press reports and marked so. Unknown limits are marked as assumptions in the pack notes.')}</span></div>

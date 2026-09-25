@@ -31,7 +31,7 @@ const snap = (n) => page.screenshot({ path: path.join(shots, `${n}.png`), fullPa
 
 try {
   await page.goto(url);
-  await page.getByText('Measure a lot.').waitFor();
+  await page.locator('.hero-card').waitFor();
   await snap('01-home');
   check('home renders', true);
 
@@ -92,7 +92,7 @@ try {
   const ctx2 = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 });
   const p2 = await ctx2.newPage();
   await p2.goto(url);
-  await p2.getByText('Measure a lot.').waitFor();
+  await p2.locator('.hero-card').waitFor();
   await p2.waitForTimeout(1500); // let the service worker finish precaching
   await ctx2.setOffline(true);
   await p2.goto(url + '#/verify');
@@ -122,6 +122,24 @@ try {
   const procured = await page.locator('.tbl tbody tr td:last-child').allInnerTexts();
   check('time travel: packs give different procured shares', new Set(procured).size > 1, procured.join(' / '));
 
+  // Navigation: tabs and deterministic back.
+  await page.goto(url);
+  await page.locator('.tabbar').getByText('Lots').click();
+  await page.locator('.lotrow').first().waitFor();
+  await snap('10-lots');
+  await page.locator('.lotrow').first().click();
+  await page.locator('.topbar .iconbtn').waitFor();
+  await page.locator('.topbar .iconbtn').click();
+  await page.waitForTimeout(400);
+  const afterBack = await page.evaluate(() => location.hash);
+  await page.locator('.tabbar').getByText('More').click();
+  await page.getByText('Rule packs').first().click();
+  await page.locator('.topbar .iconbtn').click();
+  await page.waitForTimeout(400);
+  const afterBack2 = await page.evaluate(() => location.hash);
+  check('back button returns to the parent screen', afterBack === '#/lots' && afterBack2 === '#/more', `${afterBack} ${afterBack2}`);
+  check('bottom bar has 5 slots with a centre scan button', (await page.locator('.tabbar > *').count()) === 5 && (await page.locator('.tab-scan').count()) === 1);
+
   // Live capture with the fake camera (real photo as the feed).
   await page.goto(url + '#/new');
   await page.getByRole('button', { name: 'Open camera' }).click();
@@ -147,7 +165,7 @@ try {
   await ctx.setOffline(true);
   await page.goto(url);
   await page.reload();
-  const offlineOk = await page.getByText('Measure a lot.').waitFor({ timeout: 15000 }).then(() => true, () => false);
+  const offlineOk = await page.locator('.hero-card').waitFor({ timeout: 15000 }).then(() => true, () => false);
   check('app loads offline (service worker)', offlineOk);
   await ctx.setOffline(false);
 
@@ -157,7 +175,7 @@ try {
   await page.waitForTimeout(1200);
   await page.goto(url);
   await page.waitForTimeout(1200);
-  const h1 = await page.locator('h1').first().innerText();
+  const h1 = await page.locator('.hero-text b').innerText();
   check('UI switches to Hindi', /[ऀ-ॿ]/.test(h1), h1);
   await snap('09-home-hindi');
   await page.goto(url + '#/settings');

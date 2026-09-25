@@ -37,7 +37,7 @@ export function Settings() {
 
   return (
     <>
-      <TopBar title={t('set.title', 'Settings & log')} />
+      <TopBar title={t('set.title', 'Settings & log')} backTo="more" />
       <main class="page">
         <section class="section">
           <label class="field">

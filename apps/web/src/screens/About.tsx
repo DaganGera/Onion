@@ -5,7 +5,7 @@ import { TopBar } from '../components/ui';
 export function About() {
   return (
     <>
-      <TopBar title={t('ab.title', 'How it works & limits')} />
+      <TopBar title={t('ab.title', 'How it works & limits')} backTo="more" />
       <main class="page">
         <section class="section">
           <h2>{t('ab.h1', 'Three parts')}</h2>
