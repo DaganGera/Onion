@@ -30,7 +30,7 @@ const out = {};
 // Fresh start: drop the app database, then reload.
 await run(`await new Promise((r) => { const d = indexedDB.deleteDatabase('parakh'); d.onsuccess = d.onerror = d.onblocked = () => r(); }); location.hash = '#/'; location.reload(); return true;`).catch(() => {});
 await sleep(6000);
-await waitFor('.hero-action', 30000);
+await waitFor('.hero-card', 30000);
 await click('Load the demo lot');
 const t0 = Date.now();
 await waitFor('.verdict');

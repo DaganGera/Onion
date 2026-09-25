@@ -26,7 +26,7 @@ export function Certificate({ hash }: { hash: string }) {
       setRevs((await db.certs.where('lotId').equals(x.lotId).toArray()).sort((a, b) => a.rev - b.rev));
     });
   }, [hash]);
-  if (!c) return <><TopBar title={t('cert.title', 'Receipt')} /><main class="page"><p class="muted">{t('loading', 'Loading…')}</p></main></>;
+  if (!c) return <><TopBar title={t('cert.title', 'Receipt')} backTo="lots" /><main class="page"><p class="muted">{t('loading', 'Loading…')}</p></main></>;
   const k = c.signed.core;
   const h = k.headline;
   const pack = packById(k.pack.id);

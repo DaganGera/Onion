@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'preact/hooks';
-import { Stamp, History, Camera, Info } from 'lucide-preact';
+import { Stamp, History, Camera, Info, ChartColumnStacked, ScanSearch, IndianRupee, UserCheck } from 'lucide-preact';
 import { indicativeValue, type Bucket, type BulbVerdict } from '@parakh/core';
 import { db } from '../lib/db';
 import { loadSettings, type Settings } from '../lib/device';
@@ -65,12 +65,12 @@ export function Result({ lotId }: { lotId: string }) {
     return m;
   }, [g]);
 
-  if (!g) return <><TopBar title={t('res.title', 'Lot result')} /><main class="page"><p class="muted">{t('loading', 'Loading…')}</p></main></>;
+  if (!g) return <><TopBar title={t('res.title', 'Lot result')} backTo="lots" /><main class="page"><p class="muted">{t('loading', 'Loading…')}</p></main></>;
   const r = g.result;
   if (r.n_bulb_observations === 0) {
     return (
       <>
-        <TopBar title={t('res.title', 'Lot result')} />
+        <TopBar title={t('res.title', 'Lot result')} backTo="lots" />
         <main class="page">
           <p>{t('res.none', 'No onions have been measured in this lot yet.')}</p>
           <button class="btn primary" onClick={() => go(`capture/${lotId}${g.lot.mode === 'replay' ? '?replay=1' : ''}`)}><Camera size={20} />{t('res.capture', 'Open camera')}</button>
@@ -96,7 +96,7 @@ export function Result({ lotId }: { lotId: string }) {
 
   return (
     <>
-      <TopBar title={g.lot.farmerRef} />
+      <TopBar title={g.lot.farmerRef} backTo="lots" />
       <main class="page">
         <section class="verdict" data-d={r.sprt.decision} aria-live="polite">
           <span class="kicker">{g.lot.id} · {g.pack.short}</span>
@@ -113,7 +113,7 @@ export function Result({ lotId }: { lotId: string }) {
         )}
         <section class="section">
           <div class="section-head">
-            <h2>{t('res.mix', 'Grade mix')}</h2>
+            <h2 class="ih"><ChartColumnStacked size={20} aria-hidden="true" />{t('res.mix', 'Grade mix')}</h2>
             <div class="seg" role="group" style={{ minWidth: 0 }}>
               <button aria-pressed={view === 'w'} onClick={() => setView('w')}>{t('res.w', 'Weight')}</button>
               <button aria-pressed={view === 'c'} onClick={() => setView('c')}>{t('res.c', 'Count')}</button>
@@ -140,7 +140,7 @@ export function Result({ lotId }: { lotId: string }) {
         </section>
 
         <section class="section">
-          <div class="section-head"><h2>{t('res.bulbs', 'Every bulb')}</h2><span class="xs muted">{t('res.tap', 'Tap a bulb for its reasons')}</span></div>
+          <div class="section-head"><h2 class="ih"><ScanSearch size={20} aria-hidden="true" />{t('res.bulbs', 'Every bulb')}</h2><span class="xs muted">{t('res.tap', 'Tap a bulb for its reasons')}</span></div>
           {g.captures.map((c) => (
             <Overlay key={c.id} url={urls[c.id] ?? ''} w={c.width} h={c.height} bulbs={c.bulbs}
               caption={`${t('cap.tray', 'Tray')} ${c.tray} · ${t('cap.look', 'look')} ${c.look} · ${c.calib.tier}${c.mode === 'replay' ? ' · replay' : ''}`}
@@ -153,7 +153,7 @@ export function Result({ lotId }: { lotId: string }) {
         </section>
 
         <section class="card section">
-          <h2 style={{ fontSize: 'var(--text-lg)' }}>{t('res.value', 'Indicative value')}</h2>
+          <h2 class="ih" style={{ fontSize: 'var(--text-lg)' }}><IndianRupee size={20} aria-hidden="true" />{t('res.value', 'Indicative value')}</h2>
           <label class="field">
             <span class="small">{t('res.rate', 'Rate, ₹ per quintal')}</span>
             <input class="input mono" inputMode="numeric" value={rate} onInput={(e) => setRate(parseInt((e.target as HTMLInputElement).value) || 0)} />
@@ -164,7 +164,7 @@ export function Result({ lotId }: { lotId: string }) {
 
         {g.lot.overrides.length > 0 && (
           <section class="section">
-            <h2 style={{ fontSize: 'var(--text-lg)' }}>{t('res.audit', 'Human actions')}</h2>
+            <h2 class="ih" style={{ fontSize: 'var(--text-lg)' }}><UserCheck size={20} aria-hidden="true" />{t('res.audit', 'Human actions')}</h2>
             <ul class="reasons">
               {g.lot.overrides.map((o, i) => (
                 <li key={i} data-b={o.to ?? 'REFER'}>

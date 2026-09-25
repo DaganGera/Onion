@@ -26,23 +26,39 @@ export function useOnline() {
   return on;
 }
 
-export function TopBar({ title, backTo, right }: { title?: string; backTo?: string; right?: ComponentChildren }) {
+export function OnlineChip() {
   const online = useOnline();
   return (
+    <span class="status" data-off={online ? '0' : '1'} title={online ? t('st.on.t', 'Online — nothing needs the network') : t('st.off.t', 'Offline — everything still works')}>
+      {online ? <Wifi size={13} aria-hidden="true" /> : <WifiOff size={13} aria-hidden="true" />}
+      {online ? t('st.on', 'online') : t('st.off', 'offline')}
+    </span>
+  );
+}
+
+/**
+ * Screen header. With `backTo` it shows a back arrow that always returns to that
+ * parent screen; without it, it is a tab-root header (large title, no arrow).
+ */
+export function TopBar({ title, backTo, right, subtitle }: { title?: string; backTo?: string; right?: ComponentChildren; subtitle?: string }) {
+  if (backTo === undefined) {
+    return (
+      <header class="topbar root">
+        <div class="grow">
+          {title ? <h1 class="root-title">{title}</h1> : <a class="wordmark" href="#/"><i />parakh</a>}
+          {subtitle && <p class="root-sub">{subtitle}</p>}
+        </div>
+        {right}
+        <OnlineChip />
+      </header>
+    );
+  }
+  return (
     <header class="topbar">
-      {title ? (
-        <>
-          <button class="iconbtn" onClick={() => back(backTo ?? '')} aria-label={t('nav.back', 'Back')}><ChevronLeft size={24} /></button>
-          <div class="grow"><h1>{title}</h1></div>
-        </>
-      ) : (
-        <div class="grow"><a class="wordmark" href="#/"><i />parakh</a></div>
-      )}
+      <button class="iconbtn" onClick={() => back(backTo)} aria-label={t('nav.back', 'Back')}><ChevronLeft size={26} /></button>
+      <div class="grow"><h1>{title}</h1></div>
       {right}
-      <span class="status" data-off={online ? '0' : '1'} title={online ? t('st.on.t', 'Online — nothing needs the network') : t('st.off.t', 'Offline — everything still works')}>
-        {online ? <Wifi size={12} aria-hidden="true" /> : <WifiOff size={12} aria-hidden="true" />}
-        {online ? t('st.on', 'online') : t('st.off', 'offline')}
-      </span>
+      <OnlineChip />
     </header>
   );
 }

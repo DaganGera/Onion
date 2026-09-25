@@ -5,7 +5,7 @@ import { sha256Hex } from '@parakh/core';
 import { db, type CaptureRow, type LotRow } from '../lib/db';
 import { loadSettings, type Settings } from '../lib/device';
 import { t } from '../lib/i18n';
-import { go } from '../lib/router';
+import { back, go } from '../lib/router';
 import { analyzeBitmap, scanBitmap, toEvidenceJpeg } from '../lib/vision';
 import { REPLAY_CAM_H, SAMPLES } from '../lib/demo';
 import { Overlay } from '../components/Overlay';
@@ -177,7 +177,7 @@ export function Capture({ lotId, replay }: { lotId: string; replay: boolean }) {
   return (
     <div class="cam">
       <div class="cam-top">
-        <button class="iconbtn" aria-label={t('cap.close', 'Close camera')} onClick={() => go(count ? `lot/${lotId}` : '')}><X size={24} /></button>
+        <button class="iconbtn" aria-label={t('cap.close', 'Close camera')} onClick={() => back(count ? `lot/${lotId}` : '')}><X size={24} /></button>
         <span class="grow">{t('cap.tray', 'Tray')} {tray} · {t('cap.look', 'look')} {look} · {count} {t('cap.photos', 'photos')}</span>
       </div>
       <div class="cam-view">
@@ -236,7 +236,7 @@ export function Capture({ lotId, replay }: { lotId: string; replay: boolean }) {
               {!replay && <button class="btn" onClick={nextLook}><RefreshCw size={18} aria-hidden="true" />{t('cap.shake', 'Shake, look again')}</button>}
               <button class="btn" style={{ width: '100%' }} onClick={nextTray}><ArrowRight size={18} aria-hidden="true" />{replay ? t('cap.nextphoto', 'Next stored photo (new tray)') : t('cap.nexttray', 'Next tray')}</button>
             </div>
-            <button class="btn primary block" onClick={() => go(`lot/${lotId}`)}><Check size={20} aria-hidden="true" />{t('cap.finish', 'Finish and grade')}</button>
+            <button class="btn primary block" onClick={() => back(`lot/${lotId}`)}><Check size={20} aria-hidden="true" />{t('cap.finish', 'Finish and grade')}</button>
           </>
         )}
         {phase === 'error' && (

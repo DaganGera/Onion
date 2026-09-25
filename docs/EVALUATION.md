@@ -58,13 +58,13 @@ Onions found by Tier 2, defects measured by the colour model, and the learned he
 
 ## Software checks in a real browser
 
-15 of 15 end-to-end checks passed (chromium headless (Playwright), 2026-09-25). The camera was fed a real photo through Chromium's fake capture device.
+17 of 17 end-to-end checks passed (chromium headless (Playwright), 2026-09-25). The camera was fed a real photo through Chromium's fake capture device.
 
 | Check | Result | Detail |
 |---|---|---|
 | home renders | pass |  |
-| demo lot graded | pass | 7946 ms for 4 photos incl. decode |
-| Tier-1 model ran in the browser (ONNX Runtime Web) | pass | {"n":44,"withP":44,"disagree":0,"ms":[70,56,49,32]} |
+| demo lot graded | pass | 8002 ms for 4 photos incl. decode |
+| Tier-1 model ran in the browser (ONNX Runtime Web) | pass | {"n":44,"withP":44,"disagree":0,"ms":[67,59,53,32]} |
 | bulb sheet shows reasons | pass | 2 reason lines |
 | override + contest recorded | pass |  |
 | receipt has QR | pass |  |
@@ -72,10 +72,12 @@ Onions found by Tier 2, defects measured by the colour model, and the learned he
 | second phone verifies offline | pass | Receipt checks out |
 | tampered code rejected | pass | This code is damaged, altered, or not a Parakh receipt. Nothing could be verifie |
 | time travel: packs give different procured shares | pass | 0.0 / 0.0 / 3.9 / 3.9 / 0.0 |
+| back button returns to the parent screen | pass | #/lots #/more |
+| bottom bar has 5 slots with a centre scan button | pass |  |
 | capture guard explains refusal in one sentence | pass | Keep the calibration sheet fully in view. |
-| auto-shutter fired and measured | pass | 12 onions measured. Scale: intrinsics · 688 ms |
+| auto-shutter fired and measured | pass | 12 onions measured. Scale: intrinsics · 1134 ms |
 | app loads offline (service worker) | pass |  |
-| UI switches to Hindi | pass | लॉट मापें। ऐसी रसीद दें जिसे कोई भी जाँच सके। |
+| UI switches to Hindi | pass | नया लॉट शुरू करें |
 | no page errors | pass |  |
 
 ## E1 size against calipers
@@ -114,7 +116,7 @@ How much does Tier-0 output move when a real held-out photo is darkened, brighte
 
 ## Android build in an emulator
 
-Android 15 emulator (x86_64, WHPX, swiftshader GPU), system WebView. Demo lot of 4 photos graded in 8.1 s; per photo 2839, 1292, 1376, 1041 ms including Tier 1 (538, 99, 123, 99 ms). Signing 1043 ms with ES256 (this WebView has no Ed25519); offline verification 1220 ms: "Receipt checks out". Page errors: 0. An emulator on a laptop is not a phone; E6 still needs a real device.
+Android 15 emulator (x86_64, WHPX, swiftshader GPU), system WebView. Demo lot of 4 photos graded in 7.1 s; per photo 2661, 1148, 1201, 945 ms including Tier 1 (162, 80, 83, 47 ms). Signing 1040 ms with ES256 (this WebView has no Ed25519); offline verification 137 ms: "Receipt checks out". Page errors: 0. An emulator on a laptop is not a phone; E6 still needs a real device.
 
 ## E6 phone performance
 

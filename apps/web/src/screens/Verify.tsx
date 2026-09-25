@@ -64,7 +64,7 @@ export function Verify({ code }: { code: string }) {
 
   return (
     <>
-      <TopBar title={t('v.title', 'Verify a receipt')} />
+      <TopBar title={t('v.title', 'Verify a receipt')} subtitle={t('v.sub', 'Scan a receipt QR. Works without internet.')} />
       <main class="page">
         {!state && (
           <>

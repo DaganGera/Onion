@@ -14,6 +14,7 @@ import '@fontsource/noto-sans-gujarati/400.css';
 import '@fontsource/noto-sans-bengali/400.css';
 import '@fontsource/noto-sans-gurmukhi/400.css';
 import './styles/app.css';
+import './styles/shell.css';
 import { App } from './App';
 
 render(<App />, document.getElementById('app')!);

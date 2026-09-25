@@ -1,6 +1,6 @@
 {
   "generatedBy": "tools/e2e.mjs",
-  "at": "2026-09-25T08:46:28.705Z",
+  "at": "2026-09-25T08:54:33.191Z",
   "browser": "chromium headless (Playwright)",
   "results": [
     {
@@ -11,12 +11,12 @@
     {
       "name": "demo lot graded",
       "ok": true,
-      "detail": "7946 ms for 4 photos incl. decode"
+      "detail": "8002 ms for 4 photos incl. decode"
     },
     {
       "name": "Tier-1 model ran in the browser (ONNX Runtime Web)",
       "ok": true,
-      "detail": "{\"n\":44,\"withP\":44,\"disagree\":0,\"ms\":[70,56,49,32]}"
+      "detail": "{\"n\":44,\"withP\":44,\"disagree\":0,\"ms\":[67,59,53,32]}"
     },
     {
       "name": "bulb sheet shows reasons",
@@ -54,6 +54,16 @@
       "detail": "0.0 / 0.0 / 3.9 / 3.9 / 0.0"
     },
     {
+      "name": "back button returns to the parent screen",
+      "ok": true,
+      "detail": "#/lots #/more"
+    },
+    {
+      "name": "bottom bar has 5 slots with a centre scan button",
+      "ok": true,
+      "detail": ""
+    },
+    {
       "name": "capture guard explains refusal in one sentence",
       "ok": true,
       "detail": "Keep the calibration sheet fully in view."
@@ -61,7 +71,7 @@
     {
       "name": "auto-shutter fired and measured",
       "ok": true,
-      "detail": "12 onions measured.\nScale: intrinsics · 688 ms"
+      "detail": "12 onions measured.\nScale: intrinsics · 1134 ms"
     },
     {
       "name": "app loads offline (service worker)",
@@ -71,7 +81,7 @@
     {
       "name": "UI switches to Hindi",
       "ok": true,
-      "detail": "लॉट मापें। ऐसी रसीद दें जिसे कोई भी जाँच सके।"
+      "detail": "नया लॉट शुरू करें"
     },
     {
       "name": "no page errors",
