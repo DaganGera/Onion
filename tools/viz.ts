@@ -1,11 +1,22 @@
 // Debug overlay: node --import tsx tools/viz.ts <image> <out.png>
-import { analyze, downscale, CODE } from '@parakh/vision';
+import fs from 'node:fs';
+import * as ort from 'onnxruntime-node';
+import { analyze, downscale, CODE, resizeLabels, segInput, segInstances, workSize } from '@parakh/vision';
 import { readImage, writePng } from './imgio.mjs';
 
 const [, , inp, out] = process.argv;
 const img = readImage(inp);
 const t = Date.now();
-const a = analyze(img);
+let instances: Int32Array | undefined;
+if (fs.existsSync('apps/web/public/models/seg.json') && !process.env.TIER0) {
+  const meta = JSON.parse(fs.readFileSync('apps/web/public/models/seg.json', 'utf8'));
+  const sess = await ort.InferenceSession.create('apps/web/public/models/' + meta.file);
+  const { w: W, h: H } = workSize(img.width, img.height);
+  const x = segInput(downscale(img, Math.max(W, H)).img, meta);
+  const out = await sess.run({ x: new ort.Tensor('float32', x.data, [1, 3, x.h, x.w]) });
+  instances = resizeLabels(segInstances(out.logits.data as Float32Array, x.w, x.h), x.w, x.h, W, H);
+}
+const a = analyze(img, { instances });
 console.log(`${inp}: ${img.width}x${img.height} -> ${a.width}x${a.height}, ${Date.now() - t} ms`, a.timings);
 console.log(`calib ${a.calib.tier} ${a.calib.note} mm/px=${a.calib.mmPerPx.toFixed(3)} camH=${a.calib.camHmm.toFixed(0)}`);
 const { img: v } = downscale(img, 1024);

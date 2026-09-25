@@ -35,6 +35,27 @@ Caveats:
 - Tier 1: One phone, one city; field photos will differ.
 - Tier 1: Multiple-bulb photos inherit the image label, so a healthy bulb in an "unhealthy" photo counts as unhealthy.
 
+## Finding and counting onions
+
+How many onions does the detector find, compared with a count by eye? Truth: tools/fixtures/count_truth.csv: onions visible (including ones cut by the frame edge), counted by eye by the build assistant on held-out Zenodo photos (block % 5 == 4). Not a grader study.
+
+| Detector | Photos | Mean count error | Exactly right | Within ±1 | Mean bias |
+|---|---|---|---|---|---|
+| Tier 0 colour rules | 18 | 10.89 | 6.0% | 17.0% | +10 |
+| Tier 2 learned segmentation | 18 | 0.56 | 61.0% | 89.0% | +0.22 |
+
+Ambiguous piles (onions hidden under others, counted separately): Tier 0 error 8.6, Tier 2 0.8. Field photo (team's own, printed mat on a wooden table): field_test_2.jpg: Tier 0 found 14, Tier 2 found 6.
+
+## Defect checks: full pipeline on held-out photos
+
+Onions found by Tier 2, defects measured by the colour model, and the learned healthy/unhealthy check (Tier 1) clearing colour marks on bulbs it rates healthy (p(unhealthy) below 0.7, chosen on tune photos). Photos from the held-out blocks.
+
+| | Colour rules alone | With the learned check |
+|---|---|---|
+| Unhealthy photos with rot or mould found | 85.0% | 85.0% |
+| Healthy photos wrongly flagged for rot or mould | 68.3% | 13.3% |
+| Healthy onions wrongly failing a Grade A defect limit | 91.9% | 10.1% |
+
 ## Software checks in a real browser
 
 15 of 15 end-to-end checks passed (chromium headless (Playwright), 2026-09-25). The camera was fed a real photo through Chromium's fake capture device.
@@ -42,17 +63,17 @@ Caveats:
 | Check | Result | Detail |
 |---|---|---|
 | home renders | pass |  |
-| demo lot graded | pass | 14845 ms for 4 photos incl. decode |
-| Tier-1 model ran in the browser (ONNX Runtime Web) | pass | {"n":56,"withP":56,"disagree":2,"ms":[156,45,90,80]} |
+| demo lot graded | pass | 7946 ms for 4 photos incl. decode |
+| Tier-1 model ran in the browser (ONNX Runtime Web) | pass | {"n":44,"withP":44,"disagree":0,"ms":[70,56,49,32]} |
 | bulb sheet shows reasons | pass | 2 reason lines |
 | override + contest recorded | pass |  |
 | receipt has QR | pass |  |
-| QR payload size | pass | 3010 base45 chars |
+| QR payload size | pass | 2392 base45 chars |
 | second phone verifies offline | pass | Receipt checks out |
 | tampered code rejected | pass | This code is damaged, altered, or not a Parakh receipt. Nothing could be verifie |
-| time travel: packs give different procured shares | pass | 0.0 / 0.0 / 11.2 / 11.2 / 0.0 |
+| time travel: packs give different procured shares | pass | 0.0 / 0.0 / 3.9 / 3.9 / 0.0 |
 | capture guard explains refusal in one sentence | pass | Keep the calibration sheet fully in view. |
-| auto-shutter fired and measured | pass | 8 onions measured. Scale: intrinsics · 748 ms |
+| auto-shutter fired and measured | pass | 12 onions measured. Scale: intrinsics · 688 ms |
 | app loads offline (service worker) | pass |  |
 | UI switches to Hindi | pass | लॉट मापें। ऐसी रसीद दें जिसे कोई भी जाँच सके। |
 | no page errors | pass |  |

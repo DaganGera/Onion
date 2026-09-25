@@ -3,3 +3,4 @@
 *.jpg binary
 *.onnx binary
 *.pdf binary
+packages/vision/test/fixtures/*.jpg -diff
