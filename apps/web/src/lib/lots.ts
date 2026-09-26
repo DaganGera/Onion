@@ -1,3 +1,4 @@
+import { can, currentUser } from './auth';
 import {
   canonicalize, encodeCompact, finalizeCore, gradeLot, adjudicate, hashCanonical, leafHash, packById, packHash, resultSeed,
   rootOf, sha256Hex, signCore, signHash, toHex, type BulbMeasurement, type BulbVerdict, type CertCore, type LotResult, type Override, type RulePack,
@@ -70,6 +71,8 @@ async function evidenceHash(captures: CaptureRow[]): Promise<string> {
  * certificate issued on this device; every certificate goes into the log.
  */
 export async function issueCertificate(lotId: string): Promise<CertRow> {
+  const me = currentUser();
+  if (!can(me, 'cert.sign')) throw new Error('Only an officer or supervisor can sign a receipt.');
   const lot = (await db.lots.get(lotId))!;
   const pack = packById(lot.packId)!;
   const { bulbs, captures } = await lotMeasurements(lotId);
@@ -90,6 +93,7 @@ export async function issueCertificate(lotId: string): Promise<CertRow> {
     sampling: lot.sampling ? { seed: lot.sampling.seed, draws } : null,
     evidence: await evidenceHash(captures),
     bulbs, overrides: lot.overrides,
+    ...(me ? { issuer: { id: me.id, name: me.name, role: me.role } } : {}),
   };
   const { core } = await finalizeCore(base, pack);
   const signed = await signCore(core, key);

@@ -1,3 +1,4 @@
+import { can, useSession } from '../lib/auth';
 import { useEffect, useState } from 'preact/hooks';
 import { Database } from 'lucide-preact';
 import { db, type CertRow } from '../lib/db';
@@ -16,6 +17,7 @@ function spark(values: number[]) {
 }
 
 export function Fleet() {
+  const me = useSession();
   const [rows, setRows] = useState<CentreRow[] | null>(null);
   const [busy, setBusy] = useState(false);
   const load = async () => {
@@ -63,6 +65,7 @@ export function Fleet() {
     <>
       <TopBar title={t('fl.title', 'Fleet dashboard')} backTo="more" />
       <main class="page">
+        {!can(me, 'fleet.view') && <p class="banner warn">{t('perm.no', 'Your role cannot do this. Ask the centre supervisor.')}</p>}
         <p class="small muted">{t('fl.intro', 'Built from signed receipts only. Watch for a centre whose results drift, whose human overrides disagree with the model often, or that falls back to weak size calibration.')}</p>
         {rows && rows.length === 0 && <p class="small">{t('fl.empty', 'No signed receipts on this phone yet.')}</p>}
         {rows?.map((r) => {
@@ -85,9 +88,9 @@ export function Fleet() {
             </section>
           );
         })}
-        <button class="btn quiet block" disabled={busy} data-state={busy ? 'loading' : undefined} onClick={seedFleet}>
+        {can(me, 'lot.create') && <button class="btn quiet block" disabled={busy} data-state={busy ? 'loading' : undefined} onClick={seedFleet}>
           <Database size={18} aria-hidden="true" />{busy ? t('fl.busy', 'Measuring demo photos…') : t('fl.seed', 'Add demo centres')}
-        </button>
+        </button>}
         <p class="note">{t('fl.server', 'With a sync server, every centre’s receipts and signed log heads land here. This build keeps everything on the phone.')}</p>
       </main>
     </>

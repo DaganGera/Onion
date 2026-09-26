@@ -1,3 +1,4 @@
+import { can, ROLE_LABEL, useSession } from '../lib/auth';
 import { useEffect, useState } from 'preact/hooks';
 import { ScanLine, ShieldCheck, History, LayoutDashboard, Printer, Play, ArrowRight, Scale, Layers, Percent, CloudOff, Sparkles } from 'lucide-preact';
 import { packById } from '@parakh/core';
@@ -15,6 +16,8 @@ function greeting() {
 }
 
 export function Home() {
+  const me = useSession();
+  const canGrade = can(me, 'lot.create');
   const [lots, setLots] = useState<LotWithCert[] | null>(null);
   const [s, setS] = useState<Settings | null>(null);
   const [busy, setBusy] = useState(false);
@@ -41,10 +44,10 @@ export function Home() {
           <OnlineChip />
         </div>
         <section class="hello">
-          <div class="avatar" aria-hidden="true">{(s?.officer ?? 'O').slice(0, 1)}</div>
+          <div class="avatar" aria-hidden="true">{(me?.name ?? 'O').slice(0, 1)}</div>
           <div class="grow">
             <p class="hello-g">{greeting()}</p>
-            <p class="hello-c">{s?.centre} · {s?.officer}</p>
+            <p class="hello-c">{me?.name} · {t('role.' + me?.role, me ? ROLE_LABEL[me.role] : '')} · {s?.centre}</p>
           </div>
         </section>
         <div class="stats" role="list">
@@ -54,14 +57,21 @@ export function Home() {
         </div>
       </header>
       <main class="page with-tabs home-page">
-        <button class="hero-card" onClick={() => go('new')}>
+        {canGrade ? <button class="hero-card" onClick={() => go('new')}>
           <span class="hero-icon"><ScanLine size={30} aria-hidden="true" /></span>
           <span class="hero-text">
             <b>{t('home.start', 'Start a new lot')}</b>
             <span>{t('home.start.s', 'Draw sacks, photograph trays, get a signed receipt.')}</span>
           </span>
           <ArrowRight size={22} aria-hidden="true" />
-        </button>
+        </button> : <button class="hero-card" onClick={() => go('lots')}>
+          <span class="hero-icon"><Layers size={30} aria-hidden="true" /></span>
+          <span class="hero-text">
+            <b>{t('home.audit', 'Review lots and receipts')}</b>
+            <span>{t('home.audit.s', 'Read-only access: open any lot, check receipts, watch the fleet dashboard.')}</span>
+          </span>
+          <ArrowRight size={22} aria-hidden="true" />
+        </button>}
         {pack && (
           <a class="packline" href="#/packs">
             <History size={16} aria-hidden="true" />
@@ -75,7 +85,7 @@ export function Home() {
           <div class="quick">
             <a href="#/verify"><span class="qicon q-leaf"><ShieldCheck size={22} aria-hidden="true" /></span>{t('home.verify', 'Verify a receipt')}</a>
             <a href="#/packs"><span class="qicon q-brand"><History size={22} aria-hidden="true" /></span>{t('home.packs', 'Rule packs')}</a>
-            <a href="#/fleet"><span class="qicon q-gold"><LayoutDashboard size={22} aria-hidden="true" /></span>{t('nav.fleet', 'Fleet dashboard')}</a>
+            {can(me, 'fleet.view') && <a href="#/fleet"><span class="qicon q-gold"><LayoutDashboard size={22} aria-hidden="true" /></span>{t('nav.fleet', 'Fleet dashboard')}</a>}
             <a href="./calibration_mat.pdf" target="_blank" rel="noopener"><span class="qicon"><Printer size={22} aria-hidden="true" /></span>{t('home.mat', 'Print the mat')}</a>
           </div>
         </section>
@@ -89,9 +99,9 @@ export function Home() {
             <div class="empty">
               <Sparkles size={28} aria-hidden="true" />
               <p>{t('home.empty', 'No lots yet. Grade one with the camera, or load the demo lot: real market photos from Pune, replayed through the same pipeline.')}</p>
-              <button class="btn quiet" data-state={busy ? 'loading' : undefined} disabled={busy} onClick={demo}>
+              {canGrade && <button class="btn quiet" data-state={busy ? 'loading' : undefined} disabled={busy} onClick={demo}>
                 <Play size={18} aria-hidden="true" />{busy ? t('home.demo.busy', 'Measuring demo photos…') : t('home.demo', 'Load the demo lot')}
-              </button>
+              </button>}
             </div>
           )}
           {lots && lots.length > 0 && <nav class="lotlist" aria-label={t('home.recent', 'Recent lots')}>{lots.slice(0, 4).map((l) => <LotRow key={l.id} l={l} />)}</nav>}

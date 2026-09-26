@@ -1,3 +1,4 @@
+import { can, currentUser, useSession, who } from '../lib/auth';
 import { useEffect, useMemo, useState } from 'preact/hooks';
 import { Stamp, History, Camera, Info, ChartColumnStacked, ScanSearch, IndianRupee, UserCheck } from 'lucide-preact';
 import { indicativeValue, type Bucket, type BulbVerdict } from '@parakh/core';
@@ -26,6 +27,7 @@ export function decisionLine(g: Graded): string {
 }
 
 export function Result({ lotId }: { lotId: string }) {
+  const me = useSession();
   const [g, setG] = useState<Graded | null>(null);
   const [urls, setUrls] = useState<Record<string, string>>({});
   const [view, setView] = useState<'w' | 'c' | 'b'>('w');
@@ -177,7 +179,9 @@ export function Result({ lotId }: { lotId: string }) {
         )}
 
         <div class="section no-print">
-          {dirty
+          {dirty && !can(me, 'cert.sign')
+            ? <p class="banner">{t('perm.sign', 'Only an officer or supervisor can sign. You are viewing this lot read-only.')}</p>
+            : dirty
             ? <button class="btn primary block" onClick={sign} disabled={signing} data-state={signing ? 'loading' : undefined}><Stamp size={20} aria-hidden="true" />{lastCert ? t('res.resign', 'Sign new revision') : t('res.sign', 'Sign and issue receipt')}</button>
             : <a class="btn primary block" href={`#/cert/${lastCert}`}><Stamp size={20} aria-hidden="true" />{t('res.view', 'View receipt')}</a>}
           {lastCert && dirty && <a class="btn quiet block" href={`#/cert/${lastCert}`}>{t('res.viewprev', 'View last receipt')}</a>}

@@ -1,3 +1,4 @@
+import { ROLE_LABEL, type Role } from '../lib/auth';
 import { useEffect, useState } from 'preact/hooks';
 import { Printer, Share2, FileJson, ShieldCheck, ListChecks } from 'lucide-preact';
 import { fingerprint, fromHex, packById, type Bucket } from '@parakh/core';
@@ -55,6 +56,7 @@ export function Certificate({ hash }: { hash: string }) {
           <dl class="kv">
             <dt>{t('cert.seller', 'Seller')}</dt><dd>{k.lot.farmerRef}</dd>
             <dt>{t('cert.centre', 'Centre')}</dt><dd>{k.lot.centre}</dd>
+            {k.issuer && <><dt>{t('cert.issuer', 'Signed by')}</dt><dd>{k.issuer.name} ({k.issuer.id}) · {t('role.' + k.issuer.role, ROLE_LABEL[k.issuer.role as Role] ?? k.issuer.role)}</dd></>}
             <dt>{t('cert.variety', 'Variety · sacks · declared')}</dt><dd>{k.lot.variety} · {k.lot.sacks} · {k.lot.declaredKg} kg</dd>
             <dt>{t('cert.issued', 'Issued')}</dt><dd>{new Date(k.issuedAt).toLocaleString()}</dd>
           </dl>

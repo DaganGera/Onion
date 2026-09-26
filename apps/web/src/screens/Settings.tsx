@@ -1,3 +1,4 @@
+import { can, useSession, who } from '../lib/auth';
 import { useEffect, useState } from 'preact/hooks';
 import { Download, PenLine } from 'lucide-preact';
 import { PACKS, DEFAULT_WEIGHT_MODEL } from '@parakh/core';
@@ -9,6 +10,7 @@ import { exportLog, modelHash, signTreeHead } from '../lib/lots';
 import { toast, TopBar } from '../components/ui';
 
 export function Settings() {
+  const me = useSession();
   const [s, setS] = useState<S | null>(null);
   const [fp, setFp] = useState('');
   const [alg, setAlg] = useState('');
@@ -50,11 +52,12 @@ export function Settings() {
           <label class="row small"><input type="checkbox" checked={s.speak} onChange={(e) => upd({ speak: (e.target as HTMLInputElement).checked })} />{t('set.speak', 'Read the lot decision aloud')}</label>
         </section>
 
-        <section class="section">
+        <fieldset class="section plainset" disabled={!can(me, 'settings.edit')}>
           <h2 style={{ fontSize: 'var(--text-lg)' }}>{t('set.centre', 'Centre')}</h2>
+          {!can(me, 'settings.edit') && <p class="note">{t('set.sup', 'Only the supervisor can change centre settings and the rule pack in force.')}</p>}
           <div class="grid2">
             <label class="field"><span>{t('set.cid', 'Centre code')}</span><input class="input" value={s.centre} onChange={(e) => upd({ centre: (e.target as HTMLInputElement).value })} /></label>
-            <label class="field"><span>{t('set.oid', 'Officer ID')}</span><input class="input" value={s.officer} onChange={(e) => upd({ officer: (e.target as HTMLInputElement).value })} /></label>
+            <label class="field"><span>{t('set.you', 'Signed in as')}</span><input class="input" value={me ? who(me) : ''} readOnly /></label>
           </div>
           <label class="field">
             <span>{t('set.pack', 'Default rule pack')}</span>
@@ -67,7 +70,7 @@ export function Settings() {
             <label class="field"><span>{t('set.rate', 'Default rate ₹/quintal')}</span><input class="input mono" inputMode="numeric" value={s.ratePerQuintal} onChange={(e) => upd({ ratePerQuintal: parseInt((e.target as HTMLInputElement).value) || 0 })} /></label>
           </div>
           <p class="note">{t('set.rate.n', 'Default rate 2125 is from a press report of the July 2026 PSF procurement price (docs/SOURCES.md S5). Indicative only.')}</p>
-        </section>
+        </fieldset>
 
         <section class="section">
           <h2 style={{ fontSize: 'var(--text-lg)' }}>{t('set.key', 'Signing key')}</h2>

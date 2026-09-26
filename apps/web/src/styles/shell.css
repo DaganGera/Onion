@@ -159,3 +159,40 @@
 .verdict { background: var(--color-brand-2); }
 .ih svg { color: var(--color-brand); }
 
+
+/* ---------- accounts & roles ---------- */
+.login { display: flex; flex-direction: column; gap: var(--space-lg); padding-top: calc(var(--space-2xl) + env(safe-area-inset-top)); }
+.login-head { display: flex; flex-direction: column; align-items: center; text-align: center; gap: var(--space-xs); }
+.login-head h1 { font-size: var(--text-xl); }
+.login-head p { margin: 0; max-width: 34ch; }
+.login-back { align-self: flex-start; display: inline-flex; align-items: center; gap: 4px; }
+.login-or { display: flex; align-items: center; gap: var(--space-sm); color: var(--color-neutral); font-size: var(--text-sm); }
+.login-or::before, .login-or::after { content: ""; flex: 1; border-top: var(--rule-hair); }
+.login-farmer { display: flex; align-items: center; justify-content: center; gap: 8px; color: var(--color-brand); font-weight: 600; text-decoration: none; padding: var(--space-sm); }
+.userlist { display: flex; flex-direction: column; gap: var(--space-xs); }
+.usertile { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-sm); width: 100%; min-height: var(--tap); padding: var(--space-sm) var(--space-md); border: var(--rule-hair); border-radius: var(--radius-lg); background: white; text-align: left; font: inherit; color: inherit; cursor: pointer; }
+.usertile.static { cursor: default; }
+.usertile[data-off] { opacity: 0.55; }
+.usertile b { display: block; }
+.usertile small { display: flex; align-items: center; gap: 6px; margin-top: 2px; }
+.usertile .resetrow { flex-basis: 100%; gap: var(--space-xs); }
+.usertile .resetrow .input { flex: 1; }
+.chip.role-supervisor { background: var(--color-brand); color: var(--color-brand-ink); }
+.chip.role-officer { background: var(--color-gold-tint); color: var(--color-gold-ink); }
+.chip.role-auditor { background: var(--color-q-tint); color: var(--color-q); }
+.rolelist { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: var(--space-sm); }
+.rolelist .chip { margin-right: 6px; }
+.pinpad { display: flex; flex-direction: column; align-items: center; gap: var(--space-lg); }
+.pindots { display: flex; gap: 14px; }
+.pindots i { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--color-brand); }
+.pindots i[data-on] { background: var(--color-brand); }
+.pinkeys { display: grid; grid-template-columns: repeat(3, 72px); gap: 14px; }
+.pinkey { width: 72px; height: 72px; border-radius: 50%; border: var(--rule-hair); background: white; font: 600 1.6rem/1 var(--font-display); color: var(--color-ink); cursor: pointer; display: grid; place-items: center; }
+.pinkey:active { background: var(--color-paper-3); }
+.pinkey.ghost { border: none; background: transparent; }
+.plainset { border: 0; padding: 0; margin: 0; min-width: 0; }
+.plainset:disabled { opacity: 0.7; }
+.signin-fab { position: fixed; right: var(--space-md); bottom: calc(var(--space-md) + env(safe-area-inset-bottom)); padding: 12px 18px; border-radius: 999px; background: var(--color-brand); color: var(--color-brand-ink); font-weight: 600; text-decoration: none; box-shadow: 0 6px 18px rgb(0 0 0 / 0.18); }
+.btn.sm { min-height: 40px; padding: 0 14px; }
+.usertile > .row { display: flex; align-items: center; gap: var(--space-sm); flex-wrap: nowrap; }
+.usertile .linkbtn { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }

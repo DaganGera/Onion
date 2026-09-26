@@ -31,7 +31,19 @@ page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
 const snap = async (n) => { await page.waitForSelector('#splash', { state: 'detached', timeout: 15000 }).catch(() => {}); return page.screenshot({ path: path.join(shots, `${n}.png`), fullPage: false }); };
 
 try {
+  const pin = async (pg, digits) => { for (const d of digits) await pg.locator('.pinkey', { hasText: d }).first().click(); };
+  const signIn = async (pg, name, digits) => {
+    await pg.locator('.usertile', { hasText: name }).click();
+    await pin(pg, digits);
+  };
   await page.goto(url);
+  await page.locator('.login-head').waitFor();
+  await snap('00-setup');
+  check('first run asks to set up accounts', await page.getByRole('button', { name: /Explore the demo/ }).isVisible());
+  await page.getByRole('button', { name: /Explore the demo/ }).click();
+  await page.locator('.usertile').first().waitFor();
+  await snap('11-login');
+  await signIn(page, 'R. Shinde', '2222');
   await page.locator('.hero-card').waitFor();
   await snap('01-home');
   check('home renders', true);
@@ -93,7 +105,7 @@ try {
   const ctx2 = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 });
   const p2 = await ctx2.newPage();
   await p2.goto(url);
-  await p2.locator('.hero-card').waitFor();
+  await p2.locator('.login-head').waitFor(); // a fresh phone: no accounts, the farmer never signs in
   await p2.waitForFunction(async () => {
     if (!navigator.serviceWorker?.controller) { await navigator.serviceWorker?.ready; return false; }
     const n = (await caches.keys()).find((k) => k.includes('precache'));
@@ -173,6 +185,33 @@ try {
   const offlineOk = await page.locator('.hero-card').waitFor({ timeout: 15000 }).then(() => true, () => false);
   check('app loads offline (service worker)', offlineOk);
   await ctx.setOffline(false);
+
+  // Roles: wrong PIN, auditor is read-only, supervisor manages accounts.
+  await page.goto(url + '#/more');
+  await page.getByRole('button', { name: /Switch user/ }).click();
+  await page.locator('.usertile', { hasText: 'S. Patil' }).click();
+  await pin(page, '9999');
+  const wrong = await page.locator('.banner.warn').innerText().catch(() => '');
+  check('wrong PIN is refused', /Wrong PIN/.test(wrong), wrong);
+  await page.locator('.login-back').click();
+  await signIn(page, 'A. Kulkarni', '3333');
+  await page.locator('.hero-card').waitFor();
+  const audHero = await page.locator('.hero-text b').innerText();
+  const audScan = await page.locator('.tab-scan-label').innerText();
+  await page.goto(url + '#/lots');
+  await page.locator('.lotrow').first().click();
+  await page.locator('polygon.poly:not(.x)').first().click({ force: true });
+  await page.locator('.sheet').waitFor();
+  const audOverride = await page.getByRole('button', { name: 'Officer: change' }).count();
+  check('auditor is read-only (no grading, no overrides)', /Review/.test(audHero) && /Check/.test(audScan) && audOverride === 0, `${audHero} | ${audScan} | override buttons ${audOverride}`);
+  await page.goto(url + '#/more');
+  await page.getByRole('button', { name: /Switch user/ }).click();
+  await signIn(page, 'S. Patil', '1111');
+  await page.locator('.hero-card').waitFor();
+  await page.goto(url + '#/users');
+  await page.locator('.usertile').first().waitFor();
+  await snap('12-users');
+  check('supervisor sees and manages accounts', (await page.locator('.usertile').count()) === 3);
 
   // Fleet + languages.
   await page.goto(url + '#/settings');
