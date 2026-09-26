@@ -1,0 +1,31 @@
+{
+  "name": "parakh",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc -p packages/core && tsc -p packages/vision && tsc -p apps/web --noEmit",
+    "dev": "npm run dev -w apps/web",
+    "build": "npm run build -w apps/web",
+    "e2e": "node tools/e2e.mjs",
+    "eval": "node --import tsx tools/eval_field.ts && node tools/gen_eval_md.mjs",
+    "eval:e1": "node --import tsx tools/eval_field.ts && node tools/gen_eval_md.mjs",
+    "eval:public": "node --import tsx tools/eval_zenodo.ts",
+    "deploy": "npm run build && bash tools/deploy_pages.sh"
+  },
+  "devDependencies": {
+    "@types/pngjs": "^6.0.5",
+    "fast-check": "^4.3.0",
+    "jpeg-js": "^0.4.4",
+    "onnxruntime-node": "^1.30.0",
+    "playwright": "^1.63.0",
+    "pngjs": "^7.0.0",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.0",
+    "vitest": "^5.0.1"
+  }
+}

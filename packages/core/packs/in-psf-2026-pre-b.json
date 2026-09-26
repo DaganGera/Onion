@@ -1,0 +1,108 @@
+{
+  "version": "1.0.0",
+  "size_metric": "min_feret",
+  "k_sigma": 1.645,
+  "reject_rules": [
+    {
+      "m": "rot",
+      "op": "<=",
+      "v": 10
+    },
+    {
+      "m": "sprouting",
+      "op": "<=",
+      "v": 10
+    },
+    {
+      "m": "cut",
+      "op": "<=",
+      "v": 20
+    }
+  ],
+  "refer": {
+    "min_conf": 600
+  },
+  "lot": {
+    "look_merge": "max_nonA",
+    "occlusion_factor": 1,
+    "sprt": {
+      "bucket_set": [
+        "REJECT"
+      ],
+      "p0": 0.1,
+      "p1": 0.25,
+      "alpha": 0.05,
+      "beta": 0.1
+    },
+    "max_trays": 8,
+    "refer_share_max": 0.25,
+    "bootstrap_b": 2000
+  },
+  "id": "in-psf-2026-pre-b",
+  "title": "PSF onion buffer, before 4 Jun 2026 relaxation — variant B (min 55 mm)",
+  "short": "Pre-relaxation · ≥55 mm",
+  "status": "press-report",
+  "effective_from": "2026-05-15",
+  "effective_to": "2026-06-03",
+  "sources": [
+    "S1"
+  ],
+  "buckets": [
+    {
+      "id": "GRADE_A",
+      "label": "Grade A",
+      "rules": [
+        {
+          "m": "size",
+          "op": ">=",
+          "v": 550
+        },
+        {
+          "m": "blackening",
+          "op": "<=",
+          "v": 50
+        },
+        {
+          "m": "spots",
+          "op": "<=",
+          "v": 100
+        },
+        {
+          "m": "sunburn",
+          "op": "<=",
+          "v": 20
+        },
+        {
+          "m": "peeled",
+          "op": "<=",
+          "v": 100
+        },
+        {
+          "m": "double",
+          "op": "==",
+          "v": 0
+        },
+        {
+          "m": "bottleneck",
+          "op": "==",
+          "v": 0
+        },
+        {
+          "m": "split",
+          "op": "==",
+          "v": 0
+        }
+      ]
+    }
+  ],
+  "procured": [
+    "GRADE_A"
+  ],
+  "urs_definition": "This pack has no URS bucket: before the relaxation, only Grade A was procured (press-report).",
+  "notes": [
+    "Grade A defect limits (5% blackening, 10% spots, 2% sunburn, 10% peeled) are ASSUMED placeholders: no source gives pre-relaxation tolerances (A-GRADEA-1).",
+    "Rot, sprouting and cut limits are ASSUMED detection floors, not official tolerances (A-REJECT-1).",
+    "\"One peeled outer layer allowed\" cannot be counted from a photo; peeled skin is scored as an area fraction (A-PEEL-1).",
+    "Lot SPRT thresholds p0=10%, p1=25% are ASSUMED (A-LOT-1)."
+  ]
+}

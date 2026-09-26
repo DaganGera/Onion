@@ -1,0 +1,118 @@
+{
+  "generatedBy": "tools/fit_gate.ts",
+  "at": "2026-09-26T02:27:15.421Z",
+  "config": {
+    "defects": {
+      "erode": 3,
+      "refLo": 0.35,
+      "refHi": 0.9,
+      "blackDL": 22,
+      "blackMaxL": 45,
+      "blackMaxC": 16,
+      "blackAbsL": 30,
+      "blackAbsC": 9,
+      "rotDL": 20,
+      "rotMinC": 12,
+      "rotMinHue": 35,
+      "rotMaxHue": 95,
+      "brightDL": 18,
+      "sunburnMaxCRatio": 0.55,
+      "peelDL": 28,
+      "peelMaxCRatio": 0.7,
+      "specMinRefC": 16,
+      "specMaxC": 12,
+      "specDL": 14,
+      "spotDE": 18,
+      "sproutMinHue": 95,
+      "sproutMaxHue": 170,
+      "sproutMinC": 14,
+      "minBlob": 6,
+      "minBlobFrac": 0.004,
+      "fsdBase": 25,
+      "rhoCap": 0.9,
+      "rimRho": 0.92
+    }
+  },
+  "tune": [
+    {
+      "gate": 0,
+      "tpr": 0.883,
+      "fpr": 0.633,
+      "healthyBulbFail": 0.942,
+      "obj": -0.692
+    },
+    {
+      "gate": 0.05,
+      "tpr": 0.883,
+      "fpr": 0.267,
+      "healthyBulbFail": 0.292,
+      "obj": 0.324
+    },
+    {
+      "gate": 0.1,
+      "tpr": 0.883,
+      "fpr": 0.233,
+      "healthyBulbFail": 0.249,
+      "obj": 0.401
+    },
+    {
+      "gate": 0.2,
+      "tpr": 0.883,
+      "fpr": 0.183,
+      "healthyBulbFail": 0.203,
+      "obj": 0.497
+    },
+    {
+      "gate": 0.3,
+      "tpr": 0.883,
+      "fpr": 0.117,
+      "healthyBulbFail": 0.157,
+      "obj": 0.61
+    },
+    {
+      "gate": 0.4,
+      "tpr": 0.883,
+      "fpr": 0.117,
+      "healthyBulbFail": 0.135,
+      "obj": 0.631
+    },
+    {
+      "gate": 0.5,
+      "tpr": 0.883,
+      "fpr": 0.1,
+      "healthyBulbFail": 0.098,
+      "obj": 0.685
+    },
+    {
+      "gate": 0.6,
+      "tpr": 0.883,
+      "fpr": 0.083,
+      "healthyBulbFail": 0.092,
+      "obj": 0.708
+    },
+    {
+      "gate": 0.7,
+      "tpr": 0.883,
+      "fpr": 0.083,
+      "healthyBulbFail": 0.083,
+      "obj": 0.717
+    }
+  ],
+  "chosenGate": 0.7,
+  "holdout": {
+    "chosen": {
+      "gate": 0.7,
+      "tpr": 0.85,
+      "fpr": 0.133,
+      "healthyBulbFail": 0.101,
+      "obj": 0.616
+    },
+    "noGate": {
+      "gate": 0,
+      "tpr": 0.85,
+      "fpr": 0.683,
+      "healthyBulbFail": 0.919,
+      "obj": -0.752
+    }
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "generatedBy": "tools/eval_field.ts",
+  "at": "2026-09-24T18:47:40.200Z",
+  "status": "awaiting field data",
+  "needs": "at least 6 lots named \"E2 <phone> <light> <n>\" (HUMAN_TASKS T7)",
+  "found": 0
+}
