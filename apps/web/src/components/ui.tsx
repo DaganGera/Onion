@@ -45,7 +45,7 @@ export function TopBar({ title, backTo, right, subtitle }: { title?: string; bac
     return (
       <header class="topbar root">
         <div class="grow">
-          {title ? <h1 class="root-title">{title}</h1> : <a class="wordmark" href="#/"><i />parakh</a>}
+          {title ? <h1 class="root-title">{title}</h1> : <a class="wordmark" href="#/"><i />sama</a>}
           {subtitle && <p class="root-sub">{subtitle}</p>}
         </div>
         {right}

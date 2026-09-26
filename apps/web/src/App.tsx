@@ -21,7 +21,15 @@ export function App() {
   const { path, q } = useRoute();
   const [ready, setReady] = useState(false);
   useLang();
-  useEffect(() => { loadSettings().then((s) => setLang(s.lang)).finally(() => setReady(true)); }, []);
+  useEffect(() => {
+    const t0 = performance.now();
+    loadSettings().then((s) => setLang(s.lang)).finally(() => {
+      setReady(true);
+      // Keep the startup screen up at least ~1.2 s so it reads as intentional, then fade it out.
+      const wait = Math.max(0, 1200 - (performance.now() - t0));
+      setTimeout(() => { const el = document.getElementById('splash'); if (el) { el.classList.add('gone'); setTimeout(() => el.remove(), 450); } }, wait);
+    });
+  }, []);
   if (!ready) return null;
   const [p0, p1] = path;
   let view;

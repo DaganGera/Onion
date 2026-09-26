@@ -6,6 +6,15 @@ import { go } from '../lib/router';
 import { lotMeasurements } from '../lib/lots';
 import { decisionTitle, toast, TopBar } from '../components/ui';
 
+/** When each pack applies. Kept in the UI, not in the pack files: editing a pack changes its hash. */
+const USE_WHEN: Record<string, () => string> = {
+  'in-psf-2026-pre-a': () => t('pk.use.prea', 'Lots bought 15 May – 3 Jun 2026, or disputes about that period. Grade A only, 45–65 mm.'),
+  'in-psf-2026-pre-b': () => t('pk.use.preb', 'Same period, if your centre used the "55 mm minimum" reading of the old norm.'),
+  'in-psf-2026-06-relaxed-a': () => t('pk.use.juna', 'Lots bought 4 Jun – 29 Jul 2026. Grade A plus URS (35–70 mm, blackening ≤30%, spots ≤40%, sunburn ≤10%) are both bought.'),
+  'in-psf-2026-06-relaxed-b': () => t('pk.use.junb', 'Same period, if your centre read the relaxation as "minimum 45 mm" instead of 35–70 mm.'),
+  'in-psf-2026-07-30-a-only': () => t('pk.use.jul', 'Default today. From 30 Jul 2026 only Grade A (45–65 mm) is bought; URS is still measured so the farmer knows what was turned away.'),
+};
+
 const SOURCES: Record<string, string> = {
   S1: 'Free Press Journal, 4 Jun 2026', S2: 'The Hitavada, 8 Jun 2026', S3: 'ETV Bharat / Business Standard, 7 Jun 2026',
   S4: 'Free Press Journal, 3 Aug 2026', S5: 'Indian Express (via SuperKalam), 15 May 2026',
@@ -47,6 +56,16 @@ export function Packs({ lotId }: { lotId?: string }) {
         <p class="small muted">{t('pk.intro', 'A rule pack is the rulebook: size window, defect limits, which buckets are bought. Packs are versioned and hashed. The same stored measurements can be re-graded under any pack, and each result can be verified on its own.')}</p>
         <div class="banner warn"><span>{t('pk.warn', 'No official circular was found. Every pack here is built from press reports and marked so. Unknown limits are marked as assumptions in the pack notes.')}</span></div>
 
+        <section class="card tint section">
+          <h2 class="ih" style={{ fontSize: 'var(--text-lg)' }}>{t('pk.which', 'Which pack should I use?')}</h2>
+          <ul class="small" style={{ margin: 0, paddingLeft: '1.2em', display: 'grid', gap: 6 }}>
+            <li>{t('pk.which.1', 'Grading a lot today: the default, “30 Jul 2026 · Grade A only”.')}</li>
+            <li>{t('pk.which.2', 'Settling a dispute about an older purchase: the pack that was in force on the purchase date.')}</li>
+            <li>{t('pk.which.3', 'Variant A or B: ask which size rule your centre was told. Both are here until the official circular settles it.')}</li>
+            <li>{t('pk.which.4', 'Not sure: grade once, then open “Time travel” below to see the same lot under every pack.')}</li>
+          </ul>
+        </section>
+
         <ol class="timeline">
           {PACKS.map((p) => (
             <li key={p.id} aria-current={lot?.packId === p.id ? 'true' : undefined}>
@@ -54,6 +73,7 @@ export function Packs({ lotId }: { lotId?: string }) {
               <div class="section" style={{ gap: 4 }}>
                 <span class="when">{p.effective_from}{p.effective_to ? ` → ${p.effective_to}` : ' →'}</span>
                 <b>{p.short}</b>
+                {USE_WHEN[p.id] && <span class="small muted">{USE_WHEN[p.id]()}</span>}
                 <span class="row wrap" style={{ gap: 6 }}>
                   <span class={'chip ' + (p.status === 'press-report' ? 'press' : p.status === 'assumed' ? 'assumed' : '')}>{p.status}</span>
                   <span class="chip mono">{(hashes[p.id] ?? '').slice(0, 12)}</span>

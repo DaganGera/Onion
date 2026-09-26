@@ -93,7 +93,11 @@ try {
   const p2 = await ctx2.newPage();
   await p2.goto(url);
   await p2.locator('.hero-card').waitFor();
-  await p2.waitForTimeout(1500); // let the service worker finish precaching
+  await p2.waitForFunction(async () => {
+    if (!navigator.serviceWorker?.controller) { await navigator.serviceWorker?.ready; return false; }
+    const n = (await caches.keys()).find((k) => k.includes('precache'));
+    return n ? (await (await caches.open(n)).keys()).length > 50 : false;
+  }, null, { timeout: 120000, polling: 1000 }).catch(async () => { await p2.reload(); });
   await ctx2.setOffline(true);
   await p2.goto(url + '#/verify');
   await p2.reload();

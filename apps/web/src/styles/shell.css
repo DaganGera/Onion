@@ -119,3 +119,43 @@
 
 .ih { display: inline-flex; align-items: center; gap: 8px; }
 .ih svg { color: var(--color-accent); flex: none; }
+
+/* ================= brand colour layer (v3) ================= */
+.homebanner {
+  background: var(--color-brand); color: var(--color-brand-ink);
+  padding: calc(var(--space-sm) + env(safe-area-inset-top)) var(--space-md) var(--space-lg);
+  border-radius: 0 0 28px 28px; display: flex; flex-direction: column; gap: var(--space-md);
+}
+.hb-top { display: flex; align-items: center; justify-content: space-between; min-height: 44px; }
+.wordmark.light { color: var(--color-brand-ink); display: inline-flex; align-items: center; gap: 8px; }
+.wordmark.light img { border-radius: 8px; box-shadow: 0 0 0 1.5px oklch(96% 0.02 60 / 0.25); }
+.homebanner .status { border-color: oklch(96% 0.02 60 / 0.3); color: var(--color-brand-ink); }
+.homebanner .avatar { background: var(--color-gold); color: var(--color-gold-ink); }
+.homebanner .hello-c { color: var(--color-brand-mute); }
+.homebanner .stat { background: var(--color-brand-2); color: var(--color-brand-mute); }
+.homebanner .stat svg { color: var(--color-gold); }
+.homebanner .stat b { color: var(--color-brand-ink); }
+.home-page { padding-top: var(--space-lg); }
+.hero-card { background: var(--color-gold); color: var(--color-gold-ink); box-shadow: 0 10px 24px oklch(60% 0.12 80 / 0.25); }
+.hero-card .hero-text span { color: oklch(38% 0.06 60); }
+.hero-icon { background: var(--color-gold-ink); color: var(--color-gold); box-shadow: none; }
+.qicon.q-leaf { background: var(--color-leaf-tint); color: var(--color-a); }
+.qicon.q-brand { background: var(--color-accent-tint); color: var(--color-brand); }
+.qicon.q-gold { background: var(--color-gold-tint); color: var(--color-gold-ink); }
+.tab-scan { background: var(--color-brand); box-shadow: 0 6px 18px oklch(35% 0.115 355 / 0.35), inset 0 0 0 2px var(--color-gold); }
+.tab-scan-label { color: var(--color-brand); }
+.tab[aria-current="page"] { color: var(--color-brand); }
+.tab[aria-current="page"]::after { background: var(--color-brand); }
+.topbar.root .root-title { color: var(--color-brand); }
+.btn.primary { background: var(--color-brand); border-color: var(--color-brand); }
+.btn.primary:hover { background: var(--color-brand-2); }
+.fchip[aria-pressed="true"] { background: var(--color-brand); border-color: var(--color-brand); }
+.seg button[aria-pressed="true"] { background: var(--color-brand); color: var(--color-brand-ink); }
+.micon { background: var(--color-accent-tint); color: var(--color-brand); }
+.profile { background: var(--color-brand); color: var(--color-brand-ink); }
+.profile small { color: var(--color-brand-mute); }
+.profile .avatar { background: var(--color-gold); color: var(--color-gold-ink); }
+.switch:checked { background: var(--color-brand); }
+.verdict { background: var(--color-brand-2); }
+.ih svg { color: var(--color-brand); }
+

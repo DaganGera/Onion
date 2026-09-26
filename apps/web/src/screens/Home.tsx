@@ -4,7 +4,7 @@ import { packById } from '@parakh/core';
 import { loadSettings, type Settings } from '../lib/device';
 import { t } from '../lib/i18n';
 import { go } from '../lib/router';
-import { TopBar } from '../components/ui';
+import { OnlineChip } from '../components/ui';
 import { seedDemoLot } from '../lib/demo';
 import { LotRow, loadLots, type LotWithCert } from '../components/LotRow';
 import { db } from '../lib/db';
@@ -35,8 +35,11 @@ export function Home() {
 
   return (
     <>
-      <TopBar />
-      <main class="page with-tabs">
+      <header class="homebanner">
+        <div class="hb-top">
+          <span class="wordmark light"><img src="./icon.svg" alt="" width="30" height="30" />sama</span>
+          <OnlineChip />
+        </div>
         <section class="hello">
           <div class="avatar" aria-hidden="true">{(s?.officer ?? 'O').slice(0, 1)}</div>
           <div class="grow">
@@ -44,13 +47,13 @@ export function Home() {
             <p class="hello-c">{s?.centre} · {s?.officer}</p>
           </div>
         </section>
-
         <div class="stats" role="list">
           <div class="stat" role="listitem"><Layers size={18} aria-hidden="true" /><b class="mono">{today.length}</b><span>{t('home.st.today', 'lots today')}</span></div>
           <div class="stat" role="listitem"><Scale size={18} aria-hidden="true" /><b class="mono">{bulbs}</b><span>{t('home.st.bulbs', 'onions measured')}</span></div>
           <div class="stat" role="listitem"><Percent size={18} aria-hidden="true" /><b class="mono">{avgProc === null ? '—' : avgProc.toFixed(0) + '%'}</b><span>{t('home.st.proc', 'avg procurable')}</span></div>
         </div>
-
+      </header>
+      <main class="page with-tabs home-page">
         <button class="hero-card" onClick={() => go('new')}>
           <span class="hero-icon"><ScanLine size={30} aria-hidden="true" /></span>
           <span class="hero-text">
@@ -70,9 +73,9 @@ export function Home() {
         <section class="section">
           <div class="section-head"><h2>{t('home.quick', 'Quick actions')}</h2></div>
           <div class="quick">
-            <a href="#/verify"><span class="qicon"><ShieldCheck size={22} aria-hidden="true" /></span>{t('home.verify', 'Verify a receipt')}</a>
-            <a href="#/packs"><span class="qicon"><History size={22} aria-hidden="true" /></span>{t('home.packs', 'Rule packs')}</a>
-            <a href="#/fleet"><span class="qicon"><LayoutDashboard size={22} aria-hidden="true" /></span>{t('nav.fleet', 'Fleet dashboard')}</a>
+            <a href="#/verify"><span class="qicon q-leaf"><ShieldCheck size={22} aria-hidden="true" /></span>{t('home.verify', 'Verify a receipt')}</a>
+            <a href="#/packs"><span class="qicon q-brand"><History size={22} aria-hidden="true" /></span>{t('home.packs', 'Rule packs')}</a>
+            <a href="#/fleet"><span class="qicon q-gold"><LayoutDashboard size={22} aria-hidden="true" /></span>{t('nav.fleet', 'Fleet dashboard')}</a>
             <a href="./calibration_mat.pdf" target="_blank" rel="noopener"><span class="qicon"><Printer size={22} aria-hidden="true" /></span>{t('home.mat', 'Print the mat')}</a>
           </div>
         </section>
