@@ -15,11 +15,12 @@ const browser = await chromium.launch({ args: ['--use-gl=angle', '--enable-unsaf
 const errors = [];
 let ok = true;
 try {
-  for (const [name, vp] of [['desktop', { width: 1440, height: 900 }], ['mobile', { width: 390, height: 844 }]]) {
+  for (const [name, vp] of [['desktop', { width: 1440, height: 900 }], ['mobile', { width: 390, height: 844 }], ['small', { width: 360, height: 740 }]]) {
     const page = await browser.newPage({ viewport: vp });
     page.on('pageerror', (e) => errors.push(`${name}: ${e.message}`));
     page.on('console', (m) => { if (m.type() === 'error') errors.push(`${name}: ${m.text()}`); });
     await page.goto(url, { waitUntil: 'networkidle' });
+    await page.waitForSelector('[data-ready]', { timeout: 30000 }).catch(() => errors.push(name + ': 3D model did not load'));
     await page.waitForTimeout(2600);
     await page.screenshot({ path: path.join(out, `${name}-hero.png`) });
     for (const id of ['how', 'demo', 'who', 'get']) {

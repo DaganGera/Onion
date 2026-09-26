@@ -1,0 +1,2 @@
+Onion model: "Yellow Onion" by Kuutti Siitonen, Poly Haven (https://polyhaven.com/a/yellow_onion), CC0.
+Diffuse texture recoloured to red-onion skin; textures resized for the web.

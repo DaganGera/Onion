@@ -1,0 +1,5 @@
+Wikimedia Commons photos used as section backgrounds.
+grading: "Onion grading and cleaning.jpg" by Nishaexport, CC BY-SA 3.0, https://commons.wikimedia.org/wiki/File:Onion_grading_and_cleaning.jpg
+sorting: "Sorting Onions (15358524090).jpg" by John Hoey from Framingham, MA, United States, CC BY 2.0, https://commons.wikimedia.org/wiki/File:Sorting_Onions_(15358524090).jpg
+trolley: "Onions on a trolley in India.jpg" by Ravi Dwivedi, CC BY-SA 4.0, https://commons.wikimedia.org/wiki/File:Onions_on_a_trolley_in_India.jpg
+market: "India - Koyambedu Market - Onions 08 (3987045248).jpg" by McKay Savage from London, UK, CC BY 2.0, https://commons.wikimedia.org/wiki/File:India_-_Koyambedu_Market_-_Onions_08_(3987045248).jpg
