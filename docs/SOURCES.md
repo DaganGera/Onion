@@ -80,6 +80,7 @@ Development only: vite, vitest, fast-check, typescript, playwright, tsx, pngjs, 
 | A-FOV-1 | Camera horizontal field of view 66 degrees; camera-only tier uses 380 mm height with 25% uncertainty | vision/config.ts | Read from the phone, or measure once per phone |
 | A-REPLAY-1 | Stored demo photos analysed as if taken from 260 mm | web/lib/demo.ts | Replace the demo photos with the team's own photos on the mat |
 | A-COIN-1 | Coin diameters Rs 10: 27 mm, Rs 5: 25 mm, Rs 2: 23 mm, Rs 1: 20 mm (current series, from memory, not checked against RBI) | web capture screen | Caliper the coin once (HUMAN_TASKS T1) |
+| A-SHAPE-1 | Bottleneck = neck/tail is more than 12% of the outline and the body is elongated (aspect > 1.3); double/split from body solidity | vision/config.ts | Hand-label bottleneck and double bulbs in field photos |
 | A-SAMPLE-1 | Draw ceil(sqrt(sacks)) sacks, at least 3 | core/sampling.ts | Official sampling plan unknown (OQ7) |
 | A-RATE-1 | Indicative rate Rs 2,125/quintal (S5; S4 says Rs 2,335 from 30 Jul) | web settings | User types the day's rate |
 | A-T0-* | Every Tier-0 colour threshold in packages/vision/src/config.ts | vision | Fit on field photos (scripts to come with field data) |

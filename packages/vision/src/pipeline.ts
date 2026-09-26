@@ -252,6 +252,26 @@ function mergeFragments(ws: Int32Array, w: number, h: number, calib: Calibration
   for (let i = 0; i < ws.length; i++) if (ws[i]) ws[i] = find(ws[i]);
 }
 
+/** Morphological opening of one bulb's pixels inside its bbox (radius ~15% of equivalent radius). */
+function bulbBody(P: number[], w: number, x0: number, y0: number, x1: number, y1: number): { area: number; boundary: Pt[] } {
+  const bw = x1 - x0 + 1, bh = y1 - y0 + 1;
+  const m = mask(bw, bh);
+  for (const i of P) { const x = i % w, y = (i - x) / w; m.data[(y - y0) * bw + (x - x0)] = 1; }
+  const r = Math.max(2, Math.round(0.15 * Math.sqrt(P.length / Math.PI)));
+  const o = open(m, r);
+  // Keep the largest opened piece (the bulb body).
+  const { labels, comps } = components(o);
+  if (!comps.length) return { area: 0, boundary: [] };
+  const big = comps.reduce((a, c) => (c.area > a.area ? c : a));
+  const boundary: Pt[] = [];
+  for (let y = 0; y < bh; y++) for (let x = 0; x < bw; x++) {
+    const i = y * bw + x;
+    if (labels[i] !== big.id) continue;
+    if (x === 0 || y === 0 || x === bw - 1 || y === bh - 1 || labels[i - 1] !== big.id || labels[i + 1] !== big.id || labels[i - bw] !== big.id || labels[i + bw] !== big.id) boundary.push({ x: x + x0, y: y + y0 });
+  }
+  return { area: big.area, boundary };
+}
+
 /** Fill background holes smaller than maxArea (specks inside a bulb). */
 function fillSmallHoles(m: Mask, maxArea: number): Mask {
   const inv = mask(m.width, m.height);
@@ -338,13 +358,19 @@ function measureBulbs(ws: Int32Array, fg: Mask, lab: Lab, calib: Calibration, wm
     }
     cx /= P.length; cy /= P.length;
     const hull = convexHull(boundary);
-    const hullArea = Math.max(1, polygonArea(hull));
-    const solidity = Math.min(1, P.length / hullArea);
-    const fpx = feret(hull);
+    // Body = mask opened by ~15% of the radius: strips the neck, root tuft and dry tails,
+    // so size and shape describe the bulb, not its stalk (UNECE sizes the equatorial section).
+    const body = bulbBody(P, w, x0, y0, x1, y1);
+    const bodyHull = body.boundary.length >= 8 ? convexHull(body.boundary) : hull;
+    const bodyArea = body.area >= 8 ? body.area : P.length;
+    // Share of the outline that is neck/tail rather than bulb: large for a thick neck.
+    const neckFrac = Math.max(0, (P.length - bodyArea) / P.length);
+    const solidity = Math.min(1, bodyArea / Math.max(1, polygonArea(bodyHull)));
+    const fpx = feret(bodyHull);
     const aspect = fpx.min > 0 ? fpx.max / fpx.min : 99;
 
     // Size in plane mm via the calibration, then the equator-height correction.
-    const hullMm = convexHull(hull.map((p) => toPlane(calib, p)));
+    const hullMm = convexHull(bodyHull.map((p) => toPlane(calib, p)));
     const fm = feret(hullMm);
     const minMm = heightCorrect(fm.min, calib.camHmm), maxMm = heightCorrect(fm.max, calib.camHmm);
     const meanMm = (minMm + maxMm) / 2;
@@ -432,7 +458,7 @@ function measureBulbs(ws: Int32Array, fg: Mask, lab: Lab, calib: Calibration, wm
     out.push({
       idx: out.length, hull, bbox: [x0, y0, x1, y1], centroid: { x: cx, y: cy }, excluded, areaPx: P.length, solidity,
       minMm, maxMm, sdMm, frac, fsd: D.fsdBase / 1000,
-      shape: { double: solidity < TIER0.shape.doubleSolidity, split: solidity < TIER0.shape.splitSolidity, bottleneck: aspect > TIER0.shape.bottleneckAspect },
+      shape: { double: solidity < TIER0.shape.doubleSolidity, split: solidity < TIER0.shape.splitSolidity, bottleneck: neckFrac > TIER0.shape.bottleneckNeckFrac && aspect > TIER0.shape.bottleneckAspect },
       conf: Math.max(0.05, conf), weightG: g, weightSdG: sdG,
       labels: { x0, y0, w: bw, h: bh, data: codes },
     });
