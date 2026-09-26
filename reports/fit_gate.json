@@ -1,6 +1,6 @@
 {
   "generatedBy": "tools/fit_gate.ts",
-  "at": "2026-09-25T08:43:47.739Z",
+  "at": "2026-09-26T02:27:15.421Z",
   "config": {
     "defects": {
       "erode": 3,
@@ -38,64 +38,64 @@
       "gate": 0,
       "tpr": 0.883,
       "fpr": 0.633,
-      "healthyBulbFail": 0.944,
-      "obj": -0.694
+      "healthyBulbFail": 0.942,
+      "obj": -0.692
     },
     {
       "gate": 0.05,
       "tpr": 0.883,
       "fpr": 0.267,
-      "healthyBulbFail": 0.289,
-      "obj": 0.328
+      "healthyBulbFail": 0.292,
+      "obj": 0.324
     },
     {
       "gate": 0.1,
       "tpr": 0.883,
       "fpr": 0.233,
-      "healthyBulbFail": 0.245,
-      "obj": 0.405
+      "healthyBulbFail": 0.249,
+      "obj": 0.401
     },
     {
       "gate": 0.2,
       "tpr": 0.883,
       "fpr": 0.183,
-      "healthyBulbFail": 0.199,
-      "obj": 0.501
+      "healthyBulbFail": 0.203,
+      "obj": 0.497
     },
     {
       "gate": 0.3,
       "tpr": 0.883,
       "fpr": 0.117,
-      "healthyBulbFail": 0.152,
-      "obj": 0.614
+      "healthyBulbFail": 0.157,
+      "obj": 0.61
     },
     {
       "gate": 0.4,
       "tpr": 0.883,
       "fpr": 0.117,
-      "healthyBulbFail": 0.13,
-      "obj": 0.636
+      "healthyBulbFail": 0.135,
+      "obj": 0.631
     },
     {
       "gate": 0.5,
       "tpr": 0.883,
-      "fpr": 0.083,
-      "healthyBulbFail": 0.093,
-      "obj": 0.707
+      "fpr": 0.1,
+      "healthyBulbFail": 0.098,
+      "obj": 0.685
     },
     {
       "gate": 0.6,
       "tpr": 0.883,
-      "fpr": 0.067,
-      "healthyBulbFail": 0.087,
-      "obj": 0.73
+      "fpr": 0.083,
+      "healthyBulbFail": 0.092,
+      "obj": 0.708
     },
     {
       "gate": 0.7,
       "tpr": 0.883,
-      "fpr": 0.067,
-      "healthyBulbFail": 0.078,
-      "obj": 0.739
+      "fpr": 0.083,
+      "healthyBulbFail": 0.083,
+      "obj": 0.717
     }
   ],
   "chosenGate": 0.7,
@@ -105,7 +105,7 @@
       "tpr": 0.85,
       "fpr": 0.133,
       "healthyBulbFail": 0.101,
-      "obj": 0.615
+      "obj": 0.616
     },
     "noGate": {
       "gate": 0,

@@ -48,7 +48,7 @@ export const TIER0 = {
     rhoCap: 0.9,
     rimRho: 0.92,              // rim pixels are too foreshortened/shaded to classify
   },
-  shape: { doubleSolidity: 0.86, splitSolidity: 0.78, bottleneckAspect: 1.55 },
+  shape: { doubleSolidity: 0.86, splitSolidity: 0.78, bottleneckAspect: 1.3, bottleneckNeckFrac: 0.12 }, // neck share ASSUMED (A-SHAPE-1)
   conf: { minPx: 900 },        // bulbs smaller than this many px get low confidence
   guard: {
     minSharp: 55,              // Laplacian variance on the 480px preview (fit)

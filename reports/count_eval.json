@@ -1,6 +1,6 @@
 {
   "generatedBy": "tools/eval_count.ts",
-  "at": "2026-09-25T07:58:55.927Z",
+  "at": "2026-09-26T02:27:48.846Z",
   "question": "How many onions does the detector find, compared with a count by eye?",
   "truth": "tools/fixtures/count_truth.csv: onions visible (including ones cut by the frame edge), counted by eye by the build assistant on held-out Zenodo photos (block % 5 == 4). Not a grader study.",
   "model": {
@@ -11,10 +11,10 @@
   "clear_photos": {
     "tier0": {
       "n_photos": 18,
-      "mae": 10.89,
+      "mae": 11.17,
       "exact": 0.06,
-      "within1": 0.17,
-      "mean_error": 10
+      "within1": 0.11,
+      "mean_error": 10.28
     },
     "tier2": {
       "n_photos": 18,
@@ -27,10 +27,10 @@
   "ambiguous_piles": {
     "tier0": {
       "n_photos": 5,
-      "mae": 8.6,
+      "mae": 8.4,
       "exact": 0,
       "within1": 0,
-      "mean_error": 4.2
+      "mean_error": 4
     },
     "tier2": {
       "n_photos": 5,
@@ -59,7 +59,7 @@
       "id": "Onion07238",
       "truth": 8,
       "amb": true,
-      "t0": 19,
+      "t0": 18,
       "t2": 8
     },
     {
@@ -73,7 +73,7 @@
       "id": "Onion07866",
       "truth": 12,
       "amb": false,
-      "t0": 13,
+      "t0": 14,
       "t2": 12
     },
     {
@@ -108,21 +108,21 @@
       "id": "Onion11249",
       "truth": 10,
       "amb": false,
-      "t0": 28,
+      "t0": 30,
       "t2": 10
     },
     {
       "id": "Onion11618",
       "truth": null,
       "amb": true,
-      "t0": 29,
+      "t0": 30,
       "t2": 10
     },
     {
       "id": "Onion11874",
       "truth": 10,
       "amb": false,
-      "t0": 31,
+      "t0": 32,
       "t2": 11
     },
     {
@@ -136,7 +136,7 @@
       "id": "Onion13979",
       "truth": 11,
       "amb": false,
-      "t0": 44,
+      "t0": 45,
       "t2": 11
     },
     {
