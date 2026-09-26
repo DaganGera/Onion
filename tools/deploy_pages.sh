@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Publish apps/web/dist to the gh-pages branch and make sure GitHub Pages serves it.
-# Usage: npm run build && bash tools/deploy_pages.sh
+# Publish the landing page (site root) and the web app (./app/) to the gh-pages branch.
+# Usage: npm run build && npm -w @parakh/landing run build && bash tools/deploy_pages.sh
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 TMP="$(mktemp -d)"
@@ -10,10 +10,13 @@ git -C "$ROOT" worktree add --force --detach "$TMP" >/dev/null
 cd "$TMP"
 git checkout --orphan gh-pages-new >/dev/null 2>&1
 git rm -rfq . || true
-cp -r "$ROOT/apps/web/dist/." .
+cp -r "$ROOT/apps/landing/dist/." .
+mkdir -p app
+cp -r "$ROOT/apps/web/dist/." app/
+cp "$ROOT/tools/pages/sw.js" sw.js
 touch .nojekyll
 git add -A
-git commit -qm "Deploy Parakh web app"
+git commit -qm "Deploy SAMA landing + web app"
 git push -f origin HEAD:gh-pages
 cd "$ROOT"
 git worktree remove --force "$TMP"
