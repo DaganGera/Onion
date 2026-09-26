@@ -1,40 +1,40 @@
 {
   "generatedBy": "tools/apk_webview_test.mjs",
-  "at": "2026-09-25T08:58:18.241Z",
+  "at": "2026-09-26T02:52:02.635Z",
   "device": "Android 15 emulator (x86_64, WHPX, swiftshader GPU), system WebView",
   "ua": "{\"attached\":true,\"empty\":false,\"height\":2209,\"never_attached\":false,\"screenX\":0,\"screenY\":128,\"visible\":true,\"width\":1080}",
-  "demo_ms": 7137,
+  "demo_ms": 50474,
   "verdict": "Needs human check",
   "captures": [
     {
-      "total_ms": 2661,
-      "tier1_ms": 162,
+      "total_ms": 31828,
+      "tier1_ms": 305,
       "bulbs_with_tier1": 13,
       "bulbs": 13
     },
     {
-      "total_ms": 1148,
-      "tier1_ms": 80,
+      "total_ms": 1697,
+      "tier1_ms": 87,
       "bulbs_with_tier1": 12,
       "bulbs": 12
     },
     {
-      "total_ms": 1201,
-      "tier1_ms": 83,
+      "total_ms": 2595,
+      "tier1_ms": 165,
       "bulbs_with_tier1": 11,
       "bulbs": 11
     },
     {
-      "total_ms": 945,
-      "tier1_ms": 47,
+      "total_ms": 1173,
+      "tier1_ms": 81,
       "bulbs_with_tier1": 7,
       "bulbs": 7
     }
   ],
-  "sign_ms": 1040,
-  "stamp": "SIGNED ON DEVICE\nES256 · E80F EAD6 7647 BEB1",
-  "qr_chars": 2244,
-  "verify_ms": 137,
+  "sign_ms": 6759,
+  "stamp": "SIGNED ON DEVICE\nES256 · 0C3B 36B4 E69B BC78",
+  "qr_chars": 2268,
+  "verify_ms": 1734,
   "verify": "Receipt checks out",
   "errors": []
 }

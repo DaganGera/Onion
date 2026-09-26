@@ -1,0 +1,66 @@
+@import "tailwindcss";
+
+@theme {
+  --font-heading: "Instrument Serif", serif;
+  --font-body: "Barlow", sans-serif;
+  --color-onion: #6e1f47;
+  --color-onion-deep: #3a0f25;
+  --color-gold: #e6ae45;
+  --color-paper: #f7eee1;
+  --radius: 9999px;
+}
+
+html, body { background: #0b0507; color: #fff; overflow-x: clip; }
+body { font-family: var(--font-body); -webkit-font-smoothing: antialiased; }
+::selection { background: var(--color-gold); color: #1a0710; }
+:focus-visible { outline: 2px solid var(--color-gold); outline-offset: 3px; }
+
+/* Liquid glass (from the brief) */
+.liquid-glass {
+  background: rgba(255, 255, 255, 0.01);
+  background-blend-mode: luminosity;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border: none;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+.liquid-glass::before {
+  content: "";
+  position: absolute; inset: 0;
+  border-radius: inherit;
+  padding: 1.4px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0.15) 20%, rgba(255,255,255,0) 40%, rgba(255,255,255,0) 60%, rgba(255,255,255,0.15) 80%, rgba(255,255,255,0.45) 100%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+.liquid-glass-strong {
+  background: rgba(255, 255, 255, 0.01);
+  background-blend-mode: luminosity;
+  backdrop-filter: blur(50px);
+  -webkit-backdrop-filter: blur(50px);
+  border: none;
+  box-shadow: 4px 4px 4px rgba(0, 0, 0, 0.05), inset 0 1px 1px rgba(255, 255, 255, 0.15);
+  position: relative;
+  overflow: hidden;
+}
+.liquid-glass-strong::before {
+  content: "";
+  position: absolute; inset: 0;
+  border-radius: inherit;
+  padding: 1.4px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0.2) 20%, rgba(255,255,255,0) 40%, rgba(255,255,255,0) 60%, rgba(255,255,255,0.2) 80%, rgba(255,255,255,0.5) 100%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+.btn-hover { transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1), background-color 160ms; }
+.btn-hover:hover { transform: translateY(-1px); }
+.btn-hover:active { transform: translateY(1px); }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 1ms !important; transition-duration: 1ms !important; } }
+@keyframes slide { from { transform: translateX(-100%); } to { transform: translateX(300%); } }
+section[id] { scroll-margin-top: 72px; }
