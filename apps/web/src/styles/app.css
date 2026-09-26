@@ -11,7 +11,7 @@ body {
   -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
 }
-h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 600; font-style: normal; line-height: 1.1; margin: 0; letter-spacing: -0.01em; overflow-wrap: anywhere; min-width: 0; }
+h1, h2, h3, h4 { font-family: var(--font-display); font-stretch: 87.5%; font-weight: 640; font-style: normal; line-height: 1.1; margin: 0; letter-spacing: -0.01em; overflow-wrap: anywhere; min-width: 0; }
 h1 { font-size: var(--text-2xl); }
 h2 { font-size: var(--text-xl); }
 h3 { font-size: var(--text-lg); }
@@ -38,7 +38,7 @@ img, svg, canvas, video { display: block; max-width: 100%; }
 }
 .topbar .grow { flex: 1; min-width: 0; }
 .topbar h1 { font-size: var(--text-lg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.wordmark { display: inline-flex; align-items: baseline; gap: 6px; font: 600 1.375rem/1 var(--font-display); letter-spacing: -0.02em; text-decoration: none; }
+.wordmark { display: inline-flex; align-items: baseline; gap: 6px; font: 600 1.375rem/1 var(--font-display); letter-spacing: 0.22em; text-decoration: none; }
 .wordmark i { width: 10px; height: 10px; background: var(--color-accent); display: inline-block; transform: translateY(-1px); }
 .iconbtn {
   width: 44px; height: 44px; margin-left: -10px; display: inline-grid; place-items: center;

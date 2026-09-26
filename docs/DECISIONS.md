@@ -25,3 +25,18 @@ The team asked for no questions during the 8-hour run, so each judgement call is
 ## 20. Landing page at the site root, web app at /app/
 
 The landing (apps/landing, React + three.js + framer-motion) is served from the Pages root and the web app moves to `./app/`. The live demo runs the shipped seg.onnx through ONNX Runtime Web in the visitor's browser. WebLLM was not used: SAMA needs no language model, and the vision models already run on the device. A kill-switch `sw.js` at the root retires the service worker from when the app lived there. The APK is published as `sama.apk` on the latest release, so the landing link stays stable.
+
+## 21. Type and colour system
+
+Type: the Anek superfamily (Ek Type, OFL) replaces IBM Plex Sans with Noto fallbacks. Anek is one design for Latin and all eight Indic scripts the app ships (Devanagari, Bangla, Gujarati, Gurmukhi, Kannada, Tamil, Telugu), so a Hindi or Tamil screen keeps the same x-height, weight and rhythm as the English one. Headings use its width axis at 87.5% so long labels fit on a 360 px phone. IBM Plex Mono stays for lot IDs and numbers, because it has tabular figures and reads like a receipt. The landing page pairs Instrument Serif display (from the brief) with Anek Latin body.
+
+Colour: every hue comes from the product. The brand is red-onion skin (oklch 35% 0.115 355), the highlight is the dry golden outer scale, and the paper is a warm oat tone, which glares less than white in sunlight. Grade colours are kept apart from the brand hues: A is green, URS is amber, Reject is tomato red, Refer is slate. Each grade also carries its letter, so none relies on colour alone. The measured WCAG contrast ratios are:
+
+| Pair | Contrast |
+|---|---|
+| Body ink on paper | 16:1 |
+| Secondary text | 8:1 |
+| Every grade's text on its tint | 4.9:1 or higher |
+| URS text (darker ink) | 6.5:1 |
+
+We looked at the ui-ux-pro-max database, which suggested the generic navy-and-blue "government" palette, and rejected it because it carries no product meaning.

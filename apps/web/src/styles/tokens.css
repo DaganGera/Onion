@@ -1,7 +1,11 @@
 /* Hallmark · app · genre: editorial/utilitarian · theme: custom "red onion + receipt"
  * vibe: "red onion skin, golden dry tunic, government receipt"
  * paper oklch(96.5% 0.011 75) · brand oklch(35% 0.115 355) red-onion · gold oklch(78% 0.13 75) dry skin
- * display: IBM Plex Sans Condensed · body: IBM Plex Sans · data: IBM Plex Mono
+ * type: Anek superfamily (Ek Type, OFL) for Latin + all 8 Indic scripts, one design so Hindi, Tamil,
+ *   Bangla etc. share x-height and rhythm with English; display = Anek at 87.5% width, 640 weight.
+ *   data: IBM Plex Mono, tabular figures, the receipt voice.
+ * palette rationale: brand = Nashik red-onion skin, gold = dry outer scale, paper = warm oat (less glare
+ *   outdoors than white). Grade colours sit away from brand hues and always carry a letter.
  * axes: light / grotesk-sans (condensed display) / warm red-violet brand
  */
 :root {
@@ -48,8 +52,8 @@
   --color-ok: oklch(78% 0.15 150);
   --color-wait: oklch(82% 0.13 80);
 
-  --font-display: 'IBM Plex Sans Condensed', 'Noto Sans Devanagari', 'Noto Sans Tamil', 'Noto Sans Telugu', 'Noto Sans Kannada', 'Noto Sans Gujarati', 'Noto Sans Bengali', 'Noto Sans Gurmukhi', system-ui, sans-serif;
-  --font-body: 'IBM Plex Sans', 'Noto Sans Devanagari', 'Noto Sans Tamil', 'Noto Sans Telugu', 'Noto Sans Kannada', 'Noto Sans Gujarati', 'Noto Sans Bengali', 'Noto Sans Gurmukhi', system-ui, sans-serif;
+  --font-display: 'Anek Latin Variable', 'Anek Devanagari Variable', 'Anek Bangla Variable', 'Anek Gujarati Variable', 'Anek Gurmukhi Variable', 'Anek Kannada Variable', 'Anek Tamil Variable', 'Anek Telugu Variable', system-ui, sans-serif;
+  --font-body: 'Anek Latin Variable', 'Anek Devanagari Variable', 'Anek Bangla Variable', 'Anek Gujarati Variable', 'Anek Gurmukhi Variable', 'Anek Kannada Variable', 'Anek Tamil Variable', 'Anek Telugu Variable', system-ui, sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
 
   --text-xs: 0.8125rem;

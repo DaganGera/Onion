@@ -8,7 +8,7 @@
 .topbar.root { min-height: 68px; border-bottom: 0; background: var(--color-paper); }
 .root-title { font: 600 1.75rem/1.1 var(--font-display); letter-spacing: -0.02em; }
 .root-sub { font-size: var(--text-xs); color: var(--color-muted); margin-top: 2px; }
-.wordmark { font-size: 1.6rem; }
+.wordmark { font-size: 1.3rem; align-items: center; }
 .wordmark i { width: 12px; height: 12px; }
 
 /* bottom tab bar */

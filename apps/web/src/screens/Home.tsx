@@ -37,7 +37,7 @@ export function Home() {
     <>
       <header class="homebanner">
         <div class="hb-top">
-          <span class="wordmark light"><img src="./icon.svg" alt="" width="30" height="30" />sama</span>
+          <span class="wordmark light"><img src="./icon.svg" alt="" width="30" height="30" />SAMA</span>
           <OnlineChip />
         </div>
         <section class="hello">

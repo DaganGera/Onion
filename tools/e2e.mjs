@@ -27,7 +27,8 @@ const page = await ctx.newPage();
 const errors = [];
 page.on('pageerror', (e) => errors.push(String(e)));
 page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
-const snap = (n) => page.screenshot({ path: path.join(shots, `${n}.png`), fullPage: false });
+// Wait for the startup screen to leave before each screenshot.
+const snap = async (n) => { await page.waitForSelector('#splash', { state: 'detached', timeout: 15000 }).catch(() => {}); return page.screenshot({ path: path.join(shots, `${n}.png`), fullPage: false }); };
 
 try {
   await page.goto(url);
