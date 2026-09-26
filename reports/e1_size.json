@@ -1,0 +1,6 @@
+{
+  "generatedBy": "tools/eval_field.ts",
+  "at": "2026-09-24T18:47:40.181Z",
+  "status": "awaiting field data",
+  "needs": "field/size_truth.csv + evidence files (HUMAN_TASKS T4)"
+}

@@ -1,0 +1,92 @@
+/* Hallmark · app · genre: editorial/utilitarian · theme: custom "red onion + receipt"
+ * vibe: "red onion skin, golden dry tunic, government receipt"
+ * paper oklch(96.5% 0.011 75) · brand oklch(35% 0.115 355) red-onion · gold oklch(78% 0.13 75) dry skin
+ * type: Anek superfamily (Ek Type, OFL) for Latin + all 8 Indic scripts, one design so Hindi, Tamil,
+ *   Bangla etc. share x-height and rhythm with English; display = Anek at 87.5% width, 640 weight.
+ *   data: IBM Plex Mono, tabular figures, the receipt voice.
+ * palette rationale: brand = Nashik red-onion skin, gold = dry outer scale, paper = warm oat (less glare
+ *   outdoors than white). Grade colours sit away from brand hues and always carry a letter.
+ * axes: light / grotesk-sans (condensed display) / warm red-violet brand
+ */
+:root {
+  /* paper & ink, tinted toward warm oat (hue 75) */
+  --color-paper: oklch(96.5% 0.011 75);
+  --color-paper-2: oklch(93.6% 0.014 75);
+  --color-paper-3: oklch(90.5% 0.016 72);
+  --color-rule: oklch(84% 0.014 70);
+  --color-rule-strong: oklch(70% 0.014 60);
+  --color-neutral: oklch(53% 0.013 60);
+  --color-muted: oklch(41% 0.013 50);
+  --color-ink: oklch(21% 0.018 40);
+  --color-ink-2: oklch(29% 0.018 40);
+  --color-on-ink: oklch(96.5% 0.011 75);
+
+  /* brand: red-onion skin; highlight: dry golden onion skin */
+  --color-brand: oklch(35% 0.115 355);
+  --color-brand-2: oklch(28% 0.09 355);
+  --color-brand-ink: oklch(96% 0.02 60);
+  --color-brand-mute: oklch(82% 0.04 350);
+  --color-gold: oklch(82% 0.13 85);
+  --color-gold-ink: oklch(30% 0.06 60);
+  --color-gold-tint: oklch(94% 0.045 85);
+  --color-leaf-tint: oklch(93.5% 0.04 150);
+  --color-accent: oklch(42% 0.14 355);
+  --color-accent-tint: oklch(94% 0.03 355);
+  --color-focus: oklch(52% 0.17 355);
+
+  /* grade buckets: colour + letter, never colour alone */
+  --color-a: oklch(49% 0.12 150);
+  --color-a-tint: oklch(93.5% 0.04 150);
+  --color-u: oklch(64% 0.15 55);
+  --color-u-ink: oklch(45% 0.12 50);
+  --color-u-tint: oklch(94% 0.04 60);
+  --color-r: oklch(50% 0.17 30);
+  --color-r-tint: oklch(93.5% 0.035 30);
+  --color-q: oklch(50% 0.03 240);
+  --color-q-tint: oklch(93.5% 0.012 240);
+
+  /* camera surface */
+  --color-cam: oklch(16% 0.01 60);
+  --color-cam-2: oklch(22% 0.012 60);
+  --color-cam-ink: oklch(94% 0.008 75);
+  --color-ok: oklch(78% 0.15 150);
+  --color-wait: oklch(82% 0.13 80);
+
+  --font-display: 'Anek Latin Variable', 'Anek Devanagari Variable', 'Anek Bangla Variable', 'Anek Gujarati Variable', 'Anek Gurmukhi Variable', 'Anek Kannada Variable', 'Anek Tamil Variable', 'Anek Telugu Variable', system-ui, sans-serif;
+  --font-body: 'Anek Latin Variable', 'Anek Devanagari Variable', 'Anek Bangla Variable', 'Anek Gujarati Variable', 'Anek Gurmukhi Variable', 'Anek Kannada Variable', 'Anek Tamil Variable', 'Anek Telugu Variable', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+
+  --text-xs: 0.8125rem;
+  --text-sm: 0.9375rem;
+  --text-md: 1.0625rem;
+  --text-lg: 1.25rem;
+  --text-xl: 1.625rem;
+  --text-2xl: 2.25rem;
+  --text-3xl: 3.25rem;
+
+  --space-3xs: 2px;
+  --space-2xs: 4px;
+  --space-xs: 8px;
+  --space-sm: 12px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+  --space-3xl: 64px;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --rule-hair: 1px solid var(--color-rule);
+  --rule-strong: 1px solid var(--color-rule-strong);
+
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in: cubic-bezier(0.55, 0, 1, 0.45);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-fast: 120ms;
+  --dur-med: 220ms;
+  --dur-slow: 360ms;
+
+  --tap: 52px;
+  --shell: 560px;
+}

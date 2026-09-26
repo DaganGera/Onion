@@ -1,0 +1,3467 @@
+{
+  "generatedBy": "tools/eval_zenodo.ts",
+  "at": "2026-09-25T06:21:32.679Z",
+  "dataset": "Zenodo 10.5281/zenodo.20254934 (CC-BY 4.0), bulb images, real photos from Pune markets",
+  "model": "tier0-lab@1.0.0",
+  "modelHash": "68697eb88a47939db285e45a3a912cc634004a0b89d6ca64cb66097cd8089319",
+  "question": "Image-level: does max(rot+blackening share) over detected bulbs separate authors' \"unhealthy\" from \"healthy\" photos?",
+  "caveats": [
+    "Labels are per image, from the dataset authors; \"unhealthy\" is not the same as a procurement Reject.",
+    "No size truth and no grader labels: this says nothing about Grade A / URS accuracy.",
+    "Single-camera dataset (Motorola Edge 50 Ultra), one city; field photos will differ."
+  ],
+  "threshold_from_tune": 0.133,
+  "n_tune": 160,
+  "n_holdout": 320,
+  "holdout": {
+    "all": {
+      "auc": 0.765,
+      "n_unhealthy": 160,
+      "n_healthy": 160,
+      "sensitivity": 0.681,
+      "sensitivity_ci95": [
+        0.606,
+        0.748
+      ],
+      "specificity": 0.7,
+      "specificity_ci95": [
+        0.625,
+        0.766
+      ],
+      "accuracy": 0.691
+    },
+    "red": {
+      "auc": 0.798,
+      "n_unhealthy": 80,
+      "n_healthy": 80,
+      "sensitivity": 0.788,
+      "sensitivity_ci95": [
+        0.686,
+        0.863
+      ],
+      "specificity": 0.663,
+      "specificity_ci95": [
+        0.554,
+        0.757
+      ],
+      "accuracy": 0.725
+    },
+    "white": {
+      "auc": 0.743,
+      "n_unhealthy": 80,
+      "n_healthy": 80,
+      "sensitivity": 0.575,
+      "sensitivity_ci95": [
+        0.466,
+        0.677
+      ],
+      "specificity": 0.738,
+      "specificity_ci95": [
+        0.632,
+        0.821
+      ],
+      "accuracy": 0.656
+    },
+    "single": {
+      "auc": 0.711,
+      "n_unhealthy": 80,
+      "n_healthy": 80,
+      "sensitivity": 0.513,
+      "sensitivity_ci95": [
+        0.405,
+        0.619
+      ],
+      "specificity": 0.788,
+      "specificity_ci95": [
+        0.686,
+        0.863
+      ],
+      "accuracy": 0.65
+    },
+    "multiple": {
+      "auc": 0.834,
+      "n_unhealthy": 80,
+      "n_healthy": 80,
+      "sensitivity": 0.85,
+      "sensitivity_ci95": [
+        0.756,
+        0.912
+      ],
+      "specificity": 0.613,
+      "specificity_ci95": [
+        0.503,
+        0.712
+      ],
+      "accuracy": 0.731
+    }
+  },
+  "holdout_ids": [
+    {
+      "id": 7102,
+      "label": 0,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.1548
+    },
+    {
+      "id": 7107,
+      "label": 0,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.0079
+    },
+    {
+      "id": 7113,
+      "label": 0,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.311
+    },
+    {
+      "id": 7118,
+      "label": 0,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.3981
+    },
+    {
+      "id": 7124,
+      "label": 0,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.1375
+    },
+    {
+      "id": 7229,
+      "label": 0,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0
+    },
+    {
+      "id": 7235,
+      "label": 0,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.1757
+    },
+    {
+      "id": 7240,
+      "label": 0,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.147
+    },
+    {
+      "id": 7246,
+      "label": 0,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.0607
+    },
+    {
+      "id": 7351,
+      "label": 0,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.3939
+    },
+    {
+      "id": 7357,
+      "label": 0,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.4212
+    },
+    {
+      "id": 7363,
+      "label": 0,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.0115
+    },
+    {
+      "id": 7368,
+      "label": 0,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.1364
+    },
+    {
+      "id": 7374,
+      "label": 0,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.3425
+    },
+    {
+      "id": 7479,
+      "label": 0,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0
+    },
+    {
+      "id": 7485,
+      "label": 0,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.0472
+    },
+    {
+      "id": 7490,
+      "label": 0,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.0194
+    },
+    {
+      "id": 7496,
+      "label": 0,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.0239
+    },
+    {
+      "id": 7601,
+      "label": 0,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.0164
+    },
+    {
+      "id": 7607,
+      "label": 0,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.0994
+    },
+    {
+      "id": 7613,
+      "label": 0,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.155
+    },
+    {
+      "id": 7618,
+      "label": 0,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.0967
+    },
+    {
+      "id": 7624,
+      "label": 0,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.272
+    },
+    {
+      "id": 7729,
+      "label": 0,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.0611
+    },
+    {
+      "id": 7735,
+      "label": 0,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0
+    },
+    {
+      "id": 7740,
+      "label": 0,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.0217
+    },
+    {
+      "id": 7747,
+      "label": 0,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.1612
+    },
+    {
+      "id": 7852,
+      "label": 0,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.1746
+    },
+    {
+      "id": 7858,
+      "label": 0,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.0938
+    },
+    {
+      "id": 7863,
+      "label": 0,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.1115
+    },
+    {
+      "id": 7869,
+      "label": 0,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.0781
+    },
+    {
+      "id": 7975,
+      "label": 0,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.0374
+    },
+    {
+      "id": 7980,
+      "label": 0,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.1785
+    },
+    {
+      "id": 7986,
+      "label": 0,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.1356
+    },
+    {
+      "id": 7991,
+      "label": 0,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.086
+    },
+    {
+      "id": 7997,
+      "label": 0,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.1777
+    },
+    {
+      "id": 8102,
+      "label": 0,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.0186
+    },
+    {
+      "id": 8108,
+      "label": 0,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0
+    },
+    {
+      "id": 8113,
+      "label": 0,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.1516
+    },
+    {
+      "id": 8119,
+      "label": 0,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.1264
+    },
+    {
+      "id": 4100,
+      "label": 0,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.3198
+    },
+    {
+      "id": 4114,
+      "label": 0,
+      "variety": "red",
+      "qty": "single",
+      "score": 0
+    },
+    {
+      "id": 4229,
+      "label": 0,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.4641
+    },
+    {
+      "id": 4244,
+      "label": 0,
+      "variety": "red",
+      "qty": "single",
+      "score": 0
+    },
+    {
+      "id": 4359,
+      "label": 0,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.1461
+    },
+    {
+      "id": 4374,
+      "label": 0,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.0239
+    },
+    {
+      "id": 4489,
+      "label": 0,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.1241
+    },
+    {
+      "id": 4604,
+      "label": 0,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.0127
+    },
+    {
+      "id": 4619,
+      "label": 0,
+      "variety": "red",
+      "qty": "single",
+      "score": 0
+    },
+    {
+      "id": 4734,
+      "label": 0,
+      "variety": "red",
+      "qty": "single",
+      "score": 0
+    },
+    {
+      "id": 4850,
+      "label": 0,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.0904
+    },
+    {
+      "id": 4865,
+      "label": 0,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.0647
+    },
+    {
+      "id": 4980,
+      "label": 0,
+      "variety": "red",
+      "qty": "single",
+      "score": 0
+    },
+    {
+      "id": 4995,
+      "label": 0,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.0313
+    },
+    {
+      "id": 5110,
+      "label": 0,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.0522
+    },
+    {
+      "id": 5225,
+      "label": 0,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.0391
+    },
+    {
+      "id": 5240,
+      "label": 0,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.0408
+    },
+    {
+      "id": 5355,
+      "label": 0,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.0446
+    },
+    {
+      "id": 5370,
+      "label": 0,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.0149
+    },
+    {
+      "id": 5485,
+      "label": 0,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.1228
+    },
+    {
+      "id": 5600,
+      "label": 0,
+      "variety": "red",
+      "qty": "single",
+      "score": 0
+    },
+    {
+      "id": 5615,
+      "label": 0,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.02
+    },
+    {
+      "id": 5730,
+      "label": 0,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.0322
+    },
+    {
+      "id": 5745,
+      "label": 0,
+      "variety": "red",
+      "qty": "single",
+      "score": 0
+    },
+    {
+      "id": 5860,
+      "label": 0,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.2598
+    },
+    {
+      "id": 5975,
+      "label": 0,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.1441
+    },
+    {
+      "id": 5990,
+      "label": 0,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.0514
+    },
+    {
+      "id": 6105,
+      "label": 0,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.1163
+    },
+    {
+      "id": 6120,
+      "label": 0,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.028
+    },
+    {
+      "id": 6235,
+      "label": 0,
+      "variety": "red",
+      "qty": "single",
+      "score": 0
+    },
+    {
+      "id": 6350,
+      "label": 0,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.012
+    },
+    {
+      "id": 6365,
+      "label": 0,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.21
+    },
+    {
+      "id": 6480,
+      "label": 0,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.1688
+    },
+    {
+      "id": 6495,
+      "label": 0,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.1285
+    },
+    {
+      "id": 6610,
+      "label": 0,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.0186
+    },
+    {
+      "id": 6725,
+      "label": 0,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.1619
+    },
+    {
+      "id": 6740,
+      "label": 0,
+      "variety": "red",
+      "qty": "single",
+      "score": 0
+    },
+    {
+      "id": 6855,
+      "label": 0,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.9895
+    },
+    {
+      "id": 6870,
+      "label": 0,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.1259
+    },
+    {
+      "id": 6985,
+      "label": 0,
+      "variety": "red",
+      "qty": "single",
+      "score": 0
+    },
+    {
+      "id": 11225,
+      "label": 0,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.0116
+    },
+    {
+      "id": 11230,
+      "label": 0,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.2001
+    },
+    {
+      "id": 11236,
+      "label": 0,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0
+    },
+    {
+      "id": 11241,
+      "label": 0,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.8406
+    },
+    {
+      "id": 11247,
+      "label": 0,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.1349
+    },
+    {
+      "id": 11353,
+      "label": 0,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.2867
+    },
+    {
+      "id": 11358,
+      "label": 0,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.262
+    },
+    {
+      "id": 11364,
+      "label": 0,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0
+    },
+    {
+      "id": 11369,
+      "label": 0,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.4043
+    },
+    {
+      "id": 11475,
+      "label": 0,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.0798
+    },
+    {
+      "id": 11481,
+      "label": 0,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.0626
+    },
+    {
+      "id": 11486,
+      "label": 0,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0
+    },
+    {
+      "id": 11492,
+      "label": 0,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.1228
+    },
+    {
+      "id": 11497,
+      "label": 0,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.0175
+    },
+    {
+      "id": 11603,
+      "label": 0,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.0738
+    },
+    {
+      "id": 11609,
+      "label": 0,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0
+    },
+    {
+      "id": 11614,
+      "label": 0,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.2508
+    },
+    {
+      "id": 11620,
+      "label": 0,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.0182
+    },
+    {
+      "id": 11725,
+      "label": 0,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.1691
+    },
+    {
+      "id": 11731,
+      "label": 0,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.0856
+    },
+    {
+      "id": 11737,
+      "label": 0,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.1267
+    },
+    {
+      "id": 11742,
+      "label": 0,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.0074
+    },
+    {
+      "id": 11748,
+      "label": 0,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0
+    },
+    {
+      "id": 11854,
+      "label": 0,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0
+    },
+    {
+      "id": 11860,
+      "label": 0,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.0942
+    },
+    {
+      "id": 11866,
+      "label": 0,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0
+    },
+    {
+      "id": 11871,
+      "label": 0,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.0597
+    },
+    {
+      "id": 11977,
+      "label": 0,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.161
+    },
+    {
+      "id": 11982,
+      "label": 0,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0
+    },
+    {
+      "id": 11988,
+      "label": 0,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.0449
+    },
+    {
+      "id": 11994,
+      "label": 0,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0
+    },
+    {
+      "id": 11999,
+      "label": 0,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0
+    },
+    {
+      "id": 12105,
+      "label": 0,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.2432
+    },
+    {
+      "id": 12110,
+      "label": 0,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.0058
+    },
+    {
+      "id": 12116,
+      "label": 0,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0
+    },
+    {
+      "id": 12122,
+      "label": 0,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.1584
+    },
+    {
+      "id": 12227,
+      "label": 0,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0
+    },
+    {
+      "id": 12233,
+      "label": 0,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.1481
+    },
+    {
+      "id": 12238,
+      "label": 0,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.1053
+    },
+    {
+      "id": 12244,
+      "label": 0,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.1505
+    },
+    {
+      "id": 8225,
+      "label": 0,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.145
+    },
+    {
+      "id": 8240,
+      "label": 0,
+      "variety": "white",
+      "qty": "single",
+      "score": 0
+    },
+    {
+      "id": 8355,
+      "label": 0,
+      "variety": "white",
+      "qty": "single",
+      "score": 0
+    },
+    {
+      "id": 8370,
+      "label": 0,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.0149
+    },
+    {
+      "id": 8485,
+      "label": 0,
+      "variety": "white",
+      "qty": "single",
+      "score": 0
+    },
+    {
+      "id": 8600,
+      "label": 0,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.2194
+    },
+    {
+      "id": 8615,
+      "label": 0,
+      "variety": "white",
+      "qty": "single",
+      "score": 0
+    },
+    {
+      "id": 8730,
+      "label": 0,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.0332
+    },
+    {
+      "id": 8745,
+      "label": 0,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.0831
+    },
+    {
+      "id": 8860,
+      "label": 0,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.1097
+    },
+    {
+      "id": 8975,
+      "label": 0,
+      "variety": "white",
+      "qty": "single",
+      "score": 0
+    },
+    {
+      "id": 8990,
+      "label": 0,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.1644
+    },
+    {
+      "id": 9105,
+      "label": 0,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.0199
+    },
+    {
+      "id": 9120,
+      "label": 0,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.051
+    },
+    {
+      "id": 9235,
+      "label": 0,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.0392
+    },
+    {
+      "id": 9350,
+      "label": 0,
+      "variety": "white",
+      "qty": "single",
+      "score": 0
+    },
+    {
+      "id": 9365,
+      "label": 0,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.2329
+    },
+    {
+      "id": 9480,
+      "label": 0,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.1307
+    },
+    {
+      "id": 9495,
+      "label": 0,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.1524
+    },
+    {
+      "id": 9610,
+      "label": 0,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.1797
+    },
+    {
+      "id": 9725,
+      "label": 0,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.0313
+    },
+    {
+      "id": 9740,
+      "label": 0,
+      "variety": "white",
+      "qty": "single",
+      "score": 0
+    },
+    {
+      "id": 9855,
+      "label": 0,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.0678
+    },
+    {
+      "id": 9870,
+      "label": 0,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.1503
+    },
+    {
+      "id": 9985,
+      "label": 0,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.0508
+    },
+    {
+      "id": 10100,
+      "label": 0,
+      "variety": "white",
+      "qty": "single",
+      "score": 0
+    },
+    {
+      "id": 10115,
+      "label": 0,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.0777
+    },
+    {
+      "id": 10230,
+      "label": 0,
+      "variety": "white",
+      "qty": "single",
+      "score": 0
+    },
+    {
+      "id": 10245,
+      "label": 0,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.0285
+    },
+    {
+      "id": 10360,
+      "label": 0,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.0122
+    },
+    {
+      "id": 10475,
+      "label": 0,
+      "variety": "white",
+      "qty": "single",
+      "score": 0
+    },
+    {
+      "id": 10490,
+      "label": 0,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.073
+    },
+    {
+      "id": 10605,
+      "label": 0,
+      "variety": "white",
+      "qty": "single",
+      "score": 0
+    },
+    {
+      "id": 10620,
+      "label": 0,
+      "variety": "white",
+      "qty": "single",
+      "score": 0
+    },
+    {
+      "id": 10735,
+      "label": 0,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.167
+    },
+    {
+      "id": 10850,
+      "label": 0,
+      "variety": "white",
+      "qty": "single",
+      "score": 0
+    },
+    {
+      "id": 10865,
+      "label": 0,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.0558
+    },
+    {
+      "id": 10980,
+      "label": 0,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.0578
+    },
+    {
+      "id": 10995,
+      "label": 0,
+      "variety": "white",
+      "qty": "single",
+      "score": 0
+    },
+    {
+      "id": 11110,
+      "label": 0,
+      "variety": "white",
+      "qty": "single",
+      "score": 0
+    },
+    {
+      "id": 13350,
+      "label": 1,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.1009
+    },
+    {
+      "id": 13355,
+      "label": 1,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.4224
+    },
+    {
+      "id": 13360,
+      "label": 1,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.2253
+    },
+    {
+      "id": 13365,
+      "label": 1,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.2014
+    },
+    {
+      "id": 13370,
+      "label": 1,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.6968
+    },
+    {
+      "id": 13475,
+      "label": 1,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.5186
+    },
+    {
+      "id": 13480,
+      "label": 1,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.4207
+    },
+    {
+      "id": 13485,
+      "label": 1,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.4105
+    },
+    {
+      "id": 13490,
+      "label": 1,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.2091
+    },
+    {
+      "id": 13495,
+      "label": 1,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.6251
+    },
+    {
+      "id": 13600,
+      "label": 1,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.22
+    },
+    {
+      "id": 13605,
+      "label": 1,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.2053
+    },
+    {
+      "id": 13610,
+      "label": 1,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.2199
+    },
+    {
+      "id": 13615,
+      "label": 1,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.0379
+    },
+    {
+      "id": 13620,
+      "label": 1,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.341
+    },
+    {
+      "id": 13725,
+      "label": 1,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.4751
+    },
+    {
+      "id": 13730,
+      "label": 1,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.653
+    },
+    {
+      "id": 13735,
+      "label": 1,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.1886
+    },
+    {
+      "id": 13740,
+      "label": 1,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.2718
+    },
+    {
+      "id": 13745,
+      "label": 1,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.3987
+    },
+    {
+      "id": 13850,
+      "label": 1,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.563
+    },
+    {
+      "id": 13855,
+      "label": 1,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.3306
+    },
+    {
+      "id": 13860,
+      "label": 1,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.2911
+    },
+    {
+      "id": 13865,
+      "label": 1,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.1448
+    },
+    {
+      "id": 13870,
+      "label": 1,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.3802
+    },
+    {
+      "id": 13975,
+      "label": 1,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.377
+    },
+    {
+      "id": 13980,
+      "label": 1,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.4605
+    },
+    {
+      "id": 13985,
+      "label": 1,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.1298
+    },
+    {
+      "id": 13990,
+      "label": 1,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.27
+    },
+    {
+      "id": 13995,
+      "label": 1,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.1424
+    },
+    {
+      "id": 14100,
+      "label": 1,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.2137
+    },
+    {
+      "id": 14105,
+      "label": 1,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.1415
+    },
+    {
+      "id": 14110,
+      "label": 1,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.1719
+    },
+    {
+      "id": 14115,
+      "label": 1,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.2506
+    },
+    {
+      "id": 14120,
+      "label": 1,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.292
+    },
+    {
+      "id": 14225,
+      "label": 1,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.1976
+    },
+    {
+      "id": 14230,
+      "label": 1,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.6195
+    },
+    {
+      "id": 14235,
+      "label": 1,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.1911
+    },
+    {
+      "id": 14240,
+      "label": 1,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.8892
+    },
+    {
+      "id": 14245,
+      "label": 1,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.8944
+    },
+    {
+      "id": 12350,
+      "label": 1,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.2044
+    },
+    {
+      "id": 12355,
+      "label": 1,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.093
+    },
+    {
+      "id": 12360,
+      "label": 1,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.135
+    },
+    {
+      "id": 12365,
+      "label": 1,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.091
+    },
+    {
+      "id": 12370,
+      "label": 1,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.5481
+    },
+    {
+      "id": 12475,
+      "label": 1,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.4203
+    },
+    {
+      "id": 12480,
+      "label": 1,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.49
+    },
+    {
+      "id": 12485,
+      "label": 1,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.1562
+    },
+    {
+      "id": 12490,
+      "label": 1,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.0988
+    },
+    {
+      "id": 12495,
+      "label": 1,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.0471
+    },
+    {
+      "id": 12600,
+      "label": 1,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.6943
+    },
+    {
+      "id": 12605,
+      "label": 1,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.1602
+    },
+    {
+      "id": 12610,
+      "label": 1,
+      "variety": "red",
+      "qty": "single",
+      "score": 0
+    },
+    {
+      "id": 12615,
+      "label": 1,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.2932
+    },
+    {
+      "id": 12620,
+      "label": 1,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.1856
+    },
+    {
+      "id": 12725,
+      "label": 1,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.7944
+    },
+    {
+      "id": 12730,
+      "label": 1,
+      "variety": "red",
+      "qty": "single",
+      "score": 0
+    },
+    {
+      "id": 12735,
+      "label": 1,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.2055
+    },
+    {
+      "id": 12740,
+      "label": 1,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.7646
+    },
+    {
+      "id": 12745,
+      "label": 1,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.3714
+    },
+    {
+      "id": 12850,
+      "label": 1,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.4842
+    },
+    {
+      "id": 12855,
+      "label": 1,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.1138
+    },
+    {
+      "id": 12860,
+      "label": 1,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.0719
+    },
+    {
+      "id": 12865,
+      "label": 1,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.1164
+    },
+    {
+      "id": 12870,
+      "label": 1,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.1511
+    },
+    {
+      "id": 12975,
+      "label": 1,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.1834
+    },
+    {
+      "id": 12980,
+      "label": 1,
+      "variety": "red",
+      "qty": "single",
+      "score": 0
+    },
+    {
+      "id": 12985,
+      "label": 1,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.2296
+    },
+    {
+      "id": 12990,
+      "label": 1,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.0593
+    },
+    {
+      "id": 12995,
+      "label": 1,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.0595
+    },
+    {
+      "id": 13100,
+      "label": 1,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.1918
+    },
+    {
+      "id": 13105,
+      "label": 1,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.2066
+    },
+    {
+      "id": 13110,
+      "label": 1,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.1524
+    },
+    {
+      "id": 13115,
+      "label": 1,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.1715
+    },
+    {
+      "id": 13120,
+      "label": 1,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.5355
+    },
+    {
+      "id": 13225,
+      "label": 1,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.0253
+    },
+    {
+      "id": 13230,
+      "label": 1,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.1101
+    },
+    {
+      "id": 13235,
+      "label": 1,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.2194
+    },
+    {
+      "id": 13240,
+      "label": 1,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.2413
+    },
+    {
+      "id": 13245,
+      "label": 1,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.2401
+    },
+    {
+      "id": 15350,
+      "label": 1,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.1617
+    },
+    {
+      "id": 15354,
+      "label": 1,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.2893
+    },
+    {
+      "id": 15359,
+      "label": 1,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.4086
+    },
+    {
+      "id": 15364,
+      "label": 1,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.2974
+    },
+    {
+      "id": 15369,
+      "label": 1,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.4675
+    },
+    {
+      "id": 15374,
+      "label": 1,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.4179
+    },
+    {
+      "id": 15479,
+      "label": 1,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.2465
+    },
+    {
+      "id": 15484,
+      "label": 1,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.2484
+    },
+    {
+      "id": 15489,
+      "label": 1,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.306
+    },
+    {
+      "id": 15494,
+      "label": 1,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.0421
+    },
+    {
+      "id": 15499,
+      "label": 1,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0
+    },
+    {
+      "id": 15604,
+      "label": 1,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.2393
+    },
+    {
+      "id": 15609,
+      "label": 1,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.2404
+    },
+    {
+      "id": 15614,
+      "label": 1,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.2731
+    },
+    {
+      "id": 15619,
+      "label": 1,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.7251
+    },
+    {
+      "id": 15624,
+      "label": 1,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.871
+    },
+    {
+      "id": 15729,
+      "label": 1,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.1275
+    },
+    {
+      "id": 15734,
+      "label": 1,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0
+    },
+    {
+      "id": 15739,
+      "label": 1,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.2219
+    },
+    {
+      "id": 15744,
+      "label": 1,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.2883
+    },
+    {
+      "id": 15749,
+      "label": 1,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.2435
+    },
+    {
+      "id": 15854,
+      "label": 1,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.0458
+    },
+    {
+      "id": 15859,
+      "label": 1,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.5099
+    },
+    {
+      "id": 15864,
+      "label": 1,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.9877
+    },
+    {
+      "id": 15869,
+      "label": 1,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.3224
+    },
+    {
+      "id": 15874,
+      "label": 1,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.2712
+    },
+    {
+      "id": 15979,
+      "label": 1,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 1
+    },
+    {
+      "id": 15984,
+      "label": 1,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.324
+    },
+    {
+      "id": 15989,
+      "label": 1,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.096
+    },
+    {
+      "id": 15995,
+      "label": 1,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.2457
+    },
+    {
+      "id": 16100,
+      "label": 1,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.0213
+    },
+    {
+      "id": 16105,
+      "label": 1,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.2408
+    },
+    {
+      "id": 16110,
+      "label": 1,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.6701
+    },
+    {
+      "id": 16115,
+      "label": 1,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.2557
+    },
+    {
+      "id": 16120,
+      "label": 1,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 1
+    },
+    {
+      "id": 16225,
+      "label": 1,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.5792
+    },
+    {
+      "id": 16230,
+      "label": 1,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.9605
+    },
+    {
+      "id": 16235,
+      "label": 1,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.0965
+    },
+    {
+      "id": 16240,
+      "label": 1,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.3839
+    },
+    {
+      "id": 16245,
+      "label": 1,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.0781
+    },
+    {
+      "id": 14350,
+      "label": 1,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.1265
+    },
+    {
+      "id": 14355,
+      "label": 1,
+      "variety": "white",
+      "qty": "single",
+      "score": 0
+    },
+    {
+      "id": 14360,
+      "label": 1,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.0986
+    },
+    {
+      "id": 14365,
+      "label": 1,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.0461
+    },
+    {
+      "id": 14370,
+      "label": 1,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.0895
+    },
+    {
+      "id": 14475,
+      "label": 1,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.0187
+    },
+    {
+      "id": 14480,
+      "label": 1,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.4505
+    },
+    {
+      "id": 14485,
+      "label": 1,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.0049
+    },
+    {
+      "id": 14490,
+      "label": 1,
+      "variety": "white",
+      "qty": "single",
+      "score": 0
+    },
+    {
+      "id": 14495,
+      "label": 1,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.8376
+    },
+    {
+      "id": 14600,
+      "label": 1,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.1868
+    },
+    {
+      "id": 14605,
+      "label": 1,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.0876
+    },
+    {
+      "id": 14610,
+      "label": 1,
+      "variety": "white",
+      "qty": "single",
+      "score": 0
+    },
+    {
+      "id": 14615,
+      "label": 1,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.1817
+    },
+    {
+      "id": 14620,
+      "label": 1,
+      "variety": "white",
+      "qty": "single",
+      "score": 0
+    },
+    {
+      "id": 14725,
+      "label": 1,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.1444
+    },
+    {
+      "id": 14730,
+      "label": 1,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.2959
+    },
+    {
+      "id": 14735,
+      "label": 1,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.0337
+    },
+    {
+      "id": 14740,
+      "label": 1,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.1231
+    },
+    {
+      "id": 14745,
+      "label": 1,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.0159
+    },
+    {
+      "id": 14850,
+      "label": 1,
+      "variety": "white",
+      "qty": "single",
+      "score": 0
+    },
+    {
+      "id": 14855,
+      "label": 1,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.0284
+    },
+    {
+      "id": 14860,
+      "label": 1,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.1305
+    },
+    {
+      "id": 14865,
+      "label": 1,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.1081
+    },
+    {
+      "id": 14870,
+      "label": 1,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.2024
+    },
+    {
+      "id": 14975,
+      "label": 1,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.0287
+    },
+    {
+      "id": 14980,
+      "label": 1,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.2849
+    },
+    {
+      "id": 14985,
+      "label": 1,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.0323
+    },
+    {
+      "id": 14990,
+      "label": 1,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.2788
+    },
+    {
+      "id": 14995,
+      "label": 1,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.4039
+    },
+    {
+      "id": 15100,
+      "label": 1,
+      "variety": "white",
+      "qty": "single",
+      "score": 0
+    },
+    {
+      "id": 15105,
+      "label": 1,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.3034
+    },
+    {
+      "id": 15110,
+      "label": 1,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.7836
+    },
+    {
+      "id": 15115,
+      "label": 1,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.0119
+    },
+    {
+      "id": 15120,
+      "label": 1,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.2836
+    },
+    {
+      "id": 15225,
+      "label": 1,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.09
+    },
+    {
+      "id": 15230,
+      "label": 1,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.0098
+    },
+    {
+      "id": 15235,
+      "label": 1,
+      "variety": "white",
+      "qty": "single",
+      "score": 0
+    },
+    {
+      "id": 15240,
+      "label": 1,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.3005
+    },
+    {
+      "id": 15245,
+      "label": 1,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.98
+    }
+  ],
+  "tune_ids": [
+    {
+      "id": 7125,
+      "label": 0,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.0152
+    },
+    {
+      "id": 7136,
+      "label": 0,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.5199
+    },
+    {
+      "id": 7147,
+      "label": 0,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.2966
+    },
+    {
+      "id": 7258,
+      "label": 0,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.116
+    },
+    {
+      "id": 7270,
+      "label": 0,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.2969
+    },
+    {
+      "id": 7381,
+      "label": 0,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.1024
+    },
+    {
+      "id": 7392,
+      "label": 0,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.3269
+    },
+    {
+      "id": 7503,
+      "label": 0,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.2085
+    },
+    {
+      "id": 7515,
+      "label": 0,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.071
+    },
+    {
+      "id": 7626,
+      "label": 0,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.0166
+    },
+    {
+      "id": 7637,
+      "label": 0,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.0491
+    },
+    {
+      "id": 7648,
+      "label": 0,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.101
+    },
+    {
+      "id": 7760,
+      "label": 0,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.2073
+    },
+    {
+      "id": 7771,
+      "label": 0,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.0924
+    },
+    {
+      "id": 7882,
+      "label": 0,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.9824
+    },
+    {
+      "id": 7893,
+      "label": 0,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.8872
+    },
+    {
+      "id": 8005,
+      "label": 0,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.126
+    },
+    {
+      "id": 8016,
+      "label": 0,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.1834
+    },
+    {
+      "id": 8127,
+      "label": 0,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.1272
+    },
+    {
+      "id": 8138,
+      "label": 0,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.1139
+    },
+    {
+      "id": 4125,
+      "label": 0,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.0055
+    },
+    {
+      "id": 4255,
+      "label": 0,
+      "variety": "red",
+      "qty": "single",
+      "score": 0
+    },
+    {
+      "id": 4385,
+      "label": 0,
+      "variety": "red",
+      "qty": "single",
+      "score": 0
+    },
+    {
+      "id": 4515,
+      "label": 0,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.0989
+    },
+    {
+      "id": 4645,
+      "label": 0,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.0222
+    },
+    {
+      "id": 4875,
+      "label": 0,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.0573
+    },
+    {
+      "id": 5005,
+      "label": 0,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.279
+    },
+    {
+      "id": 5135,
+      "label": 0,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.0188
+    },
+    {
+      "id": 5265,
+      "label": 0,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.0358
+    },
+    {
+      "id": 5395,
+      "label": 0,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.2884
+    },
+    {
+      "id": 5625,
+      "label": 0,
+      "variety": "red",
+      "qty": "single",
+      "score": 0
+    },
+    {
+      "id": 5755,
+      "label": 0,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.1861
+    },
+    {
+      "id": 5885,
+      "label": 0,
+      "variety": "red",
+      "qty": "single",
+      "score": 0
+    },
+    {
+      "id": 6015,
+      "label": 0,
+      "variety": "red",
+      "qty": "single",
+      "score": 0
+    },
+    {
+      "id": 6145,
+      "label": 0,
+      "variety": "red",
+      "qty": "single",
+      "score": 0
+    },
+    {
+      "id": 6375,
+      "label": 0,
+      "variety": "red",
+      "qty": "single",
+      "score": 0
+    },
+    {
+      "id": 6505,
+      "label": 0,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.2419
+    },
+    {
+      "id": 6635,
+      "label": 0,
+      "variety": "red",
+      "qty": "single",
+      "score": 0
+    },
+    {
+      "id": 6765,
+      "label": 0,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.1477
+    },
+    {
+      "id": 6895,
+      "label": 0,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.5176
+    },
+    {
+      "id": 11250,
+      "label": 0,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.3228
+    },
+    {
+      "id": 11260,
+      "label": 0,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.0894
+    },
+    {
+      "id": 11271,
+      "label": 0,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.1295
+    },
+    {
+      "id": 11381,
+      "label": 0,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.0314
+    },
+    {
+      "id": 11392,
+      "label": 0,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.2671
+    },
+    {
+      "id": 11502,
+      "label": 0,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0
+    },
+    {
+      "id": 11513,
+      "label": 0,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.0355
+    },
+    {
+      "id": 11523,
+      "label": 0,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.1156
+    },
+    {
+      "id": 11634,
+      "label": 0,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0
+    },
+    {
+      "id": 11644,
+      "label": 0,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.0874
+    },
+    {
+      "id": 11755,
+      "label": 0,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.2651
+    },
+    {
+      "id": 11766,
+      "label": 0,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0
+    },
+    {
+      "id": 11876,
+      "label": 0,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0
+    },
+    {
+      "id": 11887,
+      "label": 0,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.1139
+    },
+    {
+      "id": 11897,
+      "label": 0,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.1175
+    },
+    {
+      "id": 12008,
+      "label": 0,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0
+    },
+    {
+      "id": 12018,
+      "label": 0,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.2761
+    },
+    {
+      "id": 12129,
+      "label": 0,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.0193
+    },
+    {
+      "id": 12139,
+      "label": 0,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.2003
+    },
+    {
+      "id": 12250,
+      "label": 0,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0
+    },
+    {
+      "id": 8250,
+      "label": 0,
+      "variety": "white",
+      "qty": "single",
+      "score": 0
+    },
+    {
+      "id": 8380,
+      "label": 0,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.087
+    },
+    {
+      "id": 8510,
+      "label": 0,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.0588
+    },
+    {
+      "id": 8640,
+      "label": 0,
+      "variety": "white",
+      "qty": "single",
+      "score": 0
+    },
+    {
+      "id": 8770,
+      "label": 0,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.4863
+    },
+    {
+      "id": 9000,
+      "label": 0,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.0089
+    },
+    {
+      "id": 9130,
+      "label": 0,
+      "variety": "white",
+      "qty": "single",
+      "score": 0
+    },
+    {
+      "id": 9260,
+      "label": 0,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.0345
+    },
+    {
+      "id": 9390,
+      "label": 0,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.0588
+    },
+    {
+      "id": 9520,
+      "label": 0,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.1138
+    },
+    {
+      "id": 9750,
+      "label": 0,
+      "variety": "white",
+      "qty": "single",
+      "score": 0
+    },
+    {
+      "id": 9880,
+      "label": 0,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.0262
+    },
+    {
+      "id": 10010,
+      "label": 0,
+      "variety": "white",
+      "qty": "single",
+      "score": 0
+    },
+    {
+      "id": 10140,
+      "label": 0,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.0069
+    },
+    {
+      "id": 10270,
+      "label": 0,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.1892
+    },
+    {
+      "id": 10500,
+      "label": 0,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.2086
+    },
+    {
+      "id": 10630,
+      "label": 0,
+      "variety": "white",
+      "qty": "single",
+      "score": 0
+    },
+    {
+      "id": 10760,
+      "label": 0,
+      "variety": "white",
+      "qty": "single",
+      "score": 0
+    },
+    {
+      "id": 10890,
+      "label": 0,
+      "variety": "white",
+      "qty": "single",
+      "score": 0
+    },
+    {
+      "id": 11020,
+      "label": 0,
+      "variety": "white",
+      "qty": "single",
+      "score": 0
+    },
+    {
+      "id": 13271,
+      "label": 1,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.7853
+    },
+    {
+      "id": 13381,
+      "label": 1,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.2069
+    },
+    {
+      "id": 13391,
+      "label": 1,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.2102
+    },
+    {
+      "id": 13501,
+      "label": 1,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.9925
+    },
+    {
+      "id": 13511,
+      "label": 1,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.9248
+    },
+    {
+      "id": 13522,
+      "label": 1,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.2098
+    },
+    {
+      "id": 13632,
+      "label": 1,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.0855
+    },
+    {
+      "id": 13642,
+      "label": 1,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.2035
+    },
+    {
+      "id": 13752,
+      "label": 1,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.4099
+    },
+    {
+      "id": 13762,
+      "label": 1,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.353
+    },
+    {
+      "id": 13773,
+      "label": 1,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.1374
+    },
+    {
+      "id": 13883,
+      "label": 1,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.158
+    },
+    {
+      "id": 13893,
+      "label": 1,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.2545
+    },
+    {
+      "id": 14003,
+      "label": 1,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.2344
+    },
+    {
+      "id": 14013,
+      "label": 1,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.6007
+    },
+    {
+      "id": 14024,
+      "label": 1,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.2746
+    },
+    {
+      "id": 14134,
+      "label": 1,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.265
+    },
+    {
+      "id": 14144,
+      "label": 1,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.2406
+    },
+    {
+      "id": 14254,
+      "label": 1,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.2277
+    },
+    {
+      "id": 14264,
+      "label": 1,
+      "variety": "red",
+      "qty": "multiple",
+      "score": 0.2289
+    },
+    {
+      "id": 12261,
+      "label": 1,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.0344
+    },
+    {
+      "id": 12272,
+      "label": 1,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.6163
+    },
+    {
+      "id": 12382,
+      "label": 1,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.022
+    },
+    {
+      "id": 12393,
+      "label": 1,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.2648
+    },
+    {
+      "id": 12503,
+      "label": 1,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.0737
+    },
+    {
+      "id": 12514,
+      "label": 1,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.0169
+    },
+    {
+      "id": 12524,
+      "label": 1,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.1876
+    },
+    {
+      "id": 12635,
+      "label": 1,
+      "variety": "red",
+      "qty": "single",
+      "score": 0
+    },
+    {
+      "id": 12645,
+      "label": 1,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.134
+    },
+    {
+      "id": 12756,
+      "label": 1,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.0454
+    },
+    {
+      "id": 12766,
+      "label": 1,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.3454
+    },
+    {
+      "id": 12876,
+      "label": 1,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.0766
+    },
+    {
+      "id": 12887,
+      "label": 1,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.1721
+    },
+    {
+      "id": 12897,
+      "label": 1,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.279
+    },
+    {
+      "id": 13008,
+      "label": 1,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.033
+    },
+    {
+      "id": 13018,
+      "label": 1,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.0575
+    },
+    {
+      "id": 13129,
+      "label": 1,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.1255
+    },
+    {
+      "id": 13139,
+      "label": 1,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.4262
+    },
+    {
+      "id": 13250,
+      "label": 1,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.6588
+    },
+    {
+      "id": 13260,
+      "label": 1,
+      "variety": "red",
+      "qty": "single",
+      "score": 0.9277
+    },
+    {
+      "id": 15375,
+      "label": 1,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.2784
+    },
+    {
+      "id": 15385,
+      "label": 1,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.0676
+    },
+    {
+      "id": 15395,
+      "label": 1,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.276
+    },
+    {
+      "id": 15505,
+      "label": 1,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.7905
+    },
+    {
+      "id": 15515,
+      "label": 1,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 1
+    },
+    {
+      "id": 15625,
+      "label": 1,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.2809
+    },
+    {
+      "id": 15635,
+      "label": 1,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.1399
+    },
+    {
+      "id": 15645,
+      "label": 1,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.1333
+    },
+    {
+      "id": 15755,
+      "label": 1,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0
+    },
+    {
+      "id": 15765,
+      "label": 1,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.7071
+    },
+    {
+      "id": 15875,
+      "label": 1,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.623
+    },
+    {
+      "id": 15885,
+      "label": 1,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.2237
+    },
+    {
+      "id": 15895,
+      "label": 1,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.4606
+    },
+    {
+      "id": 16005,
+      "label": 1,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.9928
+    },
+    {
+      "id": 16015,
+      "label": 1,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0
+    },
+    {
+      "id": 16125,
+      "label": 1,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.9667
+    },
+    {
+      "id": 16135,
+      "label": 1,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0
+    },
+    {
+      "id": 16145,
+      "label": 1,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.9801
+    },
+    {
+      "id": 16255,
+      "label": 1,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.1355
+    },
+    {
+      "id": 16265,
+      "label": 1,
+      "variety": "white",
+      "qty": "multiple",
+      "score": 0.3909
+    },
+    {
+      "id": 14375,
+      "label": 1,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.2816
+    },
+    {
+      "id": 14385,
+      "label": 1,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.0495
+    },
+    {
+      "id": 14395,
+      "label": 1,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.0078
+    },
+    {
+      "id": 14505,
+      "label": 1,
+      "variety": "white",
+      "qty": "single",
+      "score": 0
+    },
+    {
+      "id": 14515,
+      "label": 1,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.0554
+    },
+    {
+      "id": 14625,
+      "label": 1,
+      "variety": "white",
+      "qty": "single",
+      "score": 0
+    },
+    {
+      "id": 14635,
+      "label": 1,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.0841
+    },
+    {
+      "id": 14645,
+      "label": 1,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.1166
+    },
+    {
+      "id": 14755,
+      "label": 1,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.8387
+    },
+    {
+      "id": 14765,
+      "label": 1,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.2383
+    },
+    {
+      "id": 14875,
+      "label": 1,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.0178
+    },
+    {
+      "id": 14885,
+      "label": 1,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.9424
+    },
+    {
+      "id": 14895,
+      "label": 1,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.2058
+    },
+    {
+      "id": 15005,
+      "label": 1,
+      "variety": "white",
+      "qty": "single",
+      "score": 0
+    },
+    {
+      "id": 15015,
+      "label": 1,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.5625
+    },
+    {
+      "id": 15125,
+      "label": 1,
+      "variety": "white",
+      "qty": "single",
+      "score": 0
+    },
+    {
+      "id": 15135,
+      "label": 1,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.1429
+    },
+    {
+      "id": 15145,
+      "label": 1,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.264
+    },
+    {
+      "id": 15255,
+      "label": 1,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.1992
+    },
+    {
+      "id": 15265,
+      "label": 1,
+      "variety": "white",
+      "qty": "single",
+      "score": 0.1372
+    }
+  ],
+  "node_latency_ms": {
+    "p50": 672,
+    "p95": 945,
+    "note": "desktop Node, not a phone"
+  }
+}

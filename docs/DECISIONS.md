@@ -1,0 +1,57 @@
+# Decisions made during the autonomous build
+
+The team asked for no questions during the 8-hour run, so each judgement call is logged here with its reason. Any of them can be reversed.
+
+1. **Name: Parakh.** परख means assay or appraisal in Hindi and Marathi and is understood across north India. It says what the app does (test the quality of a lot) better than SAMA, which had no stated meaning. The old name survives in `legacy/`.
+2. **Default rule pack: 30 Jul 2026, Grade A only.** It is the latest rule reported (S4). The June packs stay available for time travel, which is also the best demo of why packs exist.
+3. **URS wording.** Defined as "bulbs that miss this pack's Grade A limits but stay within the relaxed limits", with the press phrase "relaxed-specification" quoted and the expansion marked unverified. We did not expand the acronym.
+4. **Server: none in this build.** The brief allows FastAPI but everything the demo needs (signing, log, verification, fleet view) runs on the phone. A server adds a deployment and a failure mode for no demo value. The Merkle log exports to a JSON file that a centre can publish anywhere static.
+5. **Evaluation scripts in TypeScript, not Python.** The brief says eval scripts stay in Python. Numbers about grading must come from the same code that ships, and that code is TypeScript. Training (Tier 1) stays in Python.
+6. **Replay mode shows no "look again".** The public photos are different scenes, not the same tray shaken. Offering a second look in replay would fake the two-look protocol.
+7. **Replay photos use the camera-only size tier at an assumed 260 mm height (A-REPLAY-1).** The photos have no calibration sheet. The receipt prints the tier and the wide uncertainty, and most size-borderline bulbs go to a human. We did not invent a scale.
+8. **Design: "instrument and receipt".** Warm paper, near-black ink, one violet accent that echoes the ink of a government rubber stamp, IBM Plex Sans / Condensed / Mono, bucket colours always paired with a letter (A, U, R, ?) so colour-blind users and black-and-white printouts still work. Light theme only, for sunlight; the camera screen is dark.
+9. **Nine languages.** English plus Hindi, Marathi, Tamil, Telugu, Kannada, Gujarati, Bengali and Punjabi. All non-English strings are machine drafts (OPEN_QUESTIONS 11).
+10. **QR payload: base45 over deflated binary, the EU Digital COVID Certificate approach.** It fits the QR alphanumeric mode. A lot of about 60-80 bulb-observations fits one QR code; bigger lots fall back to the evidence file.
+11. **Tier-1 model: a bulb-crop classifier, not a segmentation student.** Without field photos and without a person to correct teacher masks, a segmentation student would learn Tier-0's own mistakes. The public dataset has exact per-bulb labels only for its single-bulb photos, so a small classifier trained on those is the one learned model we can evaluate honestly. See docs/MODEL_CARD_tier1.md for whether it ships.
+12. **Coarse location.** Rounded to two decimals of latitude and longitude (about 1 km) and only when the browser grants permission.
+13. **Tier-1 "confident unhealthy" threshold from multi-bulb crops.** The first run took the 95th percentile of healthy single-bulb crops, which gave a threshold near zero because the model memorises the repeated single-bulb onions. The threshold now comes from healthy crops cut from multi-bulb photos in the tune split (5% false alarms there), floored at 0.5. The recalibration was done once inline with ONNX Runtime and is now the rule in `scripts/train_tier1.py`.
+14. **Tier 1 ships as a cross-check only.** On the same held-out photos it separates healthy from unhealthy far better than Tier 0 (docs/EVALUATION.md), so by the brief's rule it ships. It still never sets an area fraction: the rule pack grades on Tier-0 measurements, and Tier 1 can only send a bulb to a person.
+15. **Exposure normalisation and a 3x3 denoise before Tier 0.** The first E5 sweep showed that darkening or mild noise flipped many image-level decisions. Normalising exposure and smoothing slightly made the model far more stable with public-photo accuracy essentially unchanged (both runs are in git history of reports/). The flag is `normalise` in `packages/vision/src/config.ts`, so it is part of the model hash.
+16. **Segmentation rebuilt after the first real field photo (25 Sep 2026).** With the printed mat on a wooden table, the mat, its printing, the table grain, a cable and a bag were all counted as onions (29 "onions" for 5). Changes: background colours are learned as several clusters from the image border, with minor clusters dropped so an onion touching the edge is not learned as background; once the mat or an A4 sheet is found, its whole area is known and its paper and printing are background; blue/cyan pixels are never onion skin; blobs must be onion-sized in millimetres when a real scale exists; mostly-green blobs (leaves, bags) are set aside; pieces of one bulb split by a crease or glare are merged back when their union is convex and shares a long seam. Peeled skin now needs a much stronger pale shift (healthy red onions were scored 40% peeled). Public-photo accuracy stayed at its previous level (docs/EVALUATION.md).
+17. **Tier-2 learned onion segmentation replaces the colour detector for finding bulbs.** Field testing showed the colour detector miscounted badly (12 "onions" for 5 on a wooden table with the mat). A small U-Net (MobileNetV3 encoder) was trained on real Zenodo photos labelled offline by OWLv2 + SAM (both Apache-2.0, never shipped), with real onion cut-outs pasted onto real backgrounds and the printed mat artwork for training only. On held-out photos counted by eye, the counting error fell from 10.9 to 0.56 onions per photo (reports/count_eval.json). The colour model still measures defects inside each bulb and is the fallback when the model can't load.
+18. **The segmentation model ships in full precision (16 MB), over the brief's 15 MB model budget.** INT8 quantisation (full, and encoder-only) raised the counting error from 0.56 to about 2.3-2.5 onions per photo. Counting accuracy was judged more important than 10 MB of download.
+19. **Size and shape are measured on the bulb body.** The outline is opened by about 15% of the bulb radius, which trims the neck, root tuft and dry tails, before Feret diameters, solidity and aspect are measured. Bottleneck now means a thick neck (neck share of the outline), not an oval body: on healthy public photos, false bottleneck flags fell from 10 to 0 and false doubles from 4 to 1, with counting and defect results unchanged. Most remaining URS on healthy onions comes from the size window of the rule pack (Grade A 45-65 mm), which is the rule working as written.
+
+## 20. Landing page at the site root, web app at /app/
+
+The landing (apps/landing, React + three.js + framer-motion) is served from the Pages root and the web app moves to `./app/`. The live demo runs the shipped seg.onnx through ONNX Runtime Web in the visitor's browser. WebLLM was not used: SAMA needs no language model, and the vision models already run on the device. A kill-switch `sw.js` at the root retires the service worker from when the app lived there. The APK is published as `sama.apk` on the latest release, so the landing link stays stable.
+
+## 21. Type and colour system
+
+Type: the Anek superfamily (Ek Type, OFL) replaces IBM Plex Sans with Noto fallbacks. Anek is one design for Latin and all eight Indic scripts the app ships (Devanagari, Bangla, Gujarati, Gurmukhi, Kannada, Tamil, Telugu), so a Hindi or Tamil screen keeps the same x-height, weight and rhythm as the English one. Headings use its width axis at 87.5% so long labels fit on a 360 px phone. IBM Plex Mono stays for lot IDs and numbers, because it has tabular figures and reads like a receipt. The landing page pairs Instrument Serif display (from the brief) with Anek Latin body.
+
+Colour: every hue comes from the product. The brand is red-onion skin (oklch 35% 0.115 355), the highlight is the dry golden outer scale, and the paper is a warm oat tone, which glares less than white in sunlight. Grade colours are kept apart from the brand hues: A is green, URS is amber, Reject is tomato red, Refer is slate. Each grade also carries its letter, so none relies on colour alone. The measured WCAG contrast ratios are:
+
+| Pair | Contrast |
+|---|---|
+| Body ink on paper | 16:1 |
+| Secondary text | 8:1 |
+| Every grade's text on its tint | 4.9:1 or higher |
+| URS text (darker ink) | 6.5:1 |
+
+We looked at the ui-ux-pro-max database, which suggested the generic navy-and-blue "government" palette, and rejected it because it carries no product meaning.
+
+## 21. Type and colour system
+
+Type: the Anek superfamily (Ek Type, OFL) replaces IBM Plex Sans with Noto fallbacks. Anek is one design for Latin and all eight Indic scripts the app ships (Devanagari, Bangla, Gujarati, Gurmukhi, Kannada, Tamil, Telugu), so a Hindi or Tamil screen keeps the same x-height, weight and rhythm as the English one. Headings use its width axis at 87.5% so long labels fit on a 360 px phone. IBM Plex Mono stays for lot IDs and numbers, because it has tabular figures and reads like a receipt. The landing page pairs Instrument Serif display (from the brief) with Anek Latin body.
+
+Colour: every hue comes from the product. The brand is red-onion skin (oklch 35% 0.115 355), the highlight is the dry golden outer scale, and the paper is a warm oat tone, which glares less than white in sunlight. Grade colours are kept apart from the brand hues: A is green, URS is amber, Reject is tomato red, Refer is slate. Each grade also carries its letter, so none relies on colour alone. The measured WCAG contrast ratios are:
+
+| Pair | Contrast |
+|---|---|
+| Body ink on paper | 16:1 |
+| Secondary text | 8:1 |
+| Every grade's text on its tint | 4.9:1 or higher |
+| URS text (darker ink) | 6.5:1 |
+
+We looked at the ui-ux-pro-max database, which suggested the generic navy-and-blue "government" palette, and rejected it because it carries no product meaning.

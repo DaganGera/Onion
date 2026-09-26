@@ -1,0 +1,92 @@
+{
+  "generatedBy": "tools/e2e.mjs",
+  "at": "2026-09-26T03:03:24.604Z",
+  "browser": "chromium headless (Playwright)",
+  "results": [
+    {
+      "name": "home renders",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "demo lot graded",
+      "ok": true,
+      "detail": "5502 ms for 4 photos incl. decode"
+    },
+    {
+      "name": "Tier-1 model ran in the browser (ONNX Runtime Web)",
+      "ok": true,
+      "detail": "{\"n\":44,\"withP\":44,\"disagree\":0,\"ms\":[76,89,63,38]}"
+    },
+    {
+      "name": "bulb sheet shows reasons",
+      "ok": true,
+      "detail": "2 reason lines"
+    },
+    {
+      "name": "override + contest recorded",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "receipt has QR",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "QR payload size",
+      "ok": true,
+      "detail": "2392 base45 chars"
+    },
+    {
+      "name": "second phone verifies offline",
+      "ok": true,
+      "detail": "Receipt checks out"
+    },
+    {
+      "name": "tampered code rejected",
+      "ok": true,
+      "detail": "This code is damaged, altered, or not a SAMA receipt. Nothing could be verified."
+    },
+    {
+      "name": "time travel: packs give different procured shares",
+      "ok": true,
+      "detail": "0.0 / 0.0 / 4.0 / 4.0 / 0.0"
+    },
+    {
+      "name": "back button returns to the parent screen",
+      "ok": true,
+      "detail": "#/lots #/more"
+    },
+    {
+      "name": "bottom bar has 5 slots with a centre scan button",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "capture guard explains refusal in one sentence",
+      "ok": true,
+      "detail": "Keep the calibration sheet fully in view."
+    },
+    {
+      "name": "auto-shutter fired and measured",
+      "ok": true,
+      "detail": "12 onions measured.\nScale: intrinsics · 1527 ms"
+    },
+    {
+      "name": "app loads offline (service worker)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "UI switches to Hindi",
+      "ok": true,
+      "detail": "नया लॉट शुरू करें"
+    },
+    {
+      "name": "no page errors",
+      "ok": true,
+      "detail": ""
+    }
+  ]
+}

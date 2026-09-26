@@ -1,0 +1,6 @@
+{
+  "appId": "org.algorangers.parakh",
+  "appName": "SAMA",
+  "webDir": "dist",
+  "android": { "backgroundColor": "#f6f1e9" }
+}

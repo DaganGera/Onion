@@ -1,0 +1,21 @@
+{
+ "ship": true,
+ "file": "tier1.onnx",
+ "size": 128,
+ "mean": [
+  0.485,
+  0.456,
+  0.406
+ ],
+ "std": [
+  0.229,
+  0.224,
+  0.225
+ ],
+ "thr_high": 0.9779,
+ "sha256": "9dd23d9adfe4bb9b88ca14cb6e7e31d2c96555dc642ad2ebc7a759aae497d9e8",
+ "version": "20260925",
+ "source": "scripts/train_tier1.py",
+ "gate": 0.7,
+ "gate_note": "p(unhealthy) below this clears colour defect marks; chosen on tune photos, checked on holdout (reports/fit_gate.json)"
+}
