@@ -67,7 +67,7 @@ export function More() {
           {row('#/settings', Cog, t('nav.settings', 'Settings & log'), t('more.settings.s', 'Centre, keys, models, rates'))}
           {row('#/about', Info, t('nav.about', 'How it works & limits'), t('more.about.s', 'What the app can and cannot do'))}
         </section>
-        <p class="xs muted center">Parakh · SIH 2026 · PS 26031 · AlgoRangersV1</p>
+        <p class="xs muted center">SAMA · SIH 2026 · PS 26031 · AlgoRangersV1</p>
       </main>
     </>
   );

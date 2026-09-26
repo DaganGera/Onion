@@ -83,7 +83,7 @@ export function Certificate({ hash }: { hash: string }) {
           {pack && <p class="note"><b>URS.</b> {pack.urs_definition}</p>}
           <div class="qrbox">
             {c.qr ? <Qr text={c.qr} label={t('cert.qr', 'Verification code')} /> : <p class="note">{t('cert.noqr', 'Too many bulbs for one QR code; verify with the evidence file.')}</p>}
-            <p class="xs muted">{t('cert.scan', 'Scan with Parakh → Verify. Checks the signature and re-grades the lot on the scanning phone, offline.')}</p>
+            <p class="xs muted">{t('cert.scan', 'Scan with SAMA → Verify. Checks the signature and re-grades the lot on the scanning phone, offline.')}</p>
           </div>
           <div class="stamp">{t('cert.signed', 'Signed on device')}<br />{c.signed.sig.alg} · {fp}</div>
           <p class="hash">sha256 {c.hash}<br />pack {k.pack.hash.slice(0, 24)}… · model {k.model.hash.slice(0, 16)}…<br />{k.parent ? `parent ${k.parent.slice(0, 24)}… · ` : ''}{k.prev ? `chain ${k.prev.slice(0, 24)}…` : t('cert.first', 'first on this device')}</p>

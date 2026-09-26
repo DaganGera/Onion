@@ -1,8 +1,8 @@
-/* Hallmark · app · genre: editorial/utilitarian · theme: custom "instrument + receipt"
- * vibe: "field instrument, government receipt, violet stamp ink"
- * paper oklch(96.5% 0.011 75) · accent oklch(44% 0.15 290) stamp-violet
+/* Hallmark · app · genre: editorial/utilitarian · theme: custom "red onion + receipt"
+ * vibe: "red onion skin, golden dry tunic, government receipt"
+ * paper oklch(96.5% 0.011 75) · brand oklch(35% 0.115 355) red-onion · gold oklch(78% 0.13 75) dry skin
  * display: IBM Plex Sans Condensed · body: IBM Plex Sans · data: IBM Plex Mono
- * axes: light / grotesk-sans (condensed display) / cool-violet accent
+ * axes: light / grotesk-sans (condensed display) / warm red-violet brand
  */
 :root {
   /* paper & ink, tinted toward warm oat (hue 75) */
@@ -17,17 +17,25 @@
   --color-ink-2: oklch(29% 0.018 40);
   --color-on-ink: oklch(96.5% 0.011 75);
 
-  /* the one accent: rubber-stamp violet, like a procurement office stamp */
-  --color-accent: oklch(44% 0.15 290);
-  --color-accent-tint: oklch(94% 0.028 290);
-  --color-focus: oklch(52% 0.19 290);
+  /* brand: red-onion skin; highlight: dry golden onion skin */
+  --color-brand: oklch(35% 0.115 355);
+  --color-brand-2: oklch(28% 0.09 355);
+  --color-brand-ink: oklch(96% 0.02 60);
+  --color-brand-mute: oklch(82% 0.04 350);
+  --color-gold: oklch(82% 0.13 85);
+  --color-gold-ink: oklch(30% 0.06 60);
+  --color-gold-tint: oklch(94% 0.045 85);
+  --color-leaf-tint: oklch(93.5% 0.04 150);
+  --color-accent: oklch(42% 0.14 355);
+  --color-accent-tint: oklch(94% 0.03 355);
+  --color-focus: oklch(52% 0.17 355);
 
   /* grade buckets: colour + letter, never colour alone */
   --color-a: oklch(49% 0.12 150);
   --color-a-tint: oklch(93.5% 0.04 150);
-  --color-u: oklch(63% 0.14 72);
-  --color-u-ink: oklch(42% 0.1 65);
-  --color-u-tint: oklch(94% 0.05 85);
+  --color-u: oklch(64% 0.15 55);
+  --color-u-ink: oklch(45% 0.12 50);
+  --color-u-tint: oklch(94% 0.04 60);
   --color-r: oklch(50% 0.17 30);
   --color-r-tint: oklch(93.5% 0.035 30);
   --color-q: oklch(50% 0.03 240);

@@ -25,7 +25,7 @@ export function Verify({ code }: { code: string }) {
       setState({ cert: c, rep, fp: await fingerprint(fromHex(c.sig.pub)), inLog: log?.idx ?? null, predLocal: !!pred });
     } catch (e) {
       setState(null);
-      setErr(t('v.bad', 'This code is damaged, altered, or not a Parakh receipt. Nothing could be verified.'));
+      setErr(t('v.bad', 'This code is damaged, altered, or not a SAMA receipt. Nothing could be verified.'));
     }
   };
 
@@ -49,7 +49,7 @@ export function Verify({ code }: { code: string }) {
   }, [scanning]);
 
   const openFile = (f: File) => f.text().then((s) => {
-    try { const j = JSON.parse(s); run('', j.cert ?? j); } catch { setErr(t('v.file', 'That file is not a Parakh evidence file.')); }
+    try { const j = JSON.parse(s); run('', j.cert ?? j); } catch { setErr(t('v.file', 'That file is not a SAMA evidence file.')); }
   });
 
   const r = state?.rep;
