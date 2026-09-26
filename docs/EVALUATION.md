@@ -41,10 +41,10 @@ How many onions does the detector find, compared with a count by eye? Truth: too
 
 | Detector | Photos | Mean count error | Exactly right | Within ±1 | Mean bias |
 |---|---|---|---|---|---|
-| Tier 0 colour rules | 18 | 10.89 | 6.0% | 17.0% | +10 |
+| Tier 0 colour rules | 18 | 11.17 | 6.0% | 11.0% | +10.28 |
 | Tier 2 learned segmentation | 18 | 0.56 | 61.0% | 89.0% | +0.22 |
 
-Ambiguous piles (onions hidden under others, counted separately): Tier 0 error 8.6, Tier 2 0.8. Field photo (team's own, printed mat on a wooden table): field_test_2.jpg: Tier 0 found 14, Tier 2 found 6.
+Ambiguous piles (onions hidden under others, counted separately): Tier 0 error 8.4, Tier 2 0.8. Field photo (team's own, printed mat on a wooden table): field_test_2.jpg: Tier 0 found 14, Tier 2 found 6.
 
 ## Defect checks: full pipeline on held-out photos
 
@@ -58,24 +58,24 @@ Onions found by Tier 2, defects measured by the colour model, and the learned he
 
 ## Software checks in a real browser
 
-17 of 17 end-to-end checks passed (chromium headless (Playwright), 2026-09-25). The camera was fed a real photo through Chromium's fake capture device.
+17 of 17 end-to-end checks passed (chromium headless (Playwright), 2026-09-26). The camera was fed a real photo through Chromium's fake capture device.
 
 | Check | Result | Detail |
 |---|---|---|
 | home renders | pass |  |
-| demo lot graded | pass | 8002 ms for 4 photos incl. decode |
-| Tier-1 model ran in the browser (ONNX Runtime Web) | pass | {"n":44,"withP":44,"disagree":0,"ms":[67,59,53,32]} |
+| demo lot graded | pass | 5502 ms for 4 photos incl. decode |
+| Tier-1 model ran in the browser (ONNX Runtime Web) | pass | {"n":44,"withP":44,"disagree":0,"ms":[76,89,63,38]} |
 | bulb sheet shows reasons | pass | 2 reason lines |
 | override + contest recorded | pass |  |
 | receipt has QR | pass |  |
 | QR payload size | pass | 2392 base45 chars |
 | second phone verifies offline | pass | Receipt checks out |
-| tampered code rejected | pass | This code is damaged, altered, or not a Parakh receipt. Nothing could be verifie |
-| time travel: packs give different procured shares | pass | 0.0 / 0.0 / 3.9 / 3.9 / 0.0 |
+| tampered code rejected | pass | This code is damaged, altered, or not a SAMA receipt. Nothing could be verified. |
+| time travel: packs give different procured shares | pass | 0.0 / 0.0 / 4.0 / 4.0 / 0.0 |
 | back button returns to the parent screen | pass | #/lots #/more |
 | bottom bar has 5 slots with a centre scan button | pass |  |
 | capture guard explains refusal in one sentence | pass | Keep the calibration sheet fully in view. |
-| auto-shutter fired and measured | pass | 12 onions measured. Scale: intrinsics · 1134 ms |
+| auto-shutter fired and measured | pass | 12 onions measured. Scale: intrinsics · 1527 ms |
 | app loads offline (service worker) | pass |  |
 | UI switches to Hindi | pass | नया लॉट शुरू करें |
 | no page errors | pass |  |
@@ -116,7 +116,7 @@ How much does Tier-0 output move when a real held-out photo is darkened, brighte
 
 ## Android build in an emulator
 
-Android 15 emulator (x86_64, WHPX, swiftshader GPU), system WebView. Demo lot of 4 photos graded in 7.1 s; per photo 2661, 1148, 1201, 945 ms including Tier 1 (162, 80, 83, 47 ms). Signing 1040 ms with ES256 (this WebView has no Ed25519); offline verification 137 ms: "Receipt checks out". Page errors: 0. An emulator on a laptop is not a phone; E6 still needs a real device.
+Android 15 emulator (x86_64, WHPX, swiftshader GPU), system WebView. Demo lot of 4 photos graded in 50.5 s; per photo 31828, 1697, 2595, 1173 ms including Tier 1 (305, 87, 165, 81 ms). Signing 6759 ms with ES256 (this WebView has no Ed25519); offline verification 1734 ms: "Receipt checks out". Page errors: 0. An emulator on a laptop is not a phone; E6 still needs a real device.
 
 ## E6 phone performance
 
