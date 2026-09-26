@@ -2,7 +2,7 @@
 
 @theme {
   --font-heading: "Instrument Serif", serif;
-  --font-body: "Barlow", sans-serif;
+  --font-body: "Anek Latin Variable", system-ui, sans-serif;
   --color-onion: #6e1f47;
   --color-onion-deep: #3a0f25;
   --color-gold: #e6ae45;
