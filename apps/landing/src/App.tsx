@@ -77,7 +77,7 @@ function SectionHead({ badge, title, sub }: { badge: string; title: string; sub?
 function Nav() {
   const links = [['How it works', '#how'], ['Try it', '#demo'], ['Who uses it', '#who'], ['Download', '#get']];
   return (
-    <header className="fixed inset-x-0 top-4 z-50 px-4 md:px-8 lg:px-16">
+    <header className="fixed inset-x-0 top-0 z-50 bg-gradient-to-b from-[#0b0507] from-55% via-[#0b0507]/70 to-transparent px-4 pb-8 pt-4 md:px-8 lg:px-16">
       <nav className="mx-auto flex max-w-7xl items-center justify-between gap-3" aria-label="Main">
         <a href="#top" className="liquid-glass flex h-12 items-center gap-2 rounded-full pl-2 pr-4">
           <Mark className="h-8 w-8" />
@@ -105,9 +105,9 @@ function Hero() {
   ];
   return (
     <section id="top" className="relative flex min-h-[100svh] flex-col overflow-hidden bg-[radial-gradient(120%_80%_at_70%_30%,#4a1430_0%,#1c0812_55%,#0b0507_100%)]">
-      <Onion3D className="absolute inset-0 z-0 md:left-[38%]" />
+      <Onion3D className="absolute inset-x-0 top-0 z-0 h-[44svh] md:inset-0 md:left-[38%] md:h-auto" />
       <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-64 bg-gradient-to-t from-[#0b0507] to-transparent" />
-      <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-1 flex-col justify-center px-4 pb-10 pt-32 md:px-8 lg:px-16">
+      <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-1 flex-col justify-center px-4 pb-10 pt-[42svh] md:px-8 md:pt-32 lg:px-16">
         <FadeUp delay={0.2}><Badge tag="SIH 2026">PS SIH26031 · Department of Consumer Affairs</Badge></FadeUp>
         <BlurText text="Every onion lot, graded the same at every centre."
           className="mt-6 max-w-3xl font-heading text-[3.4rem] italic leading-[0.85] tracking-[-2px] text-white sm:text-7xl md:text-8xl lg:text-[6.5rem] lg:tracking-[-4px]" />
@@ -165,11 +165,11 @@ function Capabilities() {
       tags: ['Ed25519 signature', 'QR verify', 'Merkle log'],
     },
   ];
-  const photos = useMemo(() => ['./demo/Onion13276.jpg', './demo/Onion07046.jpg', './demo/Onion11156.jpg', './demo/Onion15296.jpg'], []);
+  const photos = useMemo(() => ['./photos/grading', './photos/sorting', './photos/trolley', './photos/market'], []);
   return (
     <section id="how" className="relative overflow-hidden py-24 md:py-32">
       <FadingImages srcs={photos} className="absolute inset-0 z-0" />
-      <div className="absolute inset-0 z-[1] bg-[#0b0507]/70" />
+      <div className="absolute inset-0 z-[1] bg-[#0b0507]/60" />
       <div className="absolute inset-x-0 top-0 z-[1] h-40 bg-gradient-to-b from-[#0b0507] to-transparent" />
       <div className="absolute inset-x-0 bottom-0 z-[1] h-40 bg-gradient-to-t from-[#0b0507] to-transparent" />
       <div className="relative z-10 mx-auto max-w-7xl px-4 md:px-8 lg:px-16">
@@ -253,7 +253,7 @@ function Get() {
         <div className="grid gap-4 lg:grid-cols-[1.3fr_1fr]">
           <FadeUp>
             <div className="liquid-glass flex h-full flex-col gap-8 rounded-[1.25rem] p-6 sm:flex-row sm:items-center md:p-8">
-              <div className="w-40 shrink-0 rounded-2xl bg-[var(--color-paper)] p-3 [&_svg]:h-auto [&_svg]:w-full" aria-label="QR code linking to the APK download" role="img" dangerouslySetInnerHTML={{ __html: qr }} />
+              <div className="hidden w-40 shrink-0 rounded-2xl bg-[var(--color-paper)] sm:block p-3 [&_svg]:h-auto [&_svg]:w-full" aria-label="QR code linking to the APK download" role="img" dangerouslySetInnerHTML={{ __html: qr }} />
               <div className="flex flex-col gap-5">
                 <h3 className="font-heading text-4xl italic leading-none text-white">Android app</h3>
                 <ol className="flex flex-col gap-2 font-body text-sm font-light text-white/85">
@@ -296,7 +296,7 @@ function Footer() {
           </div>
         </div>
         <p className="max-w-xl leading-relaxed">
-          A Smart India Hackathon 2026 prototype by team AlgoRangersV1, not an official Government of India service. Grades follow the rule packs published in the repository. Onion photos: Zenodo 10.5281/zenodo.20254934, CC-BY 4.0.
+          A Smart India Hackathon 2026 prototype by team AlgoRangersV1, not an official Government of India service. Grades follow the rule packs published in the repository. Demo photos: Zenodo 10.5281/zenodo.20254934, CC BY 4.0. Background photos from Wikimedia Commons: Nishaexport (CC BY-SA 3.0), John Hoey (CC BY 2.0), Ravi Dwivedi (CC BY-SA 4.0), McKay Savage (CC BY 2.0). 3D onion: Kuutti Siitonen, Poly Haven (CC0), recoloured.
         </p>
         <a href={REPO} className="inline-flex items-center gap-1 text-white/85 hover:text-white">Source on GitHub <ArrowUpRight className="h-3.5 w-3.5" /></a>
       </div>
