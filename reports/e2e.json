@@ -1,8 +1,13 @@
 {
   "generatedBy": "tools/e2e.mjs",
-  "at": "2026-09-26T03:03:24.604Z",
+  "at": "2026-09-26T07:26:47.250Z",
   "browser": "chromium headless (Playwright)",
   "results": [
+    {
+      "name": "first run asks to set up accounts",
+      "ok": true,
+      "detail": ""
+    },
     {
       "name": "home renders",
       "ok": true,
@@ -11,12 +16,12 @@
     {
       "name": "demo lot graded",
       "ok": true,
-      "detail": "5502 ms for 4 photos incl. decode"
+      "detail": "4526 ms for 4 photos incl. decode"
     },
     {
       "name": "Tier-1 model ran in the browser (ONNX Runtime Web)",
       "ok": true,
-      "detail": "{\"n\":44,\"withP\":44,\"disagree\":0,\"ms\":[76,89,63,38]}"
+      "detail": "{\"n\":44,\"withP\":44,\"disagree\":0,\"ms\":[77,56,49,39]}"
     },
     {
       "name": "bulb sheet shows reasons",
@@ -36,7 +41,7 @@
     {
       "name": "QR payload size",
       "ok": true,
-      "detail": "2392 base45 chars"
+      "detail": "2463 base45 chars"
     },
     {
       "name": "second phone verifies offline",
@@ -71,10 +76,25 @@
     {
       "name": "auto-shutter fired and measured",
       "ok": true,
-      "detail": "12 onions measured.\nScale: intrinsics · 1527 ms"
+      "detail": "12 onions measured.\nScale: intrinsics · 1384 ms"
     },
     {
       "name": "app loads offline (service worker)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "wrong PIN is refused",
+      "ok": true,
+      "detail": "Wrong PIN."
+    },
+    {
+      "name": "auditor is read-only (no grading, no overrides)",
+      "ok": true,
+      "detail": "Review lots and receipts | Check | override buttons 0"
+    },
+    {
+      "name": "supervisor sees and manages accounts",
       "ok": true,
       "detail": ""
     },

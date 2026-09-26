@@ -1,3 +1,4 @@
+import { can, currentUser, useSession, who } from '../lib/auth';
 import { useEffect, useState } from 'preact/hooks';
 import { Camera, Dices, Images } from 'lucide-preact';
 import { drawSample, PACKS, suggestedDraws } from '@parakh/core';
@@ -11,6 +12,7 @@ import { TopBar } from '../components/ui';
 const VARIETIES = [['red', () => t('v.red', 'Red')], ['pink', () => t('v.pink', 'Pink')], ['white', () => t('v.white', 'White')], ['mixed', () => t('v.mixed', 'Mixed')]] as const;
 
 export function NewLot() {
+  const me = useSession();
   const [s, setS] = useState<Settings | null>(null);
   const [farmer, setFarmer] = useState('');
   const [variety, setVariety] = useState('red');
@@ -32,7 +34,7 @@ export function NewLot() {
 
   const start = async (replay: boolean) => {
     const row: LotRow = {
-      id, createdAt: new Date().toISOString(), centre: s.centre, officer: s.officer, farmerRef: farmer.trim() || t('nl.anon', 'Unnamed farmer'),
+      id, createdAt: new Date().toISOString(), centre: s.centre, officer: me ? who(me) : s.officer, farmerRef: farmer.trim() || t('nl.anon', 'Unnamed farmer'),
       variety, sacks, declaredKg: kg, packId, mode: replay ? 'replay' : 'live', overrides: [], certHashes: [],
       sampling: draw ? { farmerCode: fc, officerCode: oc, seed: draw.seed, draws: draw.draws } : null,
     };
@@ -44,6 +46,7 @@ export function NewLot() {
     <>
       <TopBar title={t('nl.title', 'New lot')} backTo="" />
       <main class="page">
+        {!can(me, 'lot.create') && <p class="banner warn">{t('perm.no', 'Your role cannot do this. Ask the centre supervisor.')}</p>}
         <p class="mono xs muted">{id}</p>
         <label class="field">
           <span>{t('nl.farmer', 'Farmer or seller reference')}</span>

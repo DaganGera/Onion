@@ -1,35 +1,40 @@
-# Your two questions: logins and roles, and sorting
+# Roles and logins, and sorting
 
-## 1. Does SAMA have separate logins and roles?
+## 1. Roles: built into the app (v0.4.0)
 
-**Not today.** Identity is set once per phone in Settings:
-- a centre ID (for example LSG-01) and an officer ID (for example OFF-07);
-- a signing key generated on the phone, which never leaves it.
+Each phone has its own accounts, protected by a PIN. The PIN is stored only as a salted PBKDF2 hash, never in plain text. Five wrong PINs lock that account for 30 seconds, and the app locks itself after 15 minutes without a tap. All of this works offline.
 
-Every receipt is signed with that key, so it is clear which device and which officer issued it. The farmer needs no account at all: they only scan and verify.
+| Role | Signs in? | Can do | Cannot do |
+|---|---|---|---|
+| Supervisor | Yes, PIN | Everything an officer can do. Also adds or switches off accounts, resets PINs, changes centre settings and the rule pack in force, and re-grades a lot under another pack | |
+| Procurement officer | Yes, PIN | Starts lots, photographs trays, changes a verdict with a reason, signs receipts | Change the rule pack, manage accounts |
+| Auditor | Yes, PIN | Reads lots and receipts, opens the fleet dashboard, exports the log | Grade, override or sign |
+| Farmer or buyer | No account | Contests a bulb on the officer's screen; checks any receipt on their own phone | |
 
-The app does have roles *in the workflow*: "Officer: change" (override) and "Farmer: contest" are separate actions, recorded separately. But there is no login screen, and nothing stops someone who picks up the officer's phone from using it.
+Every lot, every change and every receipt records who did it. The receipt shows "Signed by R. Shinde (OFF-07), Procurement officer", and a farmer checking it on their own phone sees the same line. Accounts are switched off, never deleted, so old receipts still name who signed them.
 
-### Would roles make it better? Yes, if done the right way
+### The workflow with roles, as a story
 
-Real procurement has distinct people with distinct powers, and the audit trail is only as good as knowing who did what. The design that fits SAMA:
+This example uses the three demo accounts in the app ("Explore the demo" on first launch):
 
-| Role | Can do | Login |
+| Account | Role | Demo PIN |
 |---|---|---|
-| **Procurement officer** | Create lots, capture, grade, override with a reason, sign receipts | PIN or fingerprint on their phone, unlocking their own signing key |
-| **Centre supervisor** | Everything an officer can do, plus approve overrides above a threshold, enrol officers' phones, switch the active rule pack | PIN + fingerprint |
-| **Farmer / FPO** | Contest a bulb on the officer's screen, verify receipts on their own phone | **No login.** Verification must stay open to anyone, or it stops being independent |
-| **Auditor / NAFED HQ** | Read-only fleet dashboard, override statistics, drift between centres, re-grade any lot under any pack | Online login (web), because auditing happens in an office |
+| S. Patil | Supervisor | 1111 |
+| R. Shinde | Procurement officer | 2222 |
+| A. Kulkarni | Auditor | 3333 |
 
-**Keep it offline-friendly.** Don't use a username and password that need a server. Instead:
-- Each officer's phone creates its own key.
-- A supervisor "enrols" that key once by signing it (a QR scan between the two phones).
-- From then on, every receipt carries the officer's key plus the supervisor's enrolment signature, so a verifier can check **who** signed and **that they were authorised**, still offline.
-- Biometric unlock (Android's fingerprint prompt) protects the key on the phone.
+1. **Morning, set-up (supervisor).** S. Patil opens SAMA on the centre phone and adds today's officer, R. Shinde (OFF-07), with a PIN. She checks that the rule pack in force is "30 Jul 2026 · Grade A only". Officers can't change it, so every lot today is graded by the same rule.
+2. **A farmer arrives (officer).** Ramesh brings 24 sacks. R. Shinde signs in with the PIN and starts a new lot. Ramesh types a 4-digit code and Shinde types another; together they pick which 5 sacks get opened.
+3. **Grading (officer).** Shinde photographs a tray from each sack on the mat, and SAMA grades the lot: say 71% Grade A by weight.
+4. **Disagreement (farmer and officer).** Ramesh thinks one rejected onion is fine and taps "Farmer: contest" on the officer's screen. Shinde looks again and taps "Officer: change" with the reason "re-inspected by hand". Both actions are saved under OFF-07, next to the AI's original verdict.
+5. **Receipt (officer).** Shinde signs. The receipt carries the grade, the rule pack, "Signed by R. Shinde (OFF-07)" and a QR code. Ramesh gets it on WhatsApp.
+6. **At home (farmer, no login).** Ramesh's son opens SAMA and taps "Check a receipt without an account". His phone, with no internet, re-runs the grading: "Receipt checks out. Signed by R. Shinde (OFF-07), Procurement officer."
+7. **Month-end audit (auditor).** A. Kulkarni from the district office signs in on the centre phone as an auditor. She can open every lot and receipt and the fleet dashboard, where she sees how often each officer overrode the AI. She has no button to grade, change or sign anything.
+8. **Staff change (supervisor).** An officer leaves. The supervisor switches their account off. Their old receipts still verify and still show their name.
 
-**How to say it in the pitch:** "Today every receipt is signed by the device and officer that issued it. The next step is role-based access with offline-verifiable officer enrolment: officers, supervisors and auditors each get exactly their powers, and farmers never need an account to verify."
+### What's next for roles
 
-The team can build this in about 1 to 2 days of work if you want it in the demo.
+Today the receipt is signed with the phone's key, and the account name is written inside the signed record. The next step is a separate key per officer, with the supervisor's approval signed onto it (a QR scan between the two phones). A verifier could then check offline both who signed and that they were authorised. Online auditor logins for a head-office dashboard would come with the sync server.
 
 ## 2. How to add a sorting mechanism after grading
 

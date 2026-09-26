@@ -83,6 +83,7 @@ export interface Override {
   reason: string;       // reason code from OVERRIDE_REASONS
   note?: string;
   at: string;           // ISO time
+  user?: string;        // account id that recorded it (officer, or the officer's phone for a farmer contest)
 }
 
 export const OVERRIDE_REASONS = [

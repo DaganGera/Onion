@@ -1,3 +1,4 @@
+import { ROLE_LABEL, type Role } from '../lib/auth';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { Check, X, Minus, ScanLine, ClipboardPaste, FileUp } from 'lucide-preact';
 import { decodeCompact, fingerprint, fromHex, packById, PACKS, verifyCert, type SignedCert, type VerifyReport } from '@parakh/core';
@@ -104,6 +105,7 @@ export function Verify({ code }: { code: string }) {
                 <h2 style={{ fontSize: 'var(--text-lg)' }}>{decisionTitle(r.result.sprt.decision)} · {r.result.procured.byWeight.est.toFixed(1)}% {t('res.proc', 'procurable')}</h2>
                 <Mix view={r.result.byWeight} />
                 <p class="note">{t('v.who', 'Seller {s} · centre {c} · {n} bulb-observations · URS: {u}', { s: state.cert.core.lot.farmerRef, c: state.cert.core.lot.centre, n: r.result.n_bulb_observations, u: bucketName('URS') })}</p>
+                {state.cert.core.issuer && <p class="note">{t('v.issuer', 'Signed by {n} ({i}), {r}. Every change on this lot is recorded under the account that made it.', { n: state.cert.core.issuer.name, i: state.cert.core.issuer.id, r: t('role.' + state.cert.core.issuer.role, ROLE_LABEL[state.cert.core.issuer.role as Role] ?? state.cert.core.issuer.role) })}</p>}
               </section>
             )}
             <button class="btn quiet block" onClick={() => { setState(null); setPaste(''); }}>{t('v.again', 'Verify another')}</button>

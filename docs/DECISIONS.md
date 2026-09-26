@@ -55,3 +55,11 @@ Colour: every hue comes from the product. The brand is red-onion skin (oklch 35%
 | URS text (darker ink) | 6.5:1 |
 
 We looked at the ui-ux-pro-max database, which suggested the generic navy-and-blue "government" palette, and rejected it because it carries no product meaning.
+
+## 22. Roles: local accounts with a PIN, receipts name the signer
+
+The roles are supervisor, procurement officer and auditor. Farmers have no account, and verifying a receipt needs no login. Accounts live on the phone, with PBKDF2-SHA256 PIN hashes (150,000 iterations and a per-user salt). Five wrong PINs lock the account for 30 seconds, and the app locks after 15 minutes idle.
+
+Permissions are enforced in the UI and again in `issueCertificate`. Receipts gain an optional `issuer` field and overrides an optional `user` field. Both are optional so receipts issued before this change still verify.
+
+Per-officer keys with supervisor-signed enrolment are left for later.

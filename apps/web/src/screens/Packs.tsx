@@ -1,3 +1,4 @@
+import { can, useSession } from '../lib/auth';
 import { useEffect, useState } from 'preact/hooks';
 import { gradeLot, packHash, PACKS, resultSeed, type CertCore, type LotResult } from '@parakh/core';
 import { db, type LotRow } from '../lib/db';
@@ -21,6 +22,7 @@ const SOURCES: Record<string, string> = {
 };
 
 export function Packs({ lotId }: { lotId?: string }) {
+  const me = useSession();
   const [hashes, setHashes] = useState<Record<string, string>>({});
   const [lots, setLots] = useState<LotRow[]>([]);
   const [sel, setSel] = useState(lotId ?? '');
@@ -117,7 +119,7 @@ export function Packs({ lotId }: { lotId?: string }) {
                         return (
                           <tr key={id} aria-current={lot?.packId === id ? 'true' : undefined}>
                             <td><b class="small">{p.short}</b><br /><span class="xs muted">{decisionTitle(r.sprt.decision)}</span>
-                              {lot?.packId !== id && <><br /><button class="linkbtn xs" onClick={() => adopt(id)}>{t('pk.use', 'Grade this lot under this pack')}</button></>}</td>
+                              {lot?.packId !== id && can(me, 'pack.change') && <><br /><button class="linkbtn xs" onClick={() => adopt(id)}>{t('pk.use', 'Grade this lot under this pack')}</button></>}</td>
                             <td class="n">{r.byWeight.GRADE_A.est.toFixed(1)}</td>
                             <td class="n">{r.byWeight.URS.est.toFixed(1)}</td>
                             <td class="n">{r.byWeight.REJECT.est.toFixed(1)}</td>
