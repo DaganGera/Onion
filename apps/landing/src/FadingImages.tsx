@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from 'react';
  */
 const FADE_MS = 500;
 
+/** `srcs` are base paths; each photo ships as `<base>-1200.jpg` and `<base>-2400.jpg`. */
 export function FadingImages({ srcs, holdMs = 4200, className }: { srcs: string[]; holdMs?: number; className?: string }) {
   const refs = useRef<(HTMLImageElement | null)[]>([]);
   const rafs = useRef<Map<number, number>>(new Map());
@@ -43,9 +44,10 @@ export function FadingImages({ srcs, holdMs = 4200, className }: { srcs: string[
 
   return (
     <div className={className} aria-hidden="true">
-      <style>{'@keyframes kb { from { transform: scale(1.08) translate(0,0); } to { transform: scale(1.18) translate(-2%, -2%); } }'}</style>
+      <style>{'@keyframes kb { from { transform: scale(1.02) translate(0,0); } to { transform: scale(1.08) translate(-1.5%, -1%); } }'}</style>
       {srcs.map((s, i) => (
-        <img key={s} ref={(el) => { refs.current[i] = el; }} src={s} alt="" className="absolute inset-0 h-full w-full object-cover"
+        <img key={s} ref={(el) => { refs.current[i] = el; }} src={`${s}-1200.jpg`} srcSet={`${s}-1200.jpg 1200w, ${s}-2400.jpg 2400w`} sizes="100vw"
+          decoding="async" loading={i === 0 ? 'eager' : 'lazy'} alt="" className="absolute inset-0 h-full w-full object-cover"
           style={{ opacity: 0, animation: `kb ${(holdMs + FADE_MS * 2) / 1000}s ease-out both` }} />
       ))}
     </div>

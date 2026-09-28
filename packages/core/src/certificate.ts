@@ -30,6 +30,8 @@ export interface CertCore {
   evidence: string | null;  // SHA-256 of the image/mask evidence bundle
   bulbs: BulbMeasurement[];
   overrides: Override[];
+  /** Who issued this revision, when the phone uses accounts. Absent on older receipts. */
+  issuer?: { id: string; name: string; role: string };
   headline: Headline;
   resultHash: string;
 }

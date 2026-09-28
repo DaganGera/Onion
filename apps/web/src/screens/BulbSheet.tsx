@@ -1,3 +1,4 @@
+import { can, currentUser, useSession, who } from '../lib/auth';
 import { useMemo, useState } from 'preact/hooks';
 import { DEFECTS, OVERRIDE_REASONS, sizeOf, type Bucket, type BulbVerdict, type Defect } from '@parakh/core';
 import { db } from '../lib/db';
@@ -27,6 +28,7 @@ export function BulbSheet({ g, refIdx, url, ai, onClose, onChanged }: { g: Grade
   const m = g.bulbs[refIdx];
   const cap = g.captures.find((c) => c.id === ref.captureId)!;
   const bulb = cap.bulbs.find((b) => b.idx === ref.idx)!;
+  const me = useSession();
   const [mask, setMask] = useState(true);
   const [mode, setMode] = useState<'view' | 'officer' | 'farmer'>('view');
   const [to, setTo] = useState<Bucket>('GRADE_A');
@@ -45,7 +47,7 @@ export function BulbSheet({ g, refIdx, url, ai, onClose, onChanged }: { g: Grade
   const size = sizeOf(m, g.pack);
 
   const save = async (kind: 'override' | 'contest') => {
-    const o = { bulb: m.id, by: kind === 'override' ? 'officer' as const : 'farmer' as const, kind, to: kind === 'override' ? to : undefined, reason, at: new Date().toISOString() };
+    const o = { bulb: m.id, by: kind === 'override' ? 'officer' as const : 'farmer' as const, kind, to: kind === 'override' ? to : undefined, reason, at: new Date().toISOString(), ...(currentUser() ? { user: currentUser()!.id } : {}) };
     await addOverride(g.lot.id, o);
     // Data engine: every human correction is kept as a labelled example for retraining.
     await db.corrections.add({ lotId: g.lot.id, bulbId: m.id, captureId: cap.id, bulbIdx: bulb.idx, from: ai.bucket, to: o.to ?? 'REFER', reason, at: o.at });
@@ -102,14 +104,14 @@ export function BulbSheet({ g, refIdx, url, ai, onClose, onChanged }: { g: Grade
 
       {history.length > 0 && (
         <ul class="reasons">
-          {history.map((o, i) => <li key={i}><span>{o.by === 'officer' ? t('who.officer', 'Officer') : t('who.farmer', 'Farmer')}: {o.kind === 'override' ? `→ ${bucketName(o.to!)}` : t('bs.contest', 'contested')}<code>{o.reason}</code></span></li>)}
+          {history.map((o, i) => <li key={i}><span>{o.by === 'officer' ? t('who.officer', 'Officer') : t('who.farmer', 'Farmer')}: {o.kind === 'override' ? `→ ${bucketName(o.to!)}` : t('bs.contest', 'contested')}<code>{o.reason}{o.user ? ` · ${o.user}` : ''}</code></span></li>)}
         </ul>
       )}
 
       {mode === 'view' && (
         <div class="grid2">
-          <button class="btn quiet" onClick={() => setMode('officer')}>{t('bs.override', 'Officer: change')}</button>
-          <button class="btn quiet" onClick={() => setMode('farmer')}>{t('bs.contestbtn', 'Farmer: contest')}</button>
+          {can(me, 'bulb.override') && <button class="btn quiet" onClick={() => setMode('officer')}>{t('bs.override', 'Officer: change')}</button>}
+          {can(me, 'bulb.contest') && <button class="btn quiet" onClick={() => setMode('farmer')}>{t('bs.contestbtn', 'Farmer: contest')}</button>}
         </div>
       )}
       {mode !== 'view' && (
