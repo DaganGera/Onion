@@ -12,14 +12,14 @@ Everything runs on the phone, including the models, storage and signing, so airp
 
 ## How it works
 
-1. **Sign in.** Supervisors, officers and auditors each have a PIN on the phone. Farmers never need an account.
-2. **Draw the sample.** The farmer and the officer each type a code, and the two codes together pick which sacks to open.
-3. **Capture.** The camera checks level, blur, glare, exposure and scale before the shutter fires, and explains any refusal in one sentence. A printed ArUco mat, an A4 sheet or a ₹5 coin sets the scale.
-4. **Measure.** A U-Net model outlines every onion, including touching ones in a heap. Each onion gets a diameter in mm, an estimated weight, and the share of its visible skin with black mould, rot, spots, sunburn, sprouting or peel. A MobileNetV3 health check clears false marks caused by light or natural skin streaks.
-5. **Grade.** A versioned, fingerprinted rule pack turns the measurements into Grade A, URS, Reject or "needs human check". An onion within measuring error of a limit goes to a person. Lot shares are reported by weight with 95% ranges, and a sequential test says whether to sample another tray.
-6. **Review.** The officer can override a verdict with a reason and the farmer can contest one. The AI verdict is kept beside both, under the name of whoever acted.
-7. **Sign.** The result is written as canonical JSON (RFC 8785), fingerprinted with SHA-256, signed with a key held on the phone, and packed into a QR code. Receipts form a hash chain and go into an append-only Merkle log (RFC 6962).
-8. **Verify.** Any phone can scan the QR offline, check the signature, re-run the grading and confirm that the numbers match. Changing one character of the code makes it fail.
+1. Sign in. Supervisors, officers and auditors each have a PIN on the phone. Farmers never need an account.
+2. Draw the sample. The farmer and the officer each type a code, and the two codes together pick which sacks to open.
+3. Capture. The camera checks level, blur, glare, exposure and scale before the shutter fires, and explains any refusal in one sentence. A printed ArUco mat, an A4 sheet or a ₹5 coin sets the scale.
+4. Measure. A U-Net model outlines every onion, including touching ones in a heap. Each onion gets a diameter in mm, an estimated weight, and the share of its visible skin with black mould, rot, spots, sunburn, sprouting or peel. A MobileNetV3 health check clears false marks caused by light or natural skin streaks.
+5. Grade. A versioned, fingerprinted rule pack turns the measurements into Grade A, URS, Reject or "needs human check". An onion within measuring error of a limit goes to a person. Lot shares are reported by weight with 95% ranges, and a sequential test says whether to sample another tray.
+6. Review. The officer can override a verdict with a reason and the farmer can contest one. The AI verdict is kept beside both, under the name of whoever acted.
+7. Sign. The result is written as canonical JSON (RFC 8785), fingerprinted with SHA-256, signed with a key held on the phone, and packed into a QR code. Receipts form a hash chain and go into an append-only Merkle log (RFC 6962).
+8. Verify. Any phone can scan the QR offline, check the signature, re-run the grading and confirm that the numbers match. Changing one character of the code makes it fail.
 
 Norms changed twice in 2026, according to press reports. Rule packs are data, so the same stored measurements can be re-graded under any pack, and every receipt names the pack it used.
 
