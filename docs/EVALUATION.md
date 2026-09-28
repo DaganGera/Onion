@@ -58,25 +58,29 @@ Onions found by Tier 2, defects measured by the colour model, and the learned he
 
 ## Software checks in a real browser
 
-17 of 17 end-to-end checks passed (chromium headless (Playwright), 2026-09-26). The camera was fed a real photo through Chromium's fake capture device.
+21 of 21 end-to-end checks passed (chromium headless (Playwright), 2026-09-26). The camera was fed a real photo through Chromium's fake capture device.
 
 | Check | Result | Detail |
 |---|---|---|
+| first run asks to set up accounts | pass |  |
 | home renders | pass |  |
-| demo lot graded | pass | 5502 ms for 4 photos incl. decode |
-| Tier-1 model ran in the browser (ONNX Runtime Web) | pass | {"n":44,"withP":44,"disagree":0,"ms":[76,89,63,38]} |
+| demo lot graded | pass | 4526 ms for 4 photos incl. decode |
+| Tier-1 model ran in the browser (ONNX Runtime Web) | pass | {"n":44,"withP":44,"disagree":0,"ms":[77,56,49,39]} |
 | bulb sheet shows reasons | pass | 2 reason lines |
 | override + contest recorded | pass |  |
 | receipt has QR | pass |  |
-| QR payload size | pass | 2392 base45 chars |
+| QR payload size | pass | 2463 base45 chars |
 | second phone verifies offline | pass | Receipt checks out |
 | tampered code rejected | pass | This code is damaged, altered, or not a SAMA receipt. Nothing could be verified. |
 | time travel: packs give different procured shares | pass | 0.0 / 0.0 / 4.0 / 4.0 / 0.0 |
 | back button returns to the parent screen | pass | #/lots #/more |
 | bottom bar has 5 slots with a centre scan button | pass |  |
 | capture guard explains refusal in one sentence | pass | Keep the calibration sheet fully in view. |
-| auto-shutter fired and measured | pass | 12 onions measured. Scale: intrinsics · 1527 ms |
+| auto-shutter fired and measured | pass | 12 onions measured. Scale: intrinsics · 1384 ms |
 | app loads offline (service worker) | pass |  |
+| wrong PIN is refused | pass | Wrong PIN. |
+| auditor is read-only (no grading, no overrides) | pass | Review lots and receipts / Check / override buttons 0 |
+| supervisor sees and manages accounts | pass |  |
 | UI switches to Hindi | pass | नया लॉट शुरू करें |
 | no page errors | pass |  |
 
