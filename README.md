@@ -7,6 +7,7 @@ The name comes from the Sanskrit and Hindi *sam*, meaning same or equal. We want
 - Landing page and in-browser demo: https://dagangera.github.io/Onion/
 - Web app: https://dagangera.github.io/Onion/app/
 - Android APK (latest): https://github.com/DaganGera/Onion/releases/latest/download/sama.apk
+- Calibration mat (print on A4 at 100% scale): [calibration_mat.pdf](calibration_mat.pdf)
 
 Everything runs on the phone, including the models, storage and signing, so airplane mode is fine. SAMA is a prototype and not an official grading tool.
 
@@ -53,7 +54,7 @@ npm -w @parakh/landing run dev   # landing page
 
 Phones only allow the camera and the signing key over HTTPS, so on a phone use the hosted web app or the APK rather than the dev server's LAN address.
 
-On first launch, tap **Explore the demo** to get three sample accounts: supervisor `1111`, officer `2222` and auditor `3333`. As the officer, **Load the demo lot** replays real market photos through the full pipeline. To grade real onions, print `apps/web/public/calibration_mat.pdf` at 100%, lay the onions on it in one layer, and point the camera straight down.
+On first launch, tap **Explore the demo** to get three sample accounts: supervisor `1111`, officer `2222` and auditor `3333`. As the officer, **Load the demo lot** replays real market photos through the full pipeline. To grade real onions, print [calibration_mat.pdf](calibration_mat.pdf) at 100%, lay the onions on it in one layer, and point the camera straight down.
 
 ```bash
 npm test                               # grading core and vision unit tests (vitest + fast-check)
